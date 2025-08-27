@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文件管理系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            padding-top: 20px;
+        }
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .file-item:hover {
+            background-color: #f8f9fa;
+        }
+        .file-preview {
+            width: 50px;
+            height: 50px;
+            margin-right: 15px;
+            object-fit: cover;
+        }
+        .audio-preview {
+            width: 50px;
+            height: 50px;
+            margin-right: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #e9ecef;
+            border-radius: 4px;
+        }
+        .file-info {
+            flex-grow: 1;
+        }
+        .file-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .tab-content {
+            padding: 20px 0;
+        }
+        .upload-area {
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+        .upload-area:hover {
+            border-color: #aaa;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="mb-4 text-center">文件管理系统</h1>
+        
+        <ul class="nav nav-tabs" id="myTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="audio-tab" data-bs-toggle="tab" data-bs-target="#audio" type="button" role="tab" aria-controls="audio" aria-selected="true">音频管理</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="images-tab" data-bs-toggle="tab" data-bs-target="#images" type="button" role="tab" aria-controls="images" aria-selected="false">图片管理</button>
+            </li>
+        </ul>
+        
+        <div class="tab-content" id="myTabContent">
+            <!-- 音频管理 -->
+            <div class="tab-pane fade show active" id="audio" role="tabpanel" aria-labelledby="audio-tab">
+                <div class="upload-area" id="audioUploadArea">
+                    <h4>点击或拖拽上传音频文件</h4>
+                    <p class="text-muted">支持的格式: MP3, WAV, OGG等</p>
+                    <input type="file" id="audioFileInput" accept="audio/*" style="display: none;">
+                </div>
+                
+                <div class="loading" id="audioLoading">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">加载中...</span>
+                    </div>
+                    <p class="mt-2">加载中...</p>
+                </div>
+                
+                <div id="audioList" class="list-group">
+                    <!-- 音频文件列表将通过JavaScript动态加载 -->
+                </div>
+            </div>
+            
+            <!-- 图片管理 -->
+            <div class="tab-pane fade" id="images" role="tabpanel" aria-labelledby="images-tab">
+                <div class="upload-area" id="imageUploadArea">
+                    <h4>点击或拖拽上传图片文件</h4>
+                    <p class="text-muted">支持的格式: JPG, PNG, GIF等</p>
+                    <input type="file" id="imageFileInput" accept="image/*" style="display: none;">
+                </div>
+                
+                <div class="loading" id="imageLoading">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">加载中...</span>
+                    </div>
+                    <p class="mt-2">加载中...</p>
+                </div>
+                
+                <div id="imageList" class="list-group">
+                    <!-- 图片文件列表将通过JavaScript动态加载 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 音频预览模态框 -->
+    <div class="modal fade" id="audioPreviewModal" tabindex="-1" aria-labelledby="audioPreviewModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="audioPreviewModalLabel">音频预览</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <audio id="audioPlayer" controls style="width: 100%;"></audio>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 图片预览模态框 -->
+    <div class="modal fade" id="imagePreviewModal" tabindex="-1" aria-labelledby="imagePreviewModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="imagePreviewModalLabel">图片预览</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <img id="imagePreview" class="img-fluid" src="" alt="图片预览">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 确认删除模态框 -->
+    <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteConfirmModalLabel">确认删除</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>确定要删除这个文件吗？此操作不可撤销。</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteBtn">删除</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 音频JSON数据模态框 -->
+    <div class="modal fade" id="audioJsonModal" tabindex="-1" aria-labelledby="audioJsonModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="audioJsonModalLabel">音频数据</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="audioJsonForm">
+                        <div class="mb-3">
+                            <label for="audioName" class="form-label">名称</label>
+                            <input type="text" class="form-control" id="audioName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="audioType" class="form-label">类型</label>
+                            <input type="text" class="form-control" id="audioType" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="saveAudioJsonBtn">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 图片JSON数据模态框 -->
+    <div class="modal fade" id="imageJsonModal" tabindex="-1" aria-labelledby="imageJsonModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="imageJsonModalLabel">图片数据</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="imageJsonForm">
+                        <div class="mb-3">
+                            <label for="imageName" class="form-label">名称</label>
+                            <input type="text" class="form-control" id="imageName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="imageType" class="form-label">类型</label>
+                            <input type="text" class="form-control" id="imageType" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="saveImageJsonBtn">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/main.js"></script>
+</body>
+</html>
