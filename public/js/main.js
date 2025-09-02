@@ -683,42 +683,47 @@ function loadDialogues() {
 function loadImagesForCharacterSelect() {
     const roleImageSelect = document.getElementById('roleImage');
     
-    fetch('/api/images')
+    // 从images.json获取图片数据
+    fetch('/jsonData/images.json')
         .then(response => response.json())
-        .then(files => {
+        .then(data => {
             roleImageSelect.innerHTML = '';
             
-            if (files.length === 0) {
+            if (!data.files || data.files.length === 0) {
                 const option = document.createElement('option');
                 option.textContent = '没有可用的图片';
                 roleImageSelect.appendChild(option);
                 return;
             }
             
-            // 添加一些示例角色图片路径
-            const exampleImages = [
-                { name: '于姥姥', path: 'res://data/img/于姥姥.png' },
-                { name: '凌霜', path: 'res://data/img/凌霜.png' },
-                { name: '其他角色', path: 'res://data/img/角色.png' }
-            ];
+            // 过滤出类型为"人物"的图片
+            const characterImages = data.files.filter(file => 
+                file.type && file.type.includes('人物')
+            );
             
-            exampleImages.forEach(image => {
+            if (characterImages.length === 0) {
                 const option = document.createElement('option');
-                option.value = image.path;
-                option.textContent = image.name;
+                option.textContent = '没有可用的人物图片';
                 roleImageSelect.appendChild(option);
-            });
+                return;
+            }
             
-            // 再添加实际的图片文件
-            files.forEach(file => {
+            // 添加人物图片选项
+            characterImages.forEach(image => {
                 const option = document.createElement('option');
-                option.value = `/images/${file.name}`;
-                option.textContent = file.name;
+                // 构建完整的图片路径
+                option.value = `/images/${image.filename}`;
+                option.textContent = image.name || image.filename;
                 roleImageSelect.appendChild(option);
             });
         })
         .catch(error => {
-            console.error('加载图片失败:', error);
+            console.error('加载人物图片失败:', error);
+            // 在出错时显示提示
+            roleImageSelect.innerHTML = '';
+            const option = document.createElement('option');
+            option.textContent = '加载人物图片失败';
+            roleImageSelect.appendChild(option);
         });
 }
 
@@ -918,7 +923,7 @@ function parseAndPlayDialogue(dialogueText) {
                     }
                 }
                 
-                setTimeout(playNextLine, 500);
+                setTimeout(playNextLine, 1);
             } else if (line.startsWith('[隐藏角色]')) {
                 // 隐藏角色指令
                 const position = line.substring('[隐藏角色]'.length).trim();
@@ -930,7 +935,7 @@ function parseAndPlayDialogue(dialogueText) {
                     }
                 }
                 
-                setTimeout(playNextLine, 500);
+                setTimeout(playNextLine, 1);
             } else if (line.startsWith('[黑屏]')) {
                 // 黑屏指令
                 const blackScreenText = line.substring('[黑屏]'.length).trim();
@@ -945,12 +950,13 @@ function parseAndPlayDialogue(dialogueText) {
                 
                 // 显示黑屏文字
                 dialogueDisplay.innerHTML = `<p class="text-white text-center text-xl">${blackScreenText}</p>`;
-                dialogueDisplay.style.backgroundColor = 'black';
-                
+                dialogueDisplay.classList.remove('bg-white');
+                dialogueDisplay.classList.add('bg-black');
                 setTimeout(() => {
                     // 恢复场景背景色
                     scene.style.backgroundColor = '#f8f9fa';
-                    dialogueDisplay.style.backgroundColor = 'white';
+                    dialogueDisplay.classList.remove('bg-black');
+                    dialogueDisplay.classList.add('bg-white');
                     playNextLine();
                 }, 2000);
             }

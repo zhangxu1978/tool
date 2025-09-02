@@ -9,6 +9,56 @@
       "filename": "1756256032419.png",
       "name": "绯月-道具-武器",
       "type": "集合类图片"
+    },
+    {
+      "filename": "default-character.png",
+      "name": "默认",
+      "type": "人物"
+    },
+    {
+      "filename": "linyue.png",
+      "name": "林悦",
+      "type": "人物"
+    },
+    {
+      "filename": "于姥姥.png",
+      "name": "于姥姥",
+      "type": "人物"
+    },
+    {
+      "filename": "小青（人）.png",
+      "name": "小青",
+      "type": "人物"
+    },
+    {
+      "filename": "胡大（虎）.png",
+      "name": "虎妖",
+      "type": "人物"
+    },
+    {
+      "filename": "老道士.png",
+      "name": "老道",
+      "type": "人物"
+    },
+    {
+      "filename": "广智.png",
+      "name": "和尚",
+      "type": "人物"
+    },
+    {
+      "filename": "月华真人.png",
+      "name": "女道士",
+      "type": "人物"
+    },
+    {
+      "filename": "小青（龙）.png",
+      "name": "龙",
+      "type": "人物"
+    },
+    {
+      "filename": "邋遢道人.png",
+      "name": "乞丐",
+      "type": "人物"
     }
   ]
 }
