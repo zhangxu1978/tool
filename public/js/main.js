@@ -1305,13 +1305,17 @@ function parseAndPlayDialogue(dialogueText) {
                     backgroundImage.src = backgroundPath;
                     backgroundImage.alt = '背景图片';
                     backgroundImage.className = 'scene-background position-absolute top-0 left-0 w-full h-full object-cover z-0';
-                    backgroundImage.style.opacity = '1'; // 设置透明度
-                    
-                    // 将背景图片添加到场景中
-                    scene.style.position = 'relative';
+                    backgroundImage.style.opacity = '0.8'; // 设置透明度
+                    //设置背景图片最大宽度和高度
+                    backgroundImage.style.maxWidth = '800px';
+                    backgroundImage.style.maxHeight = '600px';
                     //确保背景图片在其他元素之下
-                    scene.appendChild(backgroundImage);
-                   // scene.insertBefore(backgroundImage, scene.firstChild);
+                    scene.style.position = 'relative';
+                    if (scene.firstChild) {
+                        scene.insertBefore(backgroundImage, scene.firstChild);
+                    } else {
+                        scene.appendChild(backgroundImage);
+                    }
                 }
                 
                 setTimeout(playNextLine, 1);
