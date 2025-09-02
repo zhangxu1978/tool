@@ -816,22 +816,31 @@ function loadAudioFilesForSoundSelect() {
     const soundFileSelect = document.getElementById('soundFile');
     
     // 获取所有音频文件
-    fetch('/api/audio')
+    fetch('/jsonData/audio.json')
         .then(response => response.json())
-        .then(files => {
+        .then(data => {
             soundFileSelect.innerHTML = '';
             
-            if (files.length === 0) {
+            if (!data.files || data.files.length === 0) {
                 const option = document.createElement('option');
                 option.textContent = '没有可用的音频文件';
                 soundFileSelect.appendChild(option);
                 return;
             }
-            
-            files.forEach(file => {
+                        // 过滤出类型为"音效"的音频文件
+            const soundFiles = data.files.filter(file => 
+                file.type && file.type.includes('音效')
+            );
+            if (soundFiles.length === 0) {
                 const option = document.createElement('option');
-                option.value = file.path;
-                option.textContent = file.name;
+                option.textContent = '没有可用的音效文件';
+                soundFileSelect.appendChild(option);
+                return;
+            }
+            soundFiles.forEach(file => {
+                const option = document.createElement('option');
+                option.value =`/audio/${file.filename}`;
+                option.textContent =file.name || file.filename;
                 soundFileSelect.appendChild(option);
             });
         })
@@ -855,6 +864,8 @@ function loadImagesForBackgroundSelect() {
         .then(response => response.json())
         .then(data => {
             backgroundImageSelect.innerHTML = '';
+                        // 过滤出类型为"人物"的图片
+
             
             if (!data.files || data.files.length === 0) {
                 const option = document.createElement('option');
@@ -862,9 +873,18 @@ function loadImagesForBackgroundSelect() {
                 backgroundImageSelect.appendChild(option);
                 return;
             }
-            
+            // 过滤出类型为"背景"的图片
+            const backgroundImages = data.files.filter(file => 
+                file.type && file.type.includes('背景')
+            );
+                        if (backgroundImages.length === 0) {
+                const option = document.createElement('option');
+                option.textContent = '没有可用的背景图片';
+                backgroundImageSelect.appendChild(option);
+                return;
+            }
             // 添加所有图片作为背景选项
-            data.files.forEach(image => {
+            backgroundImages.forEach(image => {
                 const option = document.createElement('option');
                 // 构建完整的图片路径
                 option.value = `/images/${image.filename}`;
@@ -888,25 +908,29 @@ function loadAudioFilesForMusicSelect() {
     const musicListDiv = document.getElementById('musicList');
     
     // 获取所有音频文件
-    fetch('/api/audio')
+    fetch('/jsonData/audio.json')
         .then(response => response.json())
-        .then(files => {
+        .then(data => {
             musicListDiv.innerHTML = '';
             
-            if (files.length === 0) {
+            if (!data.files || data.files.length === 0) {
                 musicListDiv.innerHTML = '<p class="text-muted">没有可用的音频文件</p>';
                 return;
             }
+                                    // 过滤出类型为"音乐"的音频文件
+            const musicFiles = data.files.filter(file => 
+                file.type && file.type.includes('音乐')
+            );
             
-            files.forEach(file => {
+            musicFiles.forEach(file => {
                 const div = document.createElement('div');
                 div.className = 'form-check';
                 
                 const checkbox = document.createElement('input');
                 checkbox.type = 'checkbox';
                 checkbox.className = 'form-check-input';
-                checkbox.id = `music-${file.name}`;
-                checkbox.value = file.path;
+                checkbox.id = `music-${file.filename}`;
+                checkbox.value =`/audio/${file.filename}`;
                 
                 const label = document.createElement('label');
                 label.className = 'form-check-label';
@@ -1156,8 +1180,12 @@ function parseAndPlayDialogue(dialogueText) {
            // const command = line.substring(1, line.length - 1);
             
             if (line.startsWith('[开始]') || line.startsWith('[结束]')) {
-                // 开始或结束指令，继续下一行
-                setTimeout(playNextLine, 100);
+                // 开始继续下一行
+                if (line.startsWith('[开始]')) {
+                    setTimeout(playNextLine, 100);
+                }else if (line.startsWith('[结束]')) {
+                    return;
+                }
             } else if (line.startsWith('[显示角色]')) {
                 // 显示角色指令
                 const params = line.substring('[显示角色]'.length).trim();
@@ -1277,11 +1305,13 @@ function parseAndPlayDialogue(dialogueText) {
                     backgroundImage.src = backgroundPath;
                     backgroundImage.alt = '背景图片';
                     backgroundImage.className = 'scene-background position-absolute top-0 left-0 w-full h-full object-cover z-0';
-                    backgroundImage.style.opacity = '0.5'; // 设置透明度
+                    backgroundImage.style.opacity = '1'; // 设置透明度
                     
                     // 将背景图片添加到场景中
                     scene.style.position = 'relative';
-                    scene.insertBefore(backgroundImage, scene.firstChild);
+                    //确保背景图片在其他元素之下
+                    scene.appendChild(backgroundImage);
+                   // scene.insertBefore(backgroundImage, scene.firstChild);
                 }
                 
                 setTimeout(playNextLine, 1);
