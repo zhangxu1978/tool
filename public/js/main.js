@@ -12,6 +12,74 @@ document.addEventListener('DOMContentLoaded', function() {
         loadImageFiles();
     });
     
+    document.getElementById('dialogue-tab').addEventListener('click', function() {
+        loadDialogues();
+        loadImagesForCharacterSelect();
+    });
+    
+    // 快捷输入按钮事件
+    document.getElementById('insertStart').addEventListener('click', function() {
+        insertTextIntoDialogue('[开始]\n');
+    });
+    
+    document.getElementById('insertEnd').addEventListener('click', function() {
+        insertTextIntoDialogue('\n[结束]');
+    });
+    
+    document.getElementById('insertShowRole').addEventListener('click', function() {
+        const showRoleModal = new bootstrap.Modal(document.getElementById('showRoleModal'));
+        showRoleModal.show();
+    });
+    
+    document.getElementById('insertHideRole').addEventListener('click', function() {
+        const dialogueText = document.getElementById('dialogueText');
+        const textarea = dialogueText;
+        
+        // 显示一个简单的提示让用户输入位置
+        const position = prompt('请输入角色位置(left/center/right):');
+        if (position && ['left', 'center', 'right'].includes(position.toLowerCase())) {
+            insertTextIntoDialogue(`\n[隐藏角色]${position.toLowerCase()}`);
+        } else if (position) {
+            alert('位置输入错误，请输入left、center或right');
+        }
+    });
+    
+    document.getElementById('insertBlackScreen').addEventListener('click', function() {
+        const blackScreenModal = new bootstrap.Modal(document.getElementById('blackScreenModal'));
+        blackScreenModal.show();
+    });
+    
+    // 显示角色确认按钮
+    document.getElementById('confirmShowRole').addEventListener('click', function() {
+        const position = document.getElementById('rolePosition').value;
+        const imageSelect = document.getElementById('roleImage');
+        const selectedImage = imageSelect.options[imageSelect.selectedIndex].text;
+        const imagePath = imageSelect.value;
+        
+        insertTextIntoDialogue(`\n[显示角色]${position},${imagePath}`);
+        
+        const showRoleModal = bootstrap.Modal.getInstance(document.getElementById('showRoleModal'));
+        showRoleModal.hide();
+    });
+    
+    // 黑屏确认按钮
+    document.getElementById('confirmBlackScreen').addEventListener('click', function() {
+        const blackScreenText = document.getElementById('blackScreenText').value;
+        if (blackScreenText) {
+            insertTextIntoDialogue(`\n[黑屏]${blackScreenText}`);
+        }
+        
+        const blackScreenModal = bootstrap.Modal.getInstance(document.getElementById('blackScreenModal'));
+        blackScreenModal.hide();
+        document.getElementById('blackScreenText').value = '';
+    });
+    
+    // 保存对话按钮
+    document.getElementById('saveDialogue').addEventListener('click', saveDialogue);
+    
+    // 预览对话按钮
+    document.getElementById('previewDialogue').addEventListener('click', previewDialogue);
+    
     // 音频上传区域点击事件
     document.getElementById('audioUploadArea').addEventListener('click', function() {
         document.getElementById('audioFileInput').click();
@@ -554,6 +622,304 @@ function formatFileSize(bytes) {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+/**
+ * 加载对话列表
+ */
+function loadDialogues() {
+    const dialogueList = document.getElementById('dialogueList');
+    
+    fetch('/jsonData/DialogueList.json')
+        .then(response => response.json())
+        .then(data => {
+            dialogueList.innerHTML = '';
+            
+            if (!data.dialogues || data.dialogues.length === 0) {
+                dialogueList.innerHTML = '<div class="text-center p-4">没有对话数据</div>';
+                return;
+            }
+            
+            const listGroup = document.createElement('div');
+            listGroup.className = 'list-group';
+            
+            data.dialogues.forEach((dialogue, index) => {
+                const listItem = document.createElement('button');
+                listItem.className = 'list-group-item list-group-item-action';
+                listItem.textContent = `对话 ${dialogue.id}`;
+                listItem.addEventListener('click', function() {
+                    document.getElementById('dialogueText').value = dialogue.text;
+                    // 高亮选中的对话
+                    document.querySelectorAll('#dialogueList .list-group-item').forEach(item => {
+                        item.classList.remove('active');
+                    });
+                    listItem.classList.add('active');
+                });
+                
+                listGroup.appendChild(listItem);
+            });
+            
+            dialogueList.appendChild(listGroup);
+        })
+        .catch(error => {
+            dialogueList.innerHTML = `<div class="text-center p-4 text-danger">加载失败: ${error.message}</div>`;
+            console.error('加载对话失败:', error);
+        });
+}
+
+/**
+ * 加载角色选择的图片列表
+ */
+function loadImagesForCharacterSelect() {
+    const roleImageSelect = document.getElementById('roleImage');
+    
+    fetch('/api/images')
+        .then(response => response.json())
+        .then(files => {
+            roleImageSelect.innerHTML = '';
+            
+            if (files.length === 0) {
+                const option = document.createElement('option');
+                option.textContent = '没有可用的图片';
+                roleImageSelect.appendChild(option);
+                return;
+            }
+            
+            // 添加一些示例角色图片路径
+            const exampleImages = [
+                { name: '于姥姥', path: 'res://data/img/于姥姥.png' },
+                { name: '凌霜', path: 'res://data/img/凌霜.png' },
+                { name: '其他角色', path: 'res://data/img/角色.png' }
+            ];
+            
+            exampleImages.forEach(image => {
+                const option = document.createElement('option');
+                option.value = image.path;
+                option.textContent = image.name;
+                roleImageSelect.appendChild(option);
+            });
+            
+            // 再添加实际的图片文件
+            files.forEach(file => {
+                const option = document.createElement('option');
+                option.value = `/images/${file.name}`;
+                option.textContent = file.name;
+                roleImageSelect.appendChild(option);
+            });
+        })
+        .catch(error => {
+            console.error('加载图片失败:', error);
+        });
+}
+
+/**
+ * 向对话文本框插入文本
+ * @param {string} text - 要插入的文本
+ */
+function insertTextIntoDialogue(text) {
+    const textarea = document.getElementById('dialogueText');
+    const startPos = textarea.selectionStart;
+    const endPos = textarea.selectionEnd;
+    const scrollTop = textarea.scrollTop;
+    
+    textarea.value = textarea.value.substring(0, startPos) + text + textarea.value.substring(endPos, textarea.value.length);
+    textarea.focus();
+    textarea.selectionStart = textarea.selectionEnd = startPos + text.length;
+    textarea.scrollTop = scrollTop;
+}
+
+/**
+ * 保存对话
+ */
+function saveDialogue() {
+    const dialogueText = document.getElementById('dialogueText').value;
+    
+    if (!dialogueText.trim()) {
+        alert('请输入对话内容');
+        return;
+    }
+    
+    fetch('/jsonData/DialogueList.json')
+        .then(response => response.json())
+        .then(data => {
+            if (!data.dialogues) {
+                data.dialogues = [];
+            }
+            
+            // 生成新的ID
+            const newId = data.dialogues.length > 0 ? 
+                (Math.max(...data.dialogues.map(d => parseInt(d.id))) + 1).toString() : '1';
+            
+            // 添加新对话
+            data.dialogues.push({
+                id: newId,
+                text: dialogueText
+            });
+            
+            // 保存回文件
+            return fetch('/api/dialogue/save', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                alert('对话保存成功');
+                loadDialogues();
+            } else {
+                alert('保存失败: ' + (result.error || '未知错误'));
+            }
+        })
+        .catch(error => {
+            console.error('保存对话失败:', error);
+            alert('保存对话失败');
+        });
+}
+
+/**
+ * 预览对话
+ */
+function previewDialogue() {
+    const dialogueText = document.getElementById('dialogueText').value;
+    
+    if (!dialogueText.trim()) {
+        alert('请先输入对话内容');
+        return;
+    }
+    
+    // 打开预览模态框
+    const previewModal = new bootstrap.Modal(document.getElementById('dialoguePreviewModal'));
+    previewModal.show();
+    
+    // 解析对话内容并开始播放
+    parseAndPlayDialogue(dialogueText);
+}
+
+/**
+ * 解析并播放对话
+ * @param {string} dialogueText - 对话文本内容
+ */
+function parseAndPlayDialogue(dialogueText) {
+    const lines = dialogueText.split('\n');
+    const scene = document.getElementById('scene');
+    const dialogueDisplay = document.getElementById('dialogue-display');
+    
+    // 清空舞台
+    document.getElementById('left-character').innerHTML = '';
+    document.getElementById('center-character').innerHTML = '';
+    document.getElementById('right-character').innerHTML = '';
+    dialogueDisplay.innerHTML = '';
+    
+    let currentLine = 0;
+    
+    // 开始播放
+    function playNextLine() {
+        if (currentLine >= lines.length) {
+            return;
+        }
+        
+        const line = lines[currentLine].trim();
+        currentLine++;
+        
+        if (!line) {
+            // 跳过空行
+            playNextLine();
+            return;
+        }
+        
+        // 检查是否是指令
+        if (line.startsWith('[')) {
+           // const command = line.substring(1, line.length - 1);
+            
+            if (line.startsWith('[开始]') || line.startsWith('[结束]')) {
+                // 开始或结束指令，继续下一行
+                setTimeout(playNextLine, 100);
+            } else if (line.startsWith('[显示角色]')) {
+                // 显示角色指令
+                const params = line.substring('[显示角色]'.length).trim();
+                const [position, imagePath] = params.split(',');
+                
+                if (position && imagePath) {
+                    const characterDiv = document.getElementById(`${position}-character`);
+                    if (characterDiv) {
+                        // 清除该位置的现有角色
+                        characterDiv.innerHTML = '';
+                        
+                        // 创建新的角色图片
+                        const characterImage = document.createElement('img');
+                        
+                        // 检查图片路径是否是res://格式或实际路径
+                        if (imagePath.startsWith('res://')) {
+                            // 模拟res://路径，实际项目中可能需要转换
+                            characterImage.src = '/images/default-character.png';
+                            characterImage.alt = '角色图片';
+                        } else {
+                            // 使用实际路径
+                            characterImage.src = imagePath;
+                            characterImage.alt = '角色图片';
+                        }
+                        
+                        characterImage.className = 'img-fluid max-h-[400px]';
+                        characterDiv.appendChild(characterImage);
+                    }
+                }
+                
+                setTimeout(playNextLine, 500);
+            } else if (line.startsWith('[隐藏角色]')) {
+                // 隐藏角色指令
+                const position = line.substring('[隐藏角色]'.length).trim();
+                
+                if (position) {
+                    const characterDiv = document.getElementById(`${position}-character`);
+                    if (characterDiv) {
+                        characterDiv.innerHTML = '';
+                    }
+                }
+                
+                setTimeout(playNextLine, 500);
+            } else if (line.startsWith('[黑屏]')) {
+                // 黑屏指令
+                const blackScreenText = line.substring('[黑屏]'.length).trim();
+                
+                // 清除所有角色
+                document.getElementById('left-character').innerHTML = '';
+                document.getElementById('center-character').innerHTML = '';
+                document.getElementById('right-character').innerHTML = '';
+                
+                // 设置场景为黑色背景
+                scene.style.backgroundColor = 'black';
+                
+                // 显示黑屏文字
+                dialogueDisplay.innerHTML = `<p class="text-white text-center text-xl">${blackScreenText}</p>`;
+                dialogueDisplay.style.backgroundColor = 'black';
+                
+                setTimeout(() => {
+                    // 恢复场景背景色
+                    scene.style.backgroundColor = '#f8f9fa';
+                    dialogueDisplay.style.backgroundColor = 'white';
+                    playNextLine();
+                }, 2000);
+            }
+        } else {
+            // 普通对话文本
+            dialogueDisplay.innerHTML = `<p class="text-lg">${line}</p>`;
+            
+            // 等待用户点击继续
+            dialogueDisplay.style.cursor = 'pointer';
+            dialogueDisplay.onclick = function() {
+                dialogueDisplay.onclick = null;
+                dialogueDisplay.style.cursor = 'default';
+                playNextLine();
+            };
+        }
+    }
+    
+    // 开始播放第一行
+    playNextLine();
 }
 
 /**

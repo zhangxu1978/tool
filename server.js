@@ -290,6 +290,22 @@ app.post('/api/images/json/:filename', (req, res) => {
   }
 });
 
+/**
+ * 保存对话数据
+ */
+app.post('/api/dialogue/save', (req, res) => {
+  const jsonFilePath = path.join('jsonData', 'DialogueList.json');
+  const dialogueData = req.body;
+  
+  try {
+    fs.writeFileSync(jsonFilePath, JSON.stringify(dialogueData, null, 2));
+    res.json({ success: true, message: '对话数据保存成功' });
+  } catch (error) {
+    console.error('保存对话数据失败:', error);
+    res.status(500).json({ success: false, error: '保存对话数据失败' });
+  }
+});
+
 // 启动服务器
 app.listen(port, () => {
   console.log(`服务器运行在 http://localhost:${port}`);
