@@ -72,6 +72,37 @@ document.addEventListener('DOMContentLoaded', function() {
         blackScreenModal.show();
     });
     
+    // 播放声音按钮事件
+    document.getElementById('insertPlaySound').addEventListener('click', function() {
+        const playSoundModal = new bootstrap.Modal(document.getElementById('playSoundModal'));
+        loadAudioFilesForSoundSelect();
+        playSoundModal.show();
+    });
+    
+    // 停止播放按钮事件
+    document.getElementById('insertStopSound').addEventListener('click', function() {
+        insertTextIntoDialogue('\n[停止播放]');
+    });
+    
+    // 显示背景按钮事件
+    document.getElementById('insertShowBackground').addEventListener('click', function() {
+        const showBackgroundModal = new bootstrap.Modal(document.getElementById('showBackgroundModal'));
+        loadImagesForBackgroundSelect();
+        showBackgroundModal.show();
+    });
+    
+    // 隐藏背景按钮事件
+    document.getElementById('insertHideBackground').addEventListener('click', function() {
+        insertTextIntoDialogue('\n[隐藏背景]');
+    });
+    
+    // 播放音乐按钮事件
+    document.getElementById('insertPlayMusic').addEventListener('click', function() {
+        const playMusicModal = new bootstrap.Modal(document.getElementById('playMusicModal'));
+        loadAudioFilesForMusicSelect();
+        playMusicModal.show();
+    });
+    
     // 显示角色确认按钮
     document.getElementById('confirmShowRole').addEventListener('click', function() {
         const position = document.getElementById('rolePosition').value;
@@ -97,11 +128,62 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('blackScreenText').value = '';
     });
     
+    // 播放声音确认按钮
+    document.getElementById('confirmPlaySound').addEventListener('click', function() {
+        const soundFile = document.getElementById('soundFile');
+        const selectedOption = soundFile.options[soundFile.selectedIndex];
+        const soundPath = selectedOption.value;
+        const soundName = selectedOption.text;
+        
+        if (soundPath) {
+            insertTextIntoDialogue(`\n[播放声音]${soundPath}`);
+        }
+        
+        const playSoundModal = bootstrap.Modal.getInstance(document.getElementById('playSoundModal'));
+        playSoundModal.hide();
+    });
+    
+    // 显示背景确认按钮
+    document.getElementById('confirmShowBackground').addEventListener('click', function() {
+        const backgroundImage = document.getElementById('backgroundImage');
+        const selectedOption = backgroundImage.options[backgroundImage.selectedIndex];
+        const imagePath = selectedOption.value;
+        
+        if (imagePath) {
+            insertTextIntoDialogue(`\n[显示背景]${imagePath}`);
+        }
+        
+        const showBackgroundModal = bootstrap.Modal.getInstance(document.getElementById('showBackgroundModal'));
+        showBackgroundModal.hide();
+    });
+    
+    // 播放音乐确认按钮
+    document.getElementById('confirmPlayMusic').addEventListener('click', function() {
+        const selectedMusic = [];
+        document.querySelectorAll('#musicList input[type="checkbox"]:checked').forEach(checkbox => {
+            selectedMusic.push(checkbox.value);
+        });
+        
+        const playMode = document.getElementById('playMode').value;
+        
+        if (selectedMusic.length > 0) {
+            // 将音乐路径用逗号分隔
+            const musicPaths = selectedMusic.join(',');
+            insertTextIntoDialogue(`\n[播放音乐]${musicPaths},${playMode}`);
+        }
+        
+        const playMusicModal = bootstrap.Modal.getInstance(document.getElementById('playMusicModal'));
+        playMusicModal.hide();
+    });
+    
     // 保存对话按钮
     document.getElementById('saveDialogue').addEventListener('click', saveDialogue);
     
     // 预览对话按钮
     document.getElementById('previewDialogue').addEventListener('click', previewDialogue);
+    
+    // 删除对话按钮
+    document.getElementById('deleteDialogue').addEventListener('click', deleteDialogue);
     
     // 音频上传区域点击事件
     document.getElementById('audioUploadArea').addEventListener('click', function() {
@@ -728,6 +810,121 @@ function loadImagesForCharacterSelect() {
 }
 
 /**
+ * 加载声音选择的音频文件列表
+ */
+function loadAudioFilesForSoundSelect() {
+    const soundFileSelect = document.getElementById('soundFile');
+    
+    // 获取所有音频文件
+    fetch('/api/audio')
+        .then(response => response.json())
+        .then(files => {
+            soundFileSelect.innerHTML = '';
+            
+            if (files.length === 0) {
+                const option = document.createElement('option');
+                option.textContent = '没有可用的音频文件';
+                soundFileSelect.appendChild(option);
+                return;
+            }
+            
+            files.forEach(file => {
+                const option = document.createElement('option');
+                option.value = file.path;
+                option.textContent = file.name;
+                soundFileSelect.appendChild(option);
+            });
+        })
+        .catch(error => {
+            console.error('加载音频文件失败:', error);
+            soundFileSelect.innerHTML = '';
+            const option = document.createElement('option');
+            option.textContent = '加载音频文件失败';
+            soundFileSelect.appendChild(option);
+        });
+}
+
+/**
+ * 加载背景选择的图片列表
+ */
+function loadImagesForBackgroundSelect() {
+    const backgroundImageSelect = document.getElementById('backgroundImage');
+    
+    // 从images.json获取图片数据
+    fetch('/jsonData/images.json')
+        .then(response => response.json())
+        .then(data => {
+            backgroundImageSelect.innerHTML = '';
+            
+            if (!data.files || data.files.length === 0) {
+                const option = document.createElement('option');
+                option.textContent = '没有可用的图片';
+                backgroundImageSelect.appendChild(option);
+                return;
+            }
+            
+            // 添加所有图片作为背景选项
+            data.files.forEach(image => {
+                const option = document.createElement('option');
+                // 构建完整的图片路径
+                option.value = `/images/${image.filename}`;
+                option.textContent = image.name || image.filename;
+                backgroundImageSelect.appendChild(option);
+            });
+        })
+        .catch(error => {
+            console.error('加载背景图片失败:', error);
+            backgroundImageSelect.innerHTML = '';
+            const option = document.createElement('option');
+            option.textContent = '加载背景图片失败';
+            backgroundImageSelect.appendChild(option);
+        });
+}
+
+/**
+ * 加载音乐选择的音频文件列表（用于多选）
+ */
+function loadAudioFilesForMusicSelect() {
+    const musicListDiv = document.getElementById('musicList');
+    
+    // 获取所有音频文件
+    fetch('/api/audio')
+        .then(response => response.json())
+        .then(files => {
+            musicListDiv.innerHTML = '';
+            
+            if (files.length === 0) {
+                musicListDiv.innerHTML = '<p class="text-muted">没有可用的音频文件</p>';
+                return;
+            }
+            
+            files.forEach(file => {
+                const div = document.createElement('div');
+                div.className = 'form-check';
+                
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.className = 'form-check-input';
+                checkbox.id = `music-${file.name}`;
+                checkbox.value = file.path;
+                
+                const label = document.createElement('label');
+                label.className = 'form-check-label';
+                label.htmlFor = `music-${file.name}`;
+                label.textContent = file.name;
+                
+                div.appendChild(checkbox);
+                div.appendChild(label);
+                musicListDiv.appendChild(div);
+            });
+        })
+        .catch(error => {
+            console.error('加载音频文件失败:', error);
+            musicListDiv.innerHTML = '<p class="text-danger">加载音频文件失败</p>';
+        });
+}
+
+/**
  * 向对话文本框插入文本
  * @param {string} text - 要插入的文本
  */
@@ -836,6 +1033,58 @@ function saveDialogue() {
 }
 
 /**
+ * 删除对话
+ */
+function deleteDialogue() {
+    const dialogueSelect = document.getElementById('dialogueSelect');
+    const selectedId = dialogueSelect.value;
+    
+    if (!selectedId) {
+        alert('请先选择要删除的对话');
+        return;
+    }
+    
+    // 弹出确认框
+    if (confirm('确定要删除这个对话吗？此操作不可撤销。')) {
+        fetch('/jsonData/DialogueList.json')
+            .then(response => response.json())
+            .then(data => {
+                if (!data.dialogues) {
+                    data.dialogues = [];
+                }
+                
+                // 过滤掉要删除的对话
+                data.dialogues = data.dialogues.filter(dialogue => dialogue.id !== selectedId);
+                
+                // 保存回文件
+                return fetch('/api/dialogue/save', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    alert('对话删除成功');
+                    loadDialogues();
+                    // 重置选择框和文本框
+                    dialogueSelect.value = '';
+                    document.getElementById('dialogueText').value = '';
+                } else {
+                    alert('删除失败: ' + (result.error || '未知错误'));
+                }
+            })
+            .catch(error => {
+                console.error('删除对话失败:', error);
+                alert('删除对话失败');
+            });
+    }
+}
+
+/**
  * 预览对话
  */
 function previewDialogue() {
@@ -868,6 +1117,22 @@ function parseAndPlayDialogue(dialogueText) {
     document.getElementById('center-character').innerHTML = '';
     document.getElementById('right-character').innerHTML = '';
     dialogueDisplay.innerHTML = '';
+    
+    // 清除现有的背景
+    const existingBackground = scene.querySelector('.scene-background');
+    if (existingBackground) {
+        scene.removeChild(existingBackground);
+    }
+    
+    // 停止任何正在播放的音频
+    if (window.currentSound) {
+        window.currentSound.pause();
+        window.currentSound = null;
+    }
+    if (window.currentMusic) {
+        window.currentMusic.pause();
+        window.currentMusic = null;
+    }
     
     let currentLine = 0;
     
@@ -945,6 +1210,12 @@ function parseAndPlayDialogue(dialogueText) {
                 document.getElementById('center-character').innerHTML = '';
                 document.getElementById('right-character').innerHTML = '';
                 
+                // 清除背景
+                const existingBackground = scene.querySelector('.scene-background');
+                if (existingBackground) {
+                    scene.removeChild(existingBackground);
+                }
+                
                 // 设置场景为黑色背景
                 scene.style.backgroundColor = 'black';
                 
@@ -959,6 +1230,88 @@ function parseAndPlayDialogue(dialogueText) {
                     dialogueDisplay.classList.add('bg-white');
                     playNextLine();
                 }, 2000);
+            } else if (line.startsWith('[播放声音]')) {
+                // 播放声音指令
+                const soundPath = line.substring('[播放声音]'.length).trim();
+                
+                if (soundPath) {
+                    // 停止当前正在播放的声音
+                    if (window.currentSound) {
+                        window.currentSound.pause();
+                    }
+                    
+                    // 创建新的音频元素并播放
+                    window.currentSound = new Audio(soundPath);
+                    window.currentSound.play().catch(error => {
+                        console.error('播放声音失败:', error);
+                    });
+                }
+                
+                setTimeout(playNextLine, 1);
+            } else if (line.startsWith('[停止播放]')) {
+                // 停止播放指令
+                // 停止当前正在播放的声音和音乐
+                if (window.currentSound) {
+                    window.currentSound.pause();
+                    window.currentSound = null;
+                }
+                if (window.currentMusic) {
+                    window.currentMusic.pause();
+                    window.currentMusic = null;
+                }
+                
+                setTimeout(playNextLine, 1);
+            } else if (line.startsWith('[显示背景]')) {
+                // 显示背景指令
+                const backgroundPath = line.substring('[显示背景]'.length).trim();
+                
+                if (backgroundPath) {
+                    // 清除现有的背景
+                    const existingBackground = scene.querySelector('.scene-background');
+                    if (existingBackground) {
+                        scene.removeChild(existingBackground);
+                    }
+                    
+                    // 创建新的背景图片
+                    const backgroundImage = document.createElement('img');
+                    backgroundImage.src = backgroundPath;
+                    backgroundImage.alt = '背景图片';
+                    backgroundImage.className = 'scene-background position-absolute top-0 left-0 w-full h-full object-cover z-0';
+                    backgroundImage.style.opacity = '0.5'; // 设置透明度
+                    
+                    // 将背景图片添加到场景中
+                    scene.style.position = 'relative';
+                    scene.insertBefore(backgroundImage, scene.firstChild);
+                }
+                
+                setTimeout(playNextLine, 1);
+            } else if (line.startsWith('[隐藏背景]')) {
+                // 隐藏背景指令
+                const existingBackground = scene.querySelector('.scene-background');
+                if (existingBackground) {
+                    scene.removeChild(existingBackground);
+                }
+                
+                setTimeout(playNextLine, 1);
+            } else if (line.startsWith('[播放音乐]')) {
+                // 播放音乐指令
+                const params = line.substring('[播放音乐]'.length).trim();
+                const parts = params.split(',');
+                const playMode = parts.pop(); // 最后一个参数是播放模式
+                const musicPaths = parts; // 前面的都是音乐路径
+                
+                if (musicPaths.length > 0) {
+                    // 停止当前正在播放的音乐
+                    if (window.currentMusic) {
+                        window.currentMusic.pause();
+                        window.currentMusic = null;
+                    }
+                    
+                    // 创建音频播放管理器
+                    createMusicPlayer(musicPaths, playMode);
+                }
+                
+                setTimeout(playNextLine, 1);
             }
         } else {
             // 普通对话文本
@@ -976,6 +1329,57 @@ function parseAndPlayDialogue(dialogueText) {
     
     // 开始播放第一行
     playNextLine();
+}
+
+/**
+ * 创建音乐播放器
+ * @param {Array} musicPaths - 音乐文件路径数组
+ * @param {string} playMode - 播放模式：single（单曲循环）、random（随机播放）、sequential（顺序播放一次）
+ */
+function createMusicPlayer(musicPaths, playMode) {
+    let currentIndex = 0;
+    
+    function playNextMusic() {
+        if (musicPaths.length === 0) {
+            return;
+        }
+        
+        // 根据播放模式确定下一首要播放的音乐索引
+        if (playMode === 'random') {
+            // 随机播放
+            currentIndex = Math.floor(Math.random() * musicPaths.length);
+        } else if (playMode === 'sequential') {
+            // 顺序播放一次
+            if (currentIndex >= musicPaths.length - 1) {
+                // 已经播放到最后一首，停止播放
+                return;
+            }
+            currentIndex++;
+        }
+        // 单曲循环则保持currentIndex不变
+        
+        // 创建新的音频元素并播放
+        window.currentMusic = new Audio(musicPaths[currentIndex]);
+        
+        // 设置音频结束事件
+        window.currentMusic.onended = function() {
+            if (playMode === 'sequential' && currentIndex >= musicPaths.length - 1) {
+                // 顺序播放一次模式下，播放完最后一首后停止
+                window.currentMusic = null;
+                return;
+            }
+            // 其他模式继续播放
+            playNextMusic();
+        };
+        
+        // 开始播放
+        window.currentMusic.play().catch(error => {
+            console.error('播放音乐失败:', error);
+        });
+    }
+    
+    // 开始播放第一首音乐
+    playNextMusic();
 }
 
 /**
