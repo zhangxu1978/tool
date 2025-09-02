@@ -122,8 +122,12 @@
             <div class="tab-pane fade" id="dialogue" role="tabpanel" aria-labelledby="dialogue-tab">
                 <div class="mb-4">
                     <h4>对话编辑</h4>
-                    <div id="dialogueList" class="mb-4">
-                        <!-- 对话列表将通过JavaScript动态加载 -->
+                    <div class="mb-4">
+                        <label for="dialogueSelect" class="form-label">选择对话（不选择则为新增）</label>
+                        <select id="dialogueSelect" class="form-select">
+                            <option value="">-- 新增对话 --</option>
+                            <!-- 对话列表将通过JavaScript动态加载 -->
+                        </select>
                     </div>
                     <div class="mb-3">
                         <textarea id="dialogueText" class="form-control" rows="15" placeholder="在此编辑对话内容..."></textarea>

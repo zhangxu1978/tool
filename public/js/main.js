@@ -17,6 +17,29 @@ document.addEventListener('DOMContentLoaded', function() {
         loadImagesForCharacterSelect();
     });
     
+    // 对话选择框change事件
+    document.getElementById('dialogueSelect').addEventListener('change', function() {
+        const selectedId = this.value;
+        if (selectedId) {
+            fetch('/jsonData/DialogueList.json')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.dialogues) {
+                        const selectedDialogue = data.dialogues.find(d => d.id === selectedId);
+                        if (selectedDialogue) {
+                            document.getElementById('dialogueText').value = selectedDialogue.text;
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('加载对话内容失败:', error);
+                });
+        } else {
+            // 选择新增时清空文本框
+            document.getElementById('dialogueText').value = '';
+        }
+    });
+    
     // 快捷输入按钮事件
     document.getElementById('insertStart').addEventListener('click', function() {
         insertTextIntoDialogue('[开始]\n');
@@ -628,41 +651,28 @@ function formatFileSize(bytes) {
  * 加载对话列表
  */
 function loadDialogues() {
-    const dialogueList = document.getElementById('dialogueList');
+    const dialogueSelect = document.getElementById('dialogueSelect');
+    
+    // 清空除了第一个选项以外的所有选项
+    while (dialogueSelect.options.length > 1) {
+        dialogueSelect.remove(1);
+    }
     
     fetch('/jsonData/DialogueList.json')
         .then(response => response.json())
         .then(data => {
-            dialogueList.innerHTML = '';
-            
             if (!data.dialogues || data.dialogues.length === 0) {
-                dialogueList.innerHTML = '<div class="text-center p-4">没有对话数据</div>';
                 return;
             }
             
-            const listGroup = document.createElement('div');
-            listGroup.className = 'list-group';
-            
-            data.dialogues.forEach((dialogue, index) => {
-                const listItem = document.createElement('button');
-                listItem.className = 'list-group-item list-group-item-action';
-                listItem.textContent = `对话 ${dialogue.id}`;
-                listItem.addEventListener('click', function() {
-                    document.getElementById('dialogueText').value = dialogue.text;
-                    // 高亮选中的对话
-                    document.querySelectorAll('#dialogueList .list-group-item').forEach(item => {
-                        item.classList.remove('active');
-                    });
-                    listItem.classList.add('active');
-                });
-                
-                listGroup.appendChild(listItem);
+            data.dialogues.forEach(dialogue => {
+                const option = document.createElement('option');
+                option.value = dialogue.id;
+                option.textContent = dialogue.name ? `${dialogue.name} - 对话 ${dialogue.id}` : `对话 ${dialogue.id}`;
+                dialogueSelect.appendChild(option);
             });
-            
-            dialogueList.appendChild(listGroup);
         })
         .catch(error => {
-            dialogueList.innerHTML = `<div class="text-center p-4 text-danger">加载失败: ${error.message}</div>`;
             console.error('加载对话失败:', error);
         });
 }
@@ -733,6 +743,8 @@ function insertTextIntoDialogue(text) {
  */
 function saveDialogue() {
     const dialogueText = document.getElementById('dialogueText').value;
+    const dialogueSelect = document.getElementById('dialogueSelect');
+    const selectedId = dialogueSelect.value;
     
     if (!dialogueText.trim()) {
         alert('请输入对话内容');
@@ -746,15 +758,46 @@ function saveDialogue() {
                 data.dialogues = [];
             }
             
-            // 生成新的ID
-            const newId = data.dialogues.length > 0 ? 
-                (Math.max(...data.dialogues.map(d => parseInt(d.id))) + 1).toString() : '1';
-            
-            // 添加新对话
-            data.dialogues.push({
-                id: newId,
-                text: dialogueText
-            });
+            if (selectedId) {
+                // 更新现有对话
+                const dialogueIndex = data.dialogues.findIndex(d => d.id === selectedId);
+                if (dialogueIndex !== -1) {
+                    // 弹出一个输入框让用户录入对话的名称
+                    const dialogueName = prompt('请输入对话名称', data.dialogues[dialogueIndex].name || '');
+                    if (dialogueName === null) {
+                        return Promise.reject(new Error('取消保存'));
+                    }
+                    if (!dialogueName) {
+                        alert('请输入对话名称');
+                        return Promise.reject(new Error('请输入对话名称'));
+                    }
+                    
+                    data.dialogues[dialogueIndex].text = dialogueText;
+                    data.dialogues[dialogueIndex].name = dialogueName;
+                }
+            } else {
+                // 添加新对话
+                // 弹出一个输入框让用户录入对话的名称
+                const dialogueName = prompt('请输入对话名称');
+                if (dialogueName === null) {
+                    return Promise.reject(new Error('取消保存'));
+                }
+                if (!dialogueName) {
+                    alert('请输入对话名称');
+                    return Promise.reject(new Error('请输入对话名称'));
+                }
+                
+                // 生成新的ID
+                const newId = data.dialogues.length > 0 ? 
+                    (Math.max(...data.dialogues.map(d => parseInt(d.id))) + 1).toString() : '1';
+                
+                // 添加新对话
+                data.dialogues.push({
+                    id: newId,
+                    name: dialogueName,
+                    text: dialogueText
+                });
+            }
             
             // 保存回文件
             return fetch('/api/dialogue/save', {
@@ -770,13 +813,20 @@ function saveDialogue() {
             if (result.success) {
                 alert('对话保存成功');
                 loadDialogues();
+                // 如果是新增，重置选择框
+                if (!selectedId) {
+                    dialogueSelect.value = '';
+                    document.getElementById('dialogueText').value = '';
+                }
             } else {
                 alert('保存失败: ' + (result.error || '未知错误'));
             }
         })
         .catch(error => {
-            console.error('保存对话失败:', error);
-            alert('保存对话失败');
+            if (error.message !== '取消保存' && error.message !== '请输入对话名称') {
+                console.error('保存对话失败:', error);
+                alert('保存对话失败');
+            }
         });
 }
 
