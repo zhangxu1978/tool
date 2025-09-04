@@ -176,6 +176,106 @@ document.addEventListener('DOMContentLoaded', function() {
         playMusicModal.hide();
     });
     
+    // 分支选择按钮事件
+    document.getElementById('insertBranchSelect').addEventListener('click', function() {
+        const branchSelectModal = new bootstrap.Modal(document.getElementById('branchSelectModal'));
+        branchSelectModal.show();
+    });
+    
+    // 确认分支选择按钮事件
+    document.getElementById('confirmBranchSelect').addEventListener('click', function() {
+        const branchOptionsText = document.getElementById('branchOptions').value;
+        if (!branchOptionsText.trim()) {
+            alert('请输入至少一个选择选项');
+            return;
+        }
+        
+        const options = branchOptionsText.trim().split('\n').filter(option => option.trim());
+        let branchSelectCommand = '[分支选择]' + options.join(',');
+        let branchTargetCommand = '[选择目标]';
+        let hasEmptyTarget = false;
+        
+        // 遍历所有选项，获取对应的目标对话
+        options.forEach((option, index) => {
+            const targetSelect = document.getElementById(`targetDialogue_${index}`);
+            const targetId = targetSelect ? targetSelect.value : '';
+            
+            if (!targetId) {
+                hasEmptyTarget = true;
+            }
+            
+            branchTargetCommand += `${option}:${targetId}`;
+            if (index < options.length - 1) {
+                branchTargetCommand += ',';
+            }
+        });
+        
+        if (hasEmptyTarget) {
+            alert('请为所有选项选择目标对话');
+            return;
+        }
+        
+        // 插入分支选择指令到对话文本中
+        insertTextIntoDialogue(`\n${branchTargetCommand}\n${branchSelectCommand}`);
+        
+        const branchSelectModal = bootstrap.Modal.getInstance(document.getElementById('branchSelectModal'));
+        branchSelectModal.hide();
+        document.getElementById('branchOptions').value = '';
+        document.getElementById('branchTargets').innerHTML = '';
+    });
+    
+    // 监听分支选项文本框变化，动态生成目标对话选择器
+    document.getElementById('branchOptions').addEventListener('input', function() {
+        const options = this.value.trim().split('\n').filter(option => option.trim());
+        const branchTargetsDiv = document.getElementById('branchTargets');
+        branchTargetsDiv.innerHTML = '';
+        
+        // 先加载所有对话供选择
+        fetch('/jsonData/DialogueList.json')
+            .then(response => response.json())
+            .then(data => {
+                if (!data.dialogues || data.dialogues.length === 0) {
+                    branchTargetsDiv.innerHTML = '<p class="text-muted">没有可用的对话</p>';
+                    return;
+                }
+                
+                options.forEach((option, index) => {
+                    const div = document.createElement('div');
+                    div.className = 'mb-3';
+                    
+                    const label = document.createElement('label');
+                    label.className = 'form-label';
+                    label.textContent = `"${option}" 的目标对话`;
+                    
+                    const select = document.createElement('select');
+                    select.id = `targetDialogue_${index}`;
+                    select.className = 'form-select';
+                    
+                    // 添加空选项
+                    const emptyOption = document.createElement('option');
+                    emptyOption.value = '';
+                    emptyOption.textContent = '-- 请选择目标对话 --';
+                    select.appendChild(emptyOption);
+                    
+                    // 添加所有对话作为选项
+                    data.dialogues.forEach(dialogue => {
+                        const optionElement = document.createElement('option');
+                        optionElement.value = dialogue.id;
+                        optionElement.textContent = dialogue.name ? `${dialogue.name} - 对话 ${dialogue.id}` : `对话 ${dialogue.id}`;
+                        select.appendChild(optionElement);
+                    });
+                    
+                    div.appendChild(label);
+                    div.appendChild(select);
+                    branchTargetsDiv.appendChild(div);
+                });
+            })
+            .catch(error => {
+                console.error('加载对话失败:', error);
+                branchTargetsDiv.innerHTML = '<p class="text-danger">加载对话失败</p>';
+            });
+    });
+    
     // 保存对话按钮
     document.getElementById('saveDialogue').addEventListener('click', saveDialogue);
     
@@ -1159,6 +1259,7 @@ function parseAndPlayDialogue(dialogueText) {
     }
     
     let currentLine = 0;
+    let branchTargets = {}; // 存储分支选择的目标对话ID
     
     // 开始播放
     function playNextLine() {
@@ -1177,9 +1278,70 @@ function parseAndPlayDialogue(dialogueText) {
         
         // 检查是否是指令
         if (line.startsWith('[')) {
-           // const command = line.substring(1, line.length - 1);
-            
-            if (line.startsWith('[开始]') || line.startsWith('[结束]')) {
+            // 处理分支选择指令
+            if (line.startsWith('[分支选择]')) {
+                const optionsStr = line.substring('[分支选择]'.length).trim();
+                const options = optionsStr.split(',');
+                
+                // 清空对话显示区域
+                dialogueDisplay.innerHTML = '<p class="text-lg mb-4">请选择：</p>';
+                
+                // 创建选择按钮
+                options.forEach(option => {
+                    const btn = document.createElement('button');
+                    btn.className = 'btn btn-primary m-2';
+                    btn.textContent = option;
+                    btn.onclick = function() {
+                            // 获取该选择对应的目标对话ID（使用trim确保与存储时的键一致）
+                            const targetDialogueId = branchTargets[option.trim()];
+                            if (targetDialogueId) {
+                                // 查找并加载目标对话
+                                fetch('/jsonData/DialogueList.json')
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        if (data.dialogues) {
+                                            const targetDialogue = data.dialogues.find(d => d.id === targetDialogueId);
+                                            if (targetDialogue) {
+                                                // 解析并播放目标对话
+                                                parseAndPlayDialogue(targetDialogue.text);
+                                            } else {
+                                                console.error('未找到目标对话:', targetDialogueId);
+                                            }
+                                        } else {
+                                            console.error('对话数据格式错误');
+                                        }
+                                    })
+                                    .catch(error => {
+                                        console.error('加载目标对话失败:', error);
+                                    });
+                            } else {
+                                console.error('未找到该选项对应的目标对话');
+                            }
+                        };
+                    dialogueDisplay.appendChild(btn);
+                });
+                
+                // 不需要继续播放下一行，等待用户选择
+                return;
+            }
+            // 处理选择目标指令
+            else if (line.startsWith('[选择目标]')) {
+                const targetsStr = line.substring('[选择目标]'.length).trim();
+                const targets = targetsStr.split(',');
+                
+                // 解析选择目标
+                targets.forEach(target => {
+                    const [option, dialogueId] = target.split(':');
+                    if (option && dialogueId) {
+                        branchTargets[option.trim()] = dialogueId.trim();
+                    }
+                });
+                
+                setTimeout(playNextLine, 1);
+                return;
+            }
+            // 其他原有指令保持不变
+            else if (line.startsWith('[开始]') || line.startsWith('[结束]')) {
                 // 开始继续下一行
                 if (line.startsWith('[开始]')) {
                     setTimeout(playNextLine, 100);
