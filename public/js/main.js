@@ -1263,16 +1263,29 @@ function parseAndPlayDialogue(dialogueText) {
                 const soundPath = line.substring('[播放声音]'.length).trim();
                 
                 if (soundPath) {
-                    // 停止当前正在播放的声音
+                    // 停止并清除当前正在播放的声音
                     if (window.currentSound) {
                         window.currentSound.pause();
+                        window.currentSound = null;
                     }
                     
                     // 创建新的音频元素并播放
                     window.currentSound = new Audio(soundPath);
-                    window.currentSound.play().catch(error => {
-                        console.error('播放声音失败:', error);
-                    });
+                    
+                    // 添加加载完成事件监听
+                    window.currentSound.oncanplaythrough = function() {
+                        // 确保只有在没有其他暂停操作干扰的情况下才播放
+                        if (window.currentSound === this) {
+                            this.play().catch(error => {
+                                console.error('播放声音失败:', error);
+                            });
+                        }
+                    };
+                    
+                    // 如果音频已经加载完成，直接播放
+                    if (window.currentSound.readyState >= 4) {
+                        window.currentSound.oncanplaythrough();
+                    }
                 }
                 
                 setTimeout(playNextLine, 1);
@@ -1392,7 +1405,13 @@ function createMusicPlayer(musicPaths, playMode) {
         }
         // 单曲循环则保持currentIndex不变
         
-        // 创建新的音频元素并播放
+        // 停止并清除当前正在播放的音乐
+        if (window.currentMusic) {
+            window.currentMusic.pause();
+            window.currentMusic = null;
+        }
+        
+        // 创建新的音频元素
         window.currentMusic = new Audio(musicPaths[currentIndex]);
         
         // 设置音频结束事件
@@ -1406,10 +1425,20 @@ function createMusicPlayer(musicPaths, playMode) {
             playNextMusic();
         };
         
-        // 开始播放
-        window.currentMusic.play().catch(error => {
-            console.error('播放音乐失败:', error);
-        });
+        // 添加加载完成事件监听
+        window.currentMusic.oncanplaythrough = function() {
+            // 确保只有在没有其他暂停操作干扰的情况下才播放
+            if (window.currentMusic === this) {
+                this.play().catch(error => {
+                    console.error('播放音乐失败:', error);
+                });
+            }
+        };
+        
+        // 如果音频已经加载完成，直接播放
+        if (window.currentMusic.readyState >= 4) {
+            window.currentMusic.oncanplaythrough();
+        }
     }
     
     // 开始播放第一首音乐
