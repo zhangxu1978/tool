@@ -167,10 +167,29 @@
             <div class="tab-pane fade" id="dialogue" role="tabpanel" aria-labelledby="dialogue-tab">
                 <div class="mb-4">
                     <div class="mb-4 d-flex align-items-center gap-3">
-                        <select id="dialogueSelect" style="width:30%;" class="form-select">
-                            <option value="">-- 新增对话 --</option>
-                            <!-- 对话列表将通过JavaScript动态加载 -->
-                        </select>
+                        <!-- 将select改造为带搜索功能的input和datalist组合 -->
+                        <div class="relative" style="width:30%;">
+                            <input 
+                                type="text" 
+                                id="dialogueSearchInput" 
+                                class="form-control" 
+                                placeholder="输入对话名称搜索或选择..."
+                                list="dialogueOptions"
+                                autocomplete="off"
+                            >
+                            <input 
+                                type="hidden" 
+                                id="dialogueSelectHidden" 
+                                value=""
+                            >
+                            <datalist id="dialogueOptions">
+                                <!-- 对话选项将通过JavaScript动态加载 -->
+                            </datalist>
+                            <!-- 为了保持视觉一致性，保留原来的select但隐藏它 -->
+                            <select id="dialogueSelect" style="width:100%; display:none;" class="form-select">
+                                <option value="">-- 新增对话 --</option>
+                            </select>
+                        </div>
                         <div class="btn-group" role="group">
                             <button type="button" class="btn btn-primary" id="previewDialogue">播放预览</button>
                             <button type="button" class="btn btn-success" id="saveDialogue">保存</button>

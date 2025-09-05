@@ -45,10 +45,56 @@ document.addEventListener('DOMContentLoaded', function() {
         loadImagesForCharacterSelect();
     });
     
-    // 对话选择框change事件
+    // 对话选择框change事件（为了保持向后兼容）
     document.getElementById('dialogueSelect').addEventListener('change', function() {
         const selectedId = this.value;
+        updateDialogueBySelection(selectedId);
+    });
+    
+    // 对话搜索输入框变化事件
+    document.getElementById('dialogueSearchInput').addEventListener('input', function() {
+        const inputValue = this.value;
+        const hiddenInput = document.getElementById('dialogueSelectHidden');
+        const selectElement = document.getElementById('dialogueSelect');
+        
+        if (!inputValue) {
+            // 输入为空时，重置隐藏字段
+            hiddenInput.value = '';
+            selectElement.value = '';
+            document.getElementById('dialogueText').value = '';
+            return;
+        }
+        
+        // 查找匹配的选项
+        fetch('/jsonData/DialogueList.json')
+            .then(response => response.json())
+            .then(data => {
+                if (data.dialogues) {
+                    // 检查是否有完全匹配的选项
+                    const matchedOption = data.dialogues.find(d => 
+                        (d.name ? `${d.name} - 对话 ${d.id}` : `对话 ${d.id}`) === inputValue
+                    );
+                    
+                    if (matchedOption) {
+                        hiddenInput.value = matchedOption.id;
+                        selectElement.value = matchedOption.id;
+                        document.getElementById('dialogueText').value = matchedOption.text;
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('搜索对话失败:', error);
+            });
+    });
+    
+    // 辅助函数：根据选择的ID更新对话文本
+    function updateDialogueBySelection(selectedId) {
+        const hiddenInput = document.getElementById('dialogueSelectHidden');
+        const searchInput = document.getElementById('dialogueSearchInput');
+        
         if (selectedId) {
+            hiddenInput.value = selectedId;
+            
             fetch('/jsonData/DialogueList.json')
                 .then(response => response.json())
                 .then(data => {
@@ -56,6 +102,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         const selectedDialogue = data.dialogues.find(d => d.id === selectedId);
                         if (selectedDialogue) {
                             document.getElementById('dialogueText').value = selectedDialogue.text;
+                            // 更新搜索输入框显示的文本
+                            searchInput.value = selectedDialogue.name ? 
+                                `${selectedDialogue.name} - 对话 ${selectedDialogue.id}` : 
+                                `对话 ${selectedDialogue.id}`;
                         }
                     }
                 })
@@ -63,10 +113,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     console.error('加载对话内容失败:', error);
                 });
         } else {
-            // 选择新增时清空文本框
+            // 选择新增时清空文本框和隐藏字段
+            hiddenInput.value = '';
+            searchInput.value = '';
             document.getElementById('dialogueText').value = '';
         }
-    });
+    }
     
     // 快捷输入按钮事件
     document.getElementById('insertStart').addEventListener('click', function() {
@@ -946,15 +998,22 @@ function formatFileSize(bytes) {
 }
 
 /**
- * 加载对话列表
+ * 加载对话列表（同时更新select和datalist）
  */
 function loadDialogues() {
     const dialogueSelect = document.getElementById('dialogueSelect');
+    const dialogueOptions = document.getElementById('dialogueOptions');
+    const searchInput = document.getElementById('dialogueSearchInput');
+    const hiddenInput = document.getElementById('dialogueSelectHidden');
+    const currentHiddenValue = hiddenInput.value;
     
-    // 清空除了第一个选项以外的所有选项
+    // 清空除了第一个选项以外的所有选项（select元素）
     while (dialogueSelect.options.length > 1) {
         dialogueSelect.remove(1);
     }
+    
+    // 清空datalist
+    dialogueOptions.innerHTML = '';
     
     fetch('/jsonData/DialogueList.json')
         .then(response => response.json())
@@ -963,12 +1022,37 @@ function loadDialogues() {
                 return;
             }
             
+            // 保存当前选中的对话名称
+            let selectedDialogueName = '';
+            if (currentHiddenValue) {
+                const selectedDialogue = data.dialogues.find(d => d.id === currentHiddenValue);
+                if (selectedDialogue) {
+                    selectedDialogueName = selectedDialogue.name ? 
+                        `${selectedDialogue.name} - 对话 ${selectedDialogue.id}` : 
+                        `对话 ${selectedDialogue.id}`;
+                }
+            }
+            
             data.dialogues.forEach(dialogue => {
-                const option = document.createElement('option');
-                option.value = dialogue.id;
-                option.textContent = dialogue.name ? `${dialogue.name} - 对话 ${dialogue.id}` : `对话 ${dialogue.id}`;
-                dialogueSelect.appendChild(option);
+                // 更新select元素（为了保持向后兼容）
+                const selectOption = document.createElement('option');
+                selectOption.value = dialogue.id;
+                selectOption.textContent = dialogue.name ? `${dialogue.name} - 对话 ${dialogue.id}` : `对话 ${dialogue.id}`;
+                dialogueSelect.appendChild(selectOption);
+                
+                // 更新datalist元素（用于搜索）
+                const datalistOption = document.createElement('option');
+                datalistOption.value = dialogue.name ? `${dialogue.name} - 对话 ${dialogue.id}` : `对话 ${dialogue.id}`;
+                datalistOption.setAttribute('data-id', dialogue.id);
+                dialogueOptions.appendChild(datalistOption);
             });
+            
+            // 恢复之前的选择（如果有）
+            if (currentHiddenValue) {
+                dialogueSelect.value = currentHiddenValue;
+                hiddenInput.value = currentHiddenValue;
+                searchInput.value = selectedDialogueName;
+            }
         })
         .catch(error => {
             console.error('加载对话失败:', error);
@@ -1185,8 +1269,8 @@ function insertTextIntoDialogue(text) {
  */
 function saveDialogue() {
     const dialogueText = document.getElementById('dialogueText').value;
-    const dialogueSelect = document.getElementById('dialogueSelect');
-    const selectedId = dialogueSelect.value;
+    const dialogueSelectHidden = document.getElementById('dialogueSelectHidden');
+    const selectedId = dialogueSelectHidden.value;
     
     if (!dialogueText.trim()) {
         alert('请输入对话内容');
@@ -1257,7 +1341,9 @@ function saveDialogue() {
                 loadDialogues();
                 // 如果是新增，重置选择框
                 if (!selectedId) {
-                    dialogueSelect.value = '';
+                    document.getElementById('dialogueSelect').value = '';
+                    document.getElementById('dialogueSelectHidden').value = '';
+                    document.getElementById('dialogueSearchInput').value = '';
                     document.getElementById('dialogueText').value = '';
                 }
             } else {
@@ -1276,8 +1362,8 @@ function saveDialogue() {
  * 删除对话
  */
 function deleteDialogue() {
-    const dialogueSelect = document.getElementById('dialogueSelect');
-    const selectedId = dialogueSelect.value;
+    const dialogueSelectHidden = document.getElementById('dialogueSelectHidden');
+    const selectedId = dialogueSelectHidden.value;
     
     if (!selectedId) {
         alert('请先选择要删除的对话');
@@ -1311,7 +1397,9 @@ function deleteDialogue() {
                     alert('对话删除成功');
                     loadDialogues();
                     // 重置选择框和文本框
-                    dialogueSelect.value = '';
+                    document.getElementById('dialogueSelect').value = '';
+                    document.getElementById('dialogueSelectHidden').value = '';
+                    document.getElementById('dialogueSearchInput').value = '';
                     document.getElementById('dialogueText').value = '';
                 } else {
                     alert('删除失败: ' + (result.error || '未知错误'));
