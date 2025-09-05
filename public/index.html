@@ -86,6 +86,28 @@
                     <input type="file" id="audioFileInput" accept="audio/*" style="display: none;">
                 </div>
                 
+                <!-- 音频搜索表单 -->
+                <div class="search-form mb-4 p-3 bg-light rounded">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <input type="text" id="audioSearchName" class="form-control" placeholder="按名称搜索...">
+                        </div>
+                        <div class="col-md-3">
+                            <select id="audioSearchType" class="form-select">
+                                <option value="">所有类型</option>
+                                <option value="音乐">音乐</option>
+                                <option value="音效">音效</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button id="audioSearchBtn" class="btn btn-primary w-100">搜索</button>
+                        </div>
+                        <div class="col-md-2">
+                            <button id="audioResetBtn" class="btn btn-secondary w-100">重置</button>
+                        </div>
+                    </div>
+                </div>
+                
                 <div class="loading" id="audioLoading">
                     <div class="spinner-border text-primary" role="status">
                         <span class="visually-hidden">加载中...</span>
@@ -104,6 +126,29 @@
                     <h4>点击或拖拽上传图片文件</h4>
                     <p class="text-muted">支持的格式: JPG, PNG, GIF等</p>
                     <input type="file" id="imageFileInput" accept="image/*" style="display: none;">
+                </div>
+                
+                <!-- 图片搜索表单 -->
+                <div class="search-form mb-4 p-3 bg-light rounded">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <input type="text" id="imageSearchName" class="form-control" placeholder="按名称搜索...">
+                        </div>
+                        <div class="col-md-3">
+                            <select id="imageSearchType" class="form-select">
+                                <option value="">所有类型</option>
+                                <option value="人物">人物</option>
+                                <option value="背景">背景</option>
+                                <option value="集合类图片">集合类图片</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button id="imageSearchBtn" class="btn btn-primary w-100">搜索</button>
+                        </div>
+                        <div class="col-md-2">
+                            <button id="imageResetBtn" class="btn btn-secondary w-100">重置</button>
+                        </div>
+                    </div>
                 </div>
                 
                 <div class="loading" id="imageLoading">

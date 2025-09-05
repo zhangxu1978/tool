@@ -306,6 +306,128 @@ app.post('/api/dialogue/save', (req, res) => {
   }
 });
 
+/**
+ * 按名称和类型检索音频文件
+ */
+app.get('/api/audio/search', (req, res) => {
+  const { name, type } = req.query;
+  const jsonFilePath = path.join('jsonData', 'audio.json');
+  
+  try {
+    if (!fs.existsSync(jsonFilePath)) {
+      fs.writeFileSync(jsonFilePath, JSON.stringify({ files: [] }));
+    }
+    
+    const jsonData = JSON.parse(fs.readFileSync(jsonFilePath, 'utf8'));
+    let filteredFiles = jsonData.files;
+    
+    // 按名称过滤
+    if (name) {
+      filteredFiles = filteredFiles.filter(file => 
+        file.name && file.name.toLowerCase().includes(name.toLowerCase())
+      );
+    }
+    
+    // 按类型过滤
+    if (type) {
+      filteredFiles = filteredFiles.filter(file => 
+        file.type && file.type.toLowerCase() === type.toLowerCase()
+      );
+    }
+    
+    // 获取文件的完整信息
+    const result = filteredFiles.map(file => {
+      try {
+        const stats = fs.statSync(path.join('audio', file.filename));
+        return {
+          ...file,
+          path: `/audio/${file.filename}`,
+          size: stats.size,
+          createdAt: stats.birthtime
+        };
+      } catch (err) {
+        // 文件可能已被删除，返回基本信息
+        return {
+          ...file,
+          path: `/audio/${file.filename}`,
+          size: 0,
+          createdAt: new Date()
+        };
+      }
+    });
+    
+    res.json({
+      success: true,
+      count: result.length,
+      data: result
+    });
+  } catch (error) {
+    console.error('搜索音频文件失败:', error);
+    res.status(500).json({ success: false, error: '搜索音频文件失败' });
+  }
+});
+
+/**
+ * 按名称和类型检索图片文件
+ */
+app.get('/api/images/search', (req, res) => {
+  const { name, type } = req.query;
+  const jsonFilePath = path.join('jsonData', 'images.json');
+  
+  try {
+    if (!fs.existsSync(jsonFilePath)) {
+      fs.writeFileSync(jsonFilePath, JSON.stringify({ files: [] }));
+    }
+    
+    const jsonData = JSON.parse(fs.readFileSync(jsonFilePath, 'utf8'));
+    let filteredFiles = jsonData.files;
+    
+    // 按名称过滤
+    if (name) {
+      filteredFiles = filteredFiles.filter(file => 
+        file.name && file.name.toLowerCase().includes(name.toLowerCase())
+      );
+    }
+    
+    // 按类型过滤
+    if (type) {
+      filteredFiles = filteredFiles.filter(file => 
+        file.type && file.type.toLowerCase() === type.toLowerCase()
+      );
+    }
+    
+    // 获取文件的完整信息
+    const result = filteredFiles.map(file => {
+      try {
+        const stats = fs.statSync(path.join('images', file.filename));
+        return {
+          ...file,
+          path: `/images/${file.filename}`,
+          size: stats.size,
+          createdAt: stats.birthtime
+        };
+      } catch (err) {
+        // 文件可能已被删除，返回基本信息
+        return {
+          ...file,
+          path: `/images/${file.filename}`,
+          size: 0,
+          createdAt: new Date()
+        };
+      }
+    });
+    
+    res.json({
+      success: true,
+      count: result.length,
+      data: result
+    });
+  } catch (error) {
+    console.error('搜索图片文件失败:', error);
+    res.status(500).json({ success: false, error: '搜索图片文件失败' });
+  }
+});
+
 // 启动服务器
 app.listen(port, () => {
   console.log(`服务器运行在 http://localhost:${port}`);

@@ -7,6 +7,34 @@ document.addEventListener('DOMContentLoaded', function() {
     // 初始化加载文件列表
     loadAudioFiles();
     
+    // 音频搜索按钮事件
+    document.getElementById('audioSearchBtn').addEventListener('click', function() {
+        const name = document.getElementById('audioSearchName').value.trim();
+        const type = document.getElementById('audioSearchType').value;
+        searchAudioFiles(name, type);
+    });
+    
+    // 音频重置按钮事件
+    document.getElementById('audioResetBtn').addEventListener('click', function() {
+        document.getElementById('audioSearchName').value = '';
+        document.getElementById('audioSearchType').value = '';
+        loadAudioFiles();
+    });
+    
+    // 图片搜索按钮事件
+    document.getElementById('imageSearchBtn').addEventListener('click', function() {
+        const name = document.getElementById('imageSearchName').value.trim();
+        const type = document.getElementById('imageSearchType').value;
+        searchImageFiles(name, type);
+    });
+    
+    // 图片重置按钮事件
+    document.getElementById('imageResetBtn').addEventListener('click', function() {
+        document.getElementById('imageSearchName').value = '';
+        document.getElementById('imageSearchType').value = '';
+        loadImageFiles();
+    });
+    
     // 标签切换事件
     document.getElementById('images-tab').addEventListener('click', function() {
         loadImageFiles();
@@ -416,6 +444,50 @@ function loadAudioFiles() {
 }
 
 /**
+ * 按名称和类型搜索音频文件
+ * @param {string} name - 搜索的名称关键词
+ * @param {string} type - 搜索的类型
+ */
+function searchAudioFiles(name, type) {
+    const audioList = document.getElementById('audioList');
+    const loading = document.getElementById('audioLoading');
+    
+    audioList.innerHTML = '';
+    loading.style.display = 'block';
+    
+    // 构建搜索URL
+    let url = '/api/audio/search?';
+    if (name) url += `name=${encodeURIComponent(name)}&`;
+    if (type) url += `type=${encodeURIComponent(type)}`;
+    
+    // 移除末尾的 & 或 ?
+    if (url.endsWith('&') || url.endsWith('?')) {
+        url = url.slice(0, -1);
+    }
+    
+    fetch(url)
+        .then(response => response.json())
+        .then(result => {
+            loading.style.display = 'none';
+            
+            if (!result.success || result.count === 0) {
+                audioList.innerHTML = '<div class="text-center p-4">没有找到匹配的音频文件</div>';
+                return;
+            }
+            
+            result.data.forEach(file => {
+                const fileItem = createAudioFileItem(file);
+                audioList.appendChild(fileItem);
+            });
+        })
+        .catch(error => {
+            loading.style.display = 'none';
+            audioList.innerHTML = `<div class="text-center p-4 text-danger">搜索失败: ${error.message}</div>`;
+            console.error('搜索音频文件失败:', error);
+        });
+}
+
+/**
  * 加载图片文件列表
  */
 function loadImageFiles() {
@@ -444,6 +516,50 @@ function loadImageFiles() {
             loading.style.display = 'none';
             imageList.innerHTML = `<div class="text-center p-4 text-danger">加载失败: ${error.message}</div>`;
             console.error('加载图片文件失败:', error);
+        });
+}
+
+/**
+ * 按名称和类型搜索图片文件
+ * @param {string} name - 搜索的名称关键词
+ * @param {string} type - 搜索的类型
+ */
+function searchImageFiles(name, type) {
+    const imageList = document.getElementById('imageList');
+    const loading = document.getElementById('imageLoading');
+    
+    imageList.innerHTML = '';
+    loading.style.display = 'block';
+    
+    // 构建搜索URL
+    let url = '/api/images/search?';
+    if (name) url += `name=${encodeURIComponent(name)}&`;
+    if (type) url += `type=${encodeURIComponent(type)}`;
+    
+    // 移除末尾的 & 或 ?
+    if (url.endsWith('&') || url.endsWith('?')) {
+        url = url.slice(0, -1);
+    }
+    
+    fetch(url)
+        .then(response => response.json())
+        .then(result => {
+            loading.style.display = 'none';
+            
+            if (!result.success || result.count === 0) {
+                imageList.innerHTML = '<div class="text-center p-4">没有找到匹配的图片文件</div>';
+                return;
+            }
+            
+            result.data.forEach(file => {
+                const fileItem = createImageFileItem(file);
+                imageList.appendChild(fileItem);
+            });
+        })
+        .catch(error => {
+            loading.style.display = 'none';
+            imageList.innerHTML = `<div class="text-center p-4 text-danger">搜索失败: ${error.message}</div>`;
+            console.error('搜索图片文件失败:', error);
         });
 }
 
