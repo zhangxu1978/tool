@@ -75,6 +75,9 @@
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="dialogue-tab" data-bs-toggle="tab" data-bs-target="#dialogue" type="button" role="tab" aria-controls="dialogue" aria-selected="false">对话管理</button>
             </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="imageEditor-tab" data-bs-toggle="tab" data-bs-target="#imageEditor" type="button" role="tab" aria-controls="imageEditor" aria-selected="false">图片编辑</button>
+            </li>
         </ul>
         
         <div class="tab-content" id="myTabContent">
@@ -217,6 +220,136 @@
                         </div>
                     </div>
 
+                </div>
+            </div>
+            <!-- 图片编辑 -->
+            <div class="tab-pane fade" id="imageEditor" role="tabpanel" aria-labelledby="imageEditor-tab">
+                <div class="container mt-4">
+                    <h3>图片局部复制组合工具</h3>
+                    <div class="mb-4">
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        选择框设置
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label for="tileWidth" class="form-label">宽度 (像素)</label>
+                                            <input type="number" id="tileWidth" class="form-control" value="64" min="1" max="500">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="tileHeight" class="form-label">高度 (像素)</label>
+                                            <input type="number" id="tileHeight" class="form-control" value="64" min="1" max="500">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header">
+                                        导出设置
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label for="startIndex" class="form-label">起始位置索引</label>
+                                            <input type="number" id="startIndex" class="form-control" value="0" min="0" max="99">
+                                            <small id="currentIndexInfo" class="form-text text-muted">当前索引: 0 (最大: 99)</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    图片加载
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="editorImageFileInput" class="form-label">上传图片</label>
+                                                <input type="file" id="editorImageFileInput" class="form-control" accept="image/*">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="existingImageUrl" class="form-label">使用现有图片URL</label>
+                                                <div class="input-group">
+                                                    <input type="text" id="existingImageUrl" class="form-control" placeholder="输入图片URL">
+                                                    <button id="useExistingButton" class="btn btn-primary" type="button">使用</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    图片预览
+                                </div>
+                                <div class="card-body" style="position: relative;">
+                                    <div id="editorContainer" style="position: relative; display: inline-block;">
+                                        <canvas id="editorCanvas" style="display: none; border: 1px solid #ddd;"></canvas>
+                                        <div id="selectionBox" style="position: absolute; border: 2px dashed #007bff; display: none; pointer-events: none;"></div>
+                                    </div>
+                                    <div id="imageInfo" class="mt-2 text-muted"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    组合结果
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="outputCanvas" style="border: 1px solid #ddd;"></canvas>
+                                    <div id="outputInfo" class="mt-2 text-muted">输出尺寸: 640×640px (10×10网格)</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    操作按钮
+                                </div>
+                                <div class="card-body">
+                                    <div class="btn-group" role="group">
+                                        <button id="exportButton" class="btn btn-success">导出图片</button>
+                                        <button id="resetButton" class="btn btn-secondary">重置</button>
+                                    </div>
+                                    <div class="mt-2">
+                                        <div id="tileInfo" class="text-muted">选择框尺寸: 64×64px</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    使用说明
+                                </div>
+                                <div class="card-body">
+                                    <ol>
+                                        <li>设置选择框的宽度和高度（默认为64×64像素）</li>
+                                        <li>上传图片或输入现有图片URL</li>
+                                        <li>将鼠标移动到图片上，会显示选择框</li>
+                                        <li>点击图片上的区域，会将该区域复制到组合画布</li>
+                                        <li>可以设置起始位置索引，以便在已有的组合画布上继续添加</li>
+                                        <li>完成后点击"导出图片"按钮保存组合结果</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -498,7 +631,20 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="/js/main.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/image-editor.js"></script>
+    <script>
+        // 初始化图片编辑器
+        document.addEventListener('DOMContentLoaded', function() {
+            // 监听标签页切换事件，在切换到图片编辑标签时初始化编辑器
+            document.getElementById('imageEditor-tab').addEventListener('click', function() {
+                // 确保只初始化一次
+                if (!window.imageEditorInstance) {
+                    window.imageEditorInstance = new ImageEditor();
+                }
+            });
+        });
+    </script>
 
     <!-- 添加分支选择模态框 -->
     <div class="modal fade" id="branchSelectModal" tabindex="-1" aria-labelledby="branchSelectModalLabel" aria-hidden="true">
