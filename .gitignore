@@ -2,3 +2,6 @@
 *.png
 */.bin
 node_modules
+*.json
+*.WAV
+*.jpg
