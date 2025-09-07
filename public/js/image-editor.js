@@ -120,52 +120,7 @@ class ImageEditor {
        // document.getElementById('sliceImageButton').addEventListener('click', () => this.sliceImageByCurrentSize());
     }
     
-    /**
-     * 按照当前宽高切割结果图并将瓦片信息存入this.tiles
-     */
-    // sliceImageByCurrentSize() {
-    //     // 清空当前瓦片列表
-    //     this.tiles = [];
-        
-    //     // 获取输出画布的像素数据
-    //     const imageData = this.outputCtx.getImageData(0, 0, this.outputCanvas.width, this.outputCanvas.height);
-        
-    //     // 计算横向和纵向可以切割的瓦片数量
-    //     const numCols = Math.floor(this.outputCanvas.width / this.tileWidth);
-    //     const numRows = Math.floor(this.outputCanvas.height / this.tileHeight);
-        
-    //     // 遍历所有瓦片位置
-    //     for (let row = 0; row < numRows; row++) {
-    //         for (let col = 0; col < numCols; col++) {
-    //             // 计算瓦片索引
-    //             const index = row * this.currentIndex + col;
-                
-    //             // 如果索引超过最大限制，跳过
-    //             if (index >= this.currentIndex ) {
-    //                 break;
-    //             }
-                
-    //             // 计算瓦片在输出画布中的位置
-    //             const targetX = col * this.tileWidth;
-    //             const targetY = row * this.tileHeight;
-                
-    //             //切分图片
-    //             this.outputCtx.drawImage(
-    //                 this.outputCanvas, // 源画布
-    //                 targetX, targetY, this.tileWidth, this.tileHeight, // 源矩形
-    //                 0, 0, this.tileWidth, this.tileHeight // 目标矩形
-    //             );
-    //             this.tiles.push({
-    //                 x: targetX,  // 虚拟的源X坐标
-    //                 y: targetY,  // 虚拟的源Y坐标
-    //                 index: index
-    //             });
-    //         }
-    //     }
-        
-    //     // 显示切割完成的信息
-    //     alert(`已按照当前宽高(${this.tileWidth}×${this.tileHeight}px)切割结果图，共生成${this.tiles.length}个瓦片。`);
-    // }
+    
     
     /**
      * 从文件加载图片（用于复制）
@@ -263,6 +218,8 @@ class ImageEditor {
      */
     loadImageFromUrl(url) {
         const img = new Image();
+        // 设置crossOrigin属性以允许从其他域名获取图片数据
+        img.crossOrigin = "anonymous";
         img.onload = () => {
             this.currentImage = img;
             this.originalWidth = img.width;
@@ -342,7 +299,9 @@ class ImageEditor {
         // 设置选择框大小
         this.selectionBox.style.width = `${boxWidth}px`;
         this.selectionBox.style.height = `${boxHeight}px`;
-        
+                        // 设置输出画布的尺寸和内容
+                this.outputCanvas.width = this.tileWidth*10;
+                this.outputCanvas.height = this.tileHeight*10;
         
         // 更新信息显示
         document.getElementById('tileInfo').textContent = 
