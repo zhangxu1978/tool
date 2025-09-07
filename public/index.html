@@ -302,11 +302,16 @@
                                     <div class="row">
                                         <div class="col-md-6">
                                             <div class="mb-3">
-                                                <label for="editorImageFileInput" class="form-label">上传图片</label>
-                                                <input type="file" id="editorImageFileInput" class="form-control" accept="image/*">
-                                            </div>
+                                            <label for="editorImageFileInput" class="form-label">上传图片（用于复制）</label>
+                                            <input type="file" id="editorImageFileInput" class="form-control" accept="image/*">
+                                        </div>
+                                        </div>
                                         </div>
                                         <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="loadOutputImage" class="form-label">加载导出图片（继续编辑）</label>
+                                                <input type="file" id="loadOutputImage" class="form-control" accept="image/*">
+                                            </div>
                                             <div class="mb-3">
                                                 <label for="existingImageUrl" class="form-label">使用现有图片URL</label>
                                                 <div class="input-group">
@@ -355,6 +360,7 @@
                                 <div class="card-body">
                                     <div class="btn-group" role="group">
                                         <button id="exportButton" class="btn btn-success">导出图片</button>
+                                        <!-- <button id="sliceImageButton" class="btn btn-info">按当前宽高切图</button> -->
                                         <button id="resetButton" class="btn btn-secondary">重置</button>
                                     </div>
                                     <div class="mt-2">

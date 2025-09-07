@@ -76,10 +76,19 @@ class ImageEditor {
             this.snapToGrid = e.target.checked;
         });
         
-        // 监听图片加载
+        // 监听用于复制的图片加载
         document.getElementById('editorImageFileInput').addEventListener('change', (e) => {
             if (e.target.files.length > 0) {
                 this.loadImageFromFile(e.target.files[0]);
+            }
+        });
+        
+        // 监听用于继续编辑的导出图片加载
+        document.getElementById('loadOutputImage').addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                // 保存对this的引用以避免递归问题
+                const editor = this;
+                editor.loadExportedImage(e.target.files[0]);
             }
         });
         
@@ -106,15 +115,145 @@ class ImageEditor {
                 this.loadImageFromUrl(imageUrl);
             }
         });
+        
+        // 监听按当前宽高切图按钮
+       // document.getElementById('sliceImageButton').addEventListener('click', () => this.sliceImageByCurrentSize());
     }
     
     /**
-     * 从文件加载图片
+     * 按照当前宽高切割结果图并将瓦片信息存入this.tiles
+     */
+    // sliceImageByCurrentSize() {
+    //     // 清空当前瓦片列表
+    //     this.tiles = [];
+        
+    //     // 获取输出画布的像素数据
+    //     const imageData = this.outputCtx.getImageData(0, 0, this.outputCanvas.width, this.outputCanvas.height);
+        
+    //     // 计算横向和纵向可以切割的瓦片数量
+    //     const numCols = Math.floor(this.outputCanvas.width / this.tileWidth);
+    //     const numRows = Math.floor(this.outputCanvas.height / this.tileHeight);
+        
+    //     // 遍历所有瓦片位置
+    //     for (let row = 0; row < numRows; row++) {
+    //         for (let col = 0; col < numCols; col++) {
+    //             // 计算瓦片索引
+    //             const index = row * this.currentIndex + col;
+                
+    //             // 如果索引超过最大限制，跳过
+    //             if (index >= this.currentIndex ) {
+    //                 break;
+    //             }
+                
+    //             // 计算瓦片在输出画布中的位置
+    //             const targetX = col * this.tileWidth;
+    //             const targetY = row * this.tileHeight;
+                
+    //             //切分图片
+    //             this.outputCtx.drawImage(
+    //                 this.outputCanvas, // 源画布
+    //                 targetX, targetY, this.tileWidth, this.tileHeight, // 源矩形
+    //                 0, 0, this.tileWidth, this.tileHeight // 目标矩形
+    //             );
+    //             this.tiles.push({
+    //                 x: targetX,  // 虚拟的源X坐标
+    //                 y: targetY,  // 虚拟的源Y坐标
+    //                 index: index
+    //             });
+    //         }
+    //     }
+        
+    //     // 显示切割完成的信息
+    //     alert(`已按照当前宽高(${this.tileWidth}×${this.tileHeight}px)切割结果图，共生成${this.tiles.length}个瓦片。`);
+    // }
+    
+    /**
+     * 从文件加载图片（用于复制）
      */
     loadImageFromFile(file) {
         const reader = new FileReader();
         reader.onload = (e) => {
             this.loadImageFromUrl(e.target.result);
+        };
+        reader.readAsDataURL(file);
+    }
+    
+    /**
+     * 加载导出的图片（用于继续编辑）
+     */
+    loadExportedImage(file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                // 保存当前已加载的用于复制的图片及其尺寸信息
+                const tempCurrentImage = this.currentImage;
+                const tempOriginalWidth = this.originalWidth;
+                const tempOriginalHeight = this.originalHeight;
+                const tempScale = this.scale;
+                
+                // 手动重置必要的状态，但保留输出画布和当前图片
+                this.currentIndex = 0;
+                this.tiles = [];
+                
+                // 清空编辑器画布，但保留输出画布
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // 设置输出画布的尺寸和内容
+                this.outputCanvas.width = img.width;
+                this.outputCanvas.height = img.height;
+                this.outputCtx.clearRect(0, 0, this.outputCanvas.width, this.outputCanvas.height);
+                this.outputCtx.drawImage(img, 0, 0);
+                
+                // 显示画布和选择框
+                this.canvas.style.display = 'block';
+                this.selectionBox.style.display = 'block';
+                
+                // 计算当前的瓦片数量和尺寸（假设输出图片是按照10x10网格生成的）
+                const currentTileWidth = Math.floor(img.width / this.outputSize);
+                const currentTileHeight = Math.floor(img.height / this.outputSize);
+                
+                // 更新瓦片尺寸信息
+                this.tileWidth = currentTileWidth;
+                this.tileHeight = currentTileHeight;
+                
+                // 更新选择框样式
+                // this.updateSelectionBoxStyle();
+                
+                // 恢复已加载的用于复制的图片及其尺寸信息
+                this.currentImage = tempCurrentImage;
+                this.originalWidth = tempOriginalWidth;
+                this.originalHeight = tempOriginalHeight;
+                this.scale = tempScale;
+                
+                // 如果有已加载的图片，重新绘制它
+                if (this.currentImage) {
+                    this.drawScaledImage();
+                }
+                
+                // 更新信息显示
+                document.getElementById('tileInfo').textContent = 
+                    `选择框尺寸: ${this.tileWidth}×${this.tileHeight}px`;
+                document.getElementById('outputInfo').textContent = 
+                    `输出尺寸: ${img.width}×${img.height}px (${this.outputSize}×${this.outputSize}网格)`;
+                
+                // 更新startIndex输入框的最大值
+                document.getElementById('startIndex').max = this.outputSize * this.outputSize - 1;
+                
+                // 默认将当前索引设置为0，用户可以根据需要手动调整
+                this.currentIndex = 0;
+                this.updateStartIndexDisplay();
+                
+                // 显示已加载导出图片的信息
+                document.getElementById('imageInfo').textContent = 
+                    `已加载导出图片: ${img.width}×${img.height}`;
+                
+                // 如果没有加载用于复制的图片，提示用户
+                if (!this.currentImage) {
+                    alert('已加载导出图片。请上传一张用于复制的图片以继续添加内容。');
+                }
+            };
+            img.src = e.target.result;
         };
         reader.readAsDataURL(file);
     }
@@ -144,7 +283,7 @@ class ImageEditor {
             this.selectionBox.style.display = 'block';
             
             // 更新选择框样式
-            this.updateSelectionBoxStyle();
+            //this.updateSelectionBoxStyle();
             
             // 更新状态信息
             document.getElementById('imageInfo').textContent = 
@@ -205,22 +344,22 @@ class ImageEditor {
         this.selectionBox.style.height = `${boxHeight}px`;
         
         // 更新输出画布大小
-        const outputWidth = this.tileWidth * this.outputSize;
-        const outputHeight = this.tileHeight * this.outputSize;
-        this.outputCanvas.width = outputWidth;
-        this.outputCanvas.height = outputHeight;
+        // const outputWidth = this.tileWidth * this.outputSize;
+        // const outputHeight = this.tileHeight * this.outputSize;
+        // this.outputCanvas.width = outputWidth;
+        // this.outputCanvas.height = outputHeight;
         
         // 更新信息显示
         document.getElementById('tileInfo').textContent = 
             `选择框尺寸: ${this.tileWidth}×${this.tileHeight}px`;
-        document.getElementById('outputInfo').textContent = 
-            `输出尺寸: ${outputWidth}×${outputHeight}px (10×10网格)`;
+        // document.getElementById('outputInfo').textContent = 
+        //     `输出尺寸: ${outputWidth}×${outputHeight}px (10×10网格)`;
         
         // 重置输出画布
-        this.outputCtx.clearRect(0, 0, this.outputCanvas.width, this.outputCanvas.height);
+       // this.outputCtx.clearRect(0, 0, this.outputCanvas.width, this.outputCanvas.height);
         
         // 重新绘制所有已保存的瓦片
-        this.redrawTiles();
+       // this.redrawTiles();
     }
     
     /**
