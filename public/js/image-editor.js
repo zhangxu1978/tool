@@ -218,7 +218,7 @@ class ImageEditor {
                 this.tileHeight = currentTileHeight;
                 
                 // 更新选择框样式
-                // this.updateSelectionBoxStyle();
+                this.updateSelectionBoxStyle();
                 
                 // 恢复已加载的用于复制的图片及其尺寸信息
                 this.currentImage = tempCurrentImage;
@@ -283,7 +283,7 @@ class ImageEditor {
             this.selectionBox.style.display = 'block';
             
             // 更新选择框样式
-            //this.updateSelectionBoxStyle();
+            this.updateSelectionBoxStyle();
             
             // 更新状态信息
             document.getElementById('imageInfo').textContent = 
@@ -343,23 +343,11 @@ class ImageEditor {
         this.selectionBox.style.width = `${boxWidth}px`;
         this.selectionBox.style.height = `${boxHeight}px`;
         
-        // 更新输出画布大小
-        // const outputWidth = this.tileWidth * this.outputSize;
-        // const outputHeight = this.tileHeight * this.outputSize;
-        // this.outputCanvas.width = outputWidth;
-        // this.outputCanvas.height = outputHeight;
         
         // 更新信息显示
         document.getElementById('tileInfo').textContent = 
             `选择框尺寸: ${this.tileWidth}×${this.tileHeight}px`;
-        // document.getElementById('outputInfo').textContent = 
-        //     `输出尺寸: ${outputWidth}×${outputHeight}px (10×10网格)`;
-        
-        // 重置输出画布
-       // this.outputCtx.clearRect(0, 0, this.outputCanvas.width, this.outputCanvas.height);
-        
-        // 重新绘制所有已保存的瓦片
-       // this.redrawTiles();
+
     }
     
     /**
