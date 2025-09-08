@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>九域传奇-大争之世 - 道具管理</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 0;
+            text-align: center;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e1e8ed;
+        }
+        
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-danger {
+            background-color: #e74c3c;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+        
+        .btn-secondary {
+            background-color: #95a5a6;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #7f8c8d;
+        }
+        
+        .btn-small {
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e1e8ed;
+        }
+        
+        th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #2c3e50;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .badge-type {
+            background-color: #e3f2fd;
+            color: #1976d2;
+        }
+        
+        .badge-level {
+            background-color: #fff3e0;
+            color: #f57c00;
+        }
+        
+        .badge-price {
+            background-color: #e8f5e9;
+            color: #388e3c;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #7f8c8d;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #7f8c8d;
+        }
+        
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            color: #95a5a6;
+        }
+        
+        .empty-state h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #2c3e50;
+        }
+        
+        input, select, textarea {
+
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            padding-top: 20px;
+            border-top: 1px solid #e1e8ed;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            width: 100%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #7f8c8d;
+        }
+        
+        .close-modal:hover {
+            color: #2c3e50;
+        }
+        
+        .message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            border-radius: 4px;
+            color: white;
+            z-index: 1001;
+            animation: slideIn 0.3s ease;
+        }
+        
+        .message-success {
+            background-color: #2ecc71;
+        }
+        
+        .message-error {
+            background-color: #e74c3c;
+        }
+        
+        .search-container {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .search-input {
+            flex: 1;
+            min-width: 250px;
+        }
+        
+        .filter-select {
+            min-width: 150px;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .card-header {
+                flex-direction: column;
+                gap: 15px;
+                align-items: stretch;
+            }
+            
+ .search-filter {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .search-filter input,
+        .search-filter select {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            flex: 1;
+            min-width: 150px;
+          
+        }
+            
+            .modal-content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>九域传奇-大争之世</h1>
+            <p class="subtitle">道具管理系统</p>
+        </header>
+        
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">道具列表</h2>
+                <button id="btn-add-prop" class="btn btn-primary">添加道具</button>
+            </div>
+            
+            <div class="search-filter">
+                <input type="text" id="search-input" class="search-input" placeholder="搜索道具名称、描述...">
+                <select id="type-filter" class="filter-select">
+                    <option value="">所有类型</option>
+                    <option value="法宝">法宝</option>
+                    <option value="丹药">丹药</option>
+                    <option value="书籍">书籍</option>
+                    <option value="任务道具">任务道具</option>
+                    <option value="装备">装备</option>
+                    <option value="资源">资源</option>
+                </select>
+                <select id="level-filter" class="filter-select">
+                    <option value="">所有等级</option>
+                    <option value="1">1级</option>
+                    <option value="2">2级</option>
+                    <option value="3">3级</option>
+                    <option value="4">4级</option>
+                    <option value="5">5级</option>
+                    <option value="6">6级</option>
+                    <option value="7">7级</option>
+                    <option value="8">8级</option>
+                    <option value="9">9级</option>
+                </select>
+            </div>
+            
+            <div id="loading" class="loading">
+                <p>加载中...</p>
+            </div>
+            
+            <div id="empty-state" class="empty-state" style="display: none;">
+                <h3>暂无道具数据</h3>
+                <p>点击上方"添加道具"按钮开始创建道具</p>
+            </div>
+            
+            <div class="table-container" id="prop-table-container" style="display: none;">
+                <table id="prop-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>名称</th>
+                            <th>类型</th>
+                            <th>描述</th>
+                            <th>等级</th>
+                            <th>价格</th>
+                            <th>效果</th>
+                            <th>使用条件</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="prop-table-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 道具编辑/添加模态框 -->
+    <div id="prop-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modal-title">添加道具</h2>
+                <button id="close-modal" class="close-modal">×</button>
+            </div>
+            
+            <form id="prop-form">
+                <input type="hidden" id="prop-id">
+                
+                <div class="form-group">
+                    <label for="prop-name">道具名称</label>
+                    <input type="text" id="prop-name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="prop-type">类型</label>
+                    <select id="prop-type" required>
+                        <option value="">请选择类型</option>
+                        <option value="法宝">法宝</option>
+                        <option value="丹药">丹药</option>
+                        <option value="书籍">书籍</option>
+                        <option value="任务道具">任务道具</option>
+                        <option value="装备">装备</option>
+                        <option value="资源">资源</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="prop-description">描述</label>
+                    <textarea id="prop-description" rows="3"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="prop-image">图片ID</label>
+                    <input type="text" id="prop-image">
+                </div>
+                
+                <div class="form-group">
+                    <label for="prop-price">价格</label>
+                    <input type="number" id="prop-price" min="0" value="0">
+                </div>
+                
+                <div class="form-group">
+                    <label for="prop-level">等级</label>
+                    <select id="prop-level">
+                        <option value="">无等级</option>
+                        <option value="1">1级</option>
+                        <option value="2">2级</option>
+                        <option value="3">3级</option>
+                        <option value="4">4级</option>
+                        <option value="5">5级</option>
+                        <option value="6">6级</option>
+                        <option value="7">7级</option>
+                        <option value="8">8级</option>
+                        <option value="9">9级</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="prop-effect">效果</label>
+                    <input type="text" id="prop-effect">
+                </div>
+                
+                <div class="form-group">
+                    <label for="prop-effect-description">效果描述</label>
+                    <textarea id="prop-effect-description" rows="2"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="prop-use-condition">使用条件</label>
+                    <input type="text" id="prop-use-condition">
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" id="cancel-form" class="btn btn-secondary">取消</button>
+                    <button type="submit" class="btn btn-primary">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- 消息提示容器 -->
+    <div id="message-container"></div>
+    
+    <script src="js/prop-management.js"></script>
+</body>
+</html>

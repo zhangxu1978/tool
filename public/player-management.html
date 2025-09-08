@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>九域传奇-大争之世 - 角色管理</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 0;
+            text-align: center;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e1e8ed;
+        }
+        
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-danger {
+            background-color: #e74c3c;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+        
+        .btn-secondary {
+            background-color: #95a5a6;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #7f8c8d;
+        }
+        
+        .btn-small {
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+        
+        .search-filter {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .search-filter input,
+        .search-filter select {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            flex: 1;
+            min-width: 150px;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th,
+        td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e1e8ed;
+        }
+        
+        th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .badge-type {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .badge-team {
+            background-color: #2ecc71;
+            color: white;
+        }
+        
+        .badge-gender {
+            background-color: #e74c3c;
+            color: white;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #7f8c8d;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #7f8c8d;
+            display: none;
+        }
+        
+        .empty-state h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        
+        .message-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            max-width: 300px;
+        }
+        
+        .message {
+            padding: 15px 20px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            animation: slideIn 0.3s ease;
+        }
+        
+        .message.success {
+            background-color: #2ecc71;
+            color: white;
+        }
+        
+        .message.error {
+            background-color: #e74c3c;
+            color: white;
+        }
+        
+        .message.info {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        /* 模态框样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+        }
+        
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #e1e8ed;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #7f8c8d;
+        }
+        
+        .modal-body {
+            padding: 20px;
+        }
+        
+        .modal-footer {
+            padding: 20px;
+            border-top: 1px solid #e1e8ed;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #2c3e50;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .form-row .form-group {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        /* 分页样式 */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 30px;
+        }
+        
+        .pagination button {
+            padding: 8px 15px;
+            margin: 0 5px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .pagination button:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .pagination button.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #667eea;
+        }
+        
+        /* 角色详情样式 */
+        .player-details {
+            display: none;
+            margin-top: 20px;
+        }
+        
+        .detail-section {
+            margin-bottom: 20px;
+        }
+        
+        .detail-section h3 {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .detail-item {
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        
+        .detail-label {
+            font-weight: 600;
+            color: #7f8c8d;
+            font-size: 12px;
+        }
+        
+        .detail-value {
+            color: #2c3e50;
+            margin-top: 5px;
+        }
+        
+        /* 属性值条 */
+        .attribute-bar {
+            width: 100%;
+            height: 8px;
+            background-color: #e1e8ed;
+            border-radius: 4px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+        
+        .attribute-value {
+            height: 100%;
+            background: linear-gradient(90deg, #3498db, #2ecc71);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>九域传奇-大争之世</h1>
+            <p class="subtitle">角色管理系统</p>
+        </header>
+        
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">角色列表</h2>
+                <button id="btn-add-player" class="btn btn-primary">添加角色</button>
+            </div>
+            
+            <div class="search-filter">
+                <input type="text" id="search-input" placeholder="搜索角色名称...">
+                <select id="type-filter">
+                    <option value="">所有类型</option>
+                    <option value="人类">人类</option>
+                    <option value="妖">妖</option>
+                    <option value="鬼">鬼</option>
+                    <option value="先天灵">先天灵</option>
+                </select>
+                <select id="team-filter">
+                    <option value="">所有门派</option>
+                    <option value="无门无派">无门无派</option>
+                    <option value="黑风寨">黑风寨</option>
+                    <option value="恶人谷">恶人谷</option>
+                </select>
+                <select id="gender-filter">
+                    <option value="">所有性别</option>
+                    <option value="1">男</option>
+                    <option value="0">女</option>
+                </select>
+            </div>
+            
+            <div class="loading" id="loading">
+                <p>加载中...</p>
+            </div>
+            
+            <div class="table-container" id="player-table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>角色名称</th>
+                            <th>类型</th>
+                            <th>门派</th>
+                            <th>性别</th>
+                            <th>年龄</th>
+                            <th>等级</th>
+                            <th>描述</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="player-table-body">
+                        <!-- 角色数据将通过JavaScript动态填充 -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="empty-state" id="empty-state">
+                <h3>暂无角色数据</h3>
+                <p>点击"添加角色"按钮创建第一个角色</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 角色详情面板 -->
+    <div class="container">
+        <div class="card player-details" id="player-details">
+            <div class="card-header">
+                <h2 class="card-title" id="detail-name">角色详情</h2>
+                <button id="close-details" class="btn btn-secondary btn-small">关闭详情</button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="detail-section">
+                    <h3>基本信息</h3>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <div class="detail-label">ID</div>
+                            <div class="detail-value" id="detail-id"></div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">类型</div>
+                            <div class="detail-value" id="detail-type"></div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">门派</div>
+                            <div class="detail-value" id="detail-team"></div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">性别</div>
+                            <div class="detail-value" id="detail-gender"></div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">年龄</div>
+                            <div class="detail-value" id="detail-age"></div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">等级</div>
+                            <div class="detail-value" id="detail-level"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="detail-section">
+                    <h3>详细描述</h3>
+                    <div class="detail-item">
+                        <div class="detail-value" id="detail-description"></div>
+                    </div>
+                </div>
+                
+                <div class="detail-section">
+                    <h3>角色属性</h3>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <div class="detail-label">力量</div>
+                            <div class="detail-value" id="detail-strength"></div>
+                            <div class="attribute-bar">
+                                <div class="attribute-value" id="strength-bar"></div>
+                            </div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">敏捷</div>
+                            <div class="detail-value" id="detail-agility"></div>
+                            <div class="attribute-bar">
+                                <div class="attribute-value" id="agility-bar"></div>
+                            </div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">智力</div>
+                            <div class="detail-value" id="detail-intelligence"></div>
+                            <div class="attribute-bar">
+                                <div class="attribute-value" id="intelligence-bar"></div>
+                            </div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">体质</div>
+                            <div class="detail-value" id="detail-constitution"></div>
+                            <div class="attribute-bar">
+                                <div class="attribute-value" id="constitution-bar"></div>
+                            </div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">灵力</div>
+                            <div class="detail-value" id="detail-spirit"></div>
+                            <div class="attribute-bar">
+                                <div class="attribute-value" id="spirit-bar"></div>
+                            </div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">幸运</div>
+                            <div class="detail-value" id="detail-luck"></div>
+                            <div class="attribute-bar">
+                                <div class="attribute-value" id="luck-bar"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="detail-section">
+                    <h3>道具列表</h3>
+                    <div id="detail-props"></div>
+                </div>
+                
+                <div class="detail-section">
+                    <h3>技能列表</h3>
+                    <div id="detail-skills"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 角色添加/编辑模态框 -->
+    <div class="modal" id="player-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modal-title">添加角色</h2>
+                <button class="close-modal" id="close-modal">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <form id="player-form">
+                    <input type="hidden" id="player-id">
+                    
+                    <div class="form-group">
+                        <label for="player-name">角色名称 *</label>
+                        <input type="text" id="player-name" required>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="player-type">类型</label>
+                            <select id="player-type">
+                                <option value="人类">人类</option>
+                                <option value="妖">妖</option>
+                                <option value="鬼">鬼</option>
+                                <option value="先天灵">先天灵</option>
+                                <option value="未知">未知</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="player-team">门派</label>
+                            <input type="text" id="player-team" placeholder="无门无派">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="player-gender">性别</label>
+                            <select id="player-gender">
+                                <option value="">未知</option>
+                                <option value="1">男</option>
+                                <option value="0">女</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="player-age">年龄</label>
+                            <input type="text" id="player-age">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="player-description">角色描述</label>
+                        <textarea id="player-description" placeholder="描述角色的外貌、性格、背景等"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="player-image">角色图片</label>
+                        <input type="text" id="player-image" placeholder="图片路径">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="player-poetry">诗词描述</label>
+                        <textarea id="player-poetry" placeholder="用诗句描述角色"></textarea>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="player-level">等级</label>
+                            <input type="text" id="player-level" value="0">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="player-experience">经验值</label>
+                            <input type="text" id="player-experience" value="0">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="player-money">金钱</label>
+                            <input type="text" id="player-money" value="0">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="player-reputation">声望</label>
+                            <input type="text" id="player-reputation" value="0">
+                        </div>
+                    </div>
+                    
+                    <div class="detail-section">
+                        <h3>角色属性</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="player-strength">力量</label>
+                                <input type="number" id="player-strength" min="0" max="200" value="100">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="player-agility">敏捷</label>
+                                <input type="number" id="player-agility" min="0" max="200" value="100">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="player-intelligence">智力</label>
+                                <input type="number" id="player-intelligence" min="0" max="200" value="100">
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="player-constitution">体质</label>
+                                <input type="number" id="player-constitution" min="0" max="200" value="100">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="player-spirit">灵力</label>
+                                <input type="number" id="player-spirit" min="0" max="200" value="100">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="player-luck">幸运</label>
+                                <input type="number" id="player-luck" min="0" max="200" value="100">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="player-career">职业</label>
+                        <input type="text" id="player-career">
+                    </div>
+                </form>
+            </div>
+            
+            <div class="modal-footer">
+                <button id="cancel-form" class="btn btn-secondary">取消</button>
+                <button type="submit" form="player-form" class="btn btn-primary">保存</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 消息提示容器 -->
+    <div class="message-container" id="message-container"></div>
+    
+    <!-- JavaScript -->
+    <script src="js/player-management.js"></script>
+</body>
+</html>

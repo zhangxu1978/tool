@@ -25,6 +25,14 @@ app.use(clanManagement);
 const spiritVeinServer = require('./spiritVeinServer');
 app.use(spiritVeinServer);
 
+// 导入道具管理模块
+const propServer = require('./prop-server');
+app.use(propServer);
+
+// 导入角色管理模块
+const playerServer = require('./player-server');
+app.use(playerServer);
+
 // 配置文件上传
 const audioStorage = multer.diskStorage({
   destination: function (req, file, cb) {
