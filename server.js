@@ -17,6 +17,10 @@ app.use('/images', express.static('images'));
 app.use('/jsonData', express.static('jsonData'));
 app.use(express.json());
 
+// 导入门派管理模块
+const clanManagement = require('./clan-management-server');
+app.use(clanManagement);
+
 // 配置文件上传
 const audioStorage = multer.diskStorage({
   destination: function (req, file, cb) {
