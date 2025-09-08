@@ -21,6 +21,10 @@ app.use(express.json());
 const clanManagement = require('./clan-management-server');
 app.use(clanManagement);
 
+// 导入灵脉模板管理模块
+const spiritVeinServer = require('./spiritVeinServer');
+app.use(spiritVeinServer);
+
 // 配置文件上传
 const audioStorage = multer.diskStorage({
   destination: function (req, file, cb) {

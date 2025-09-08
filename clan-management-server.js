@@ -18,27 +18,49 @@ router.use((req, res, next) => {
 
 // 定义文件路径
 const jsonFilePath = path.join(__dirname, 'jsonData', 'clans.json');
+const configFilePath = path.join(__dirname, 'jsonData', 'clan-config.json');
 
 /**
  * 确保JSON文件存在
  */
-function ensureFileExists() {
-    if (!fs.existsSync(jsonFilePath)) {
+function ensureFileExists(filePath) {
+    if (!fs.existsSync(filePath)) {
         // 确保目录存在
-        const dirPath = path.dirname(jsonFilePath);
+        const dirPath = path.dirname(filePath);
         if (!fs.existsSync(dirPath)) {
             fs.mkdirSync(dirPath, { recursive: true });
         }
-        fs.writeFileSync(jsonFilePath, JSON.stringify({ clans: [] }));
+        // 根据文件路径确定默认内容
+        if (filePath === configFilePath) {
+            fs.writeFileSync(filePath, JSON.stringify({ specialties: ['符箓', '剑法', '炼丹', '炼器', '御兽', '阵法', '幻术', '毒术', '体修', '雷法', '冰法', '火法'] }));
+        } else {
+            fs.writeFileSync(filePath, JSON.stringify({ clans: [] }));
+        }
     }
 }
+
+/**
+ * 获取配置数据
+ */
+router.get('/api/clan-config', (req, res) => {
+    try {
+        ensureFileExists(configFilePath);
+        
+        const configData = JSON.parse(fs.readFileSync(configFilePath, 'utf8'));
+        
+        res.json(configData);
+    } catch (error) {
+        console.error('读取配置数据失败:', error);
+        res.status(500).json({ error: '读取配置数据失败' });
+    }
+});
 
 /**
  * 获取所有门派数据
  */
 router.get('/api/clans', (req, res) => {
     try {
-        ensureFileExists();
+        ensureFileExists(jsonFilePath);
         
         const jsonData = JSON.parse(fs.readFileSync(jsonFilePath, 'utf8'));
         
@@ -59,15 +81,16 @@ router.get('/api/clans', (req, res) => {
  */
 router.get('/api/clans/generate', (req, res) => {
     try {
+        ensureFileExists(configFilePath);
+        const configData = JSON.parse(fs.readFileSync(configFilePath, 'utf8'));
+        const specialties = configData.specialties || ['符箓', '剑法', '炼丹', '炼器', '御兽', '阵法', '幻术', '毒术', '体修', '雷法', '冰法', '火法'];
+        
         // 门派名称前缀和后缀
         const prefixes = ['青云', '紫霄', '玄元', '太初', '万剑', '御灵', '丹霞', '碧游', '青冥', '玉虚'];
         const suffixes = ['派', '宗', '门', '教', '宫', '阁', '殿', '山', '谷', '洞'];
         
         // 修士级别
         const levels = ['练气期', '筑基期', '金丹期', '元婴期', '化神期'];
-        
-        // 宗门擅长
-        const specialtiesz = ['符箓', '剑法', '炼丹', '炼器', '御兽', '阵法', '幻术', '毒术', '体修', '雷法', '冰法', '火法'];
         
         // 随机选择前缀和后缀生成宗门名称
         const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
@@ -98,13 +121,13 @@ router.get('/api/clans/generate', (req, res) => {
         const ruleDegree = Math.floor(Math.random() * 30 + 70); // 70-100
         
         // 随机选择 1-3 个宗门擅长
-        const specialties = [];
+        const selectedSpecialties = [];
         const specialtyCount = Math.floor(Math.random() * 3) + 1;
         const usedSpecialties = new Set();
-        while (specialties.length < specialtyCount) {
-            const specialty = specialtiesz[Math.floor(Math.random() * specialtiesz.length)];
+        while (selectedSpecialties.length < specialtyCount) {
+            const specialty = specialties[Math.floor(Math.random() * specialties.length)];
             if (!usedSpecialties.has(specialty)) {
-                specialties.push(specialty);
+                selectedSpecialties.push(specialty);
                 usedSpecialties.add(specialty);
             }
         }
@@ -124,7 +147,7 @@ router.get('/api/clans/generate', (req, res) => {
             cultivatorCount,
             masterCount,
             ruleDegree,
-            specialties
+            specialties: selectedSpecialties
         };
         
         res.json(randomClan);
@@ -139,7 +162,7 @@ router.get('/api/clans/generate', (req, res) => {
  */
 router.get('/api/clans/:id', (req, res) => {
     try {
-        ensureFileExists();
+        ensureFileExists(jsonFilePath);
         
         const jsonData = JSON.parse(fs.readFileSync(jsonFilePath, 'utf8'));
         const clanId = parseInt(req.params.id);
@@ -167,7 +190,7 @@ router.get('/api/clans/:id', (req, res) => {
  */
 router.post('/api/clans', (req, res) => {
     try {
-        ensureFileExists();
+        ensureFileExists(jsonFilePath);
         
         const jsonData = JSON.parse(fs.readFileSync(jsonFilePath, 'utf8'));
         const newClan = req.body;
@@ -199,7 +222,7 @@ router.post('/api/clans', (req, res) => {
  */
 router.put('/api/clans/:id', (req, res) => {
     try {
-        ensureFileExists();
+        ensureFileExists(jsonFilePath);
         
         const jsonData = JSON.parse(fs.readFileSync(jsonFilePath, 'utf8'));
         const clanId = parseInt(req.params.id);
@@ -236,7 +259,7 @@ router.put('/api/clans/:id', (req, res) => {
  */
 router.delete('/api/clans/:id', (req, res) => {
     try {
-        ensureFileExists();
+        ensureFileExists(jsonFilePath);
         
         const jsonData = JSON.parse(fs.readFileSync(jsonFilePath, 'utf8'));
         const clanId = parseInt(req.params.id);

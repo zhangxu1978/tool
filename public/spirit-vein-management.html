@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>九域传奇-大争之世</title>
+    <title>九域传奇-大争之世 - 灵脉模板管理</title>
     <style>
         * {
             margin: 0;
@@ -217,20 +217,6 @@
             color: white;
         }
         
-        .specialties {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-        }
-        
-        .specialty-badge {
-            background-color: #e1e8ed;
-            color: #2c3e50;
-            padding: 3px 8px;
-            border-radius: 12px;
-            font-size: 11px;
-        }
-        
         .modal {
             display: none;
             position: fixed;
@@ -346,151 +332,95 @@
     <div class="container">
         <header>
             <h1>九域传奇-大争之世</h1>
-            <p class="subtitle">新增、修改、查询和随机生成门派数据</p>
+            <p class="subtitle">灵脉模板管理系统 - 新增、修改、查询和随机生成灵脉模板</p>
         </header>
         
         <div class="card">
             <div class="card-header">
-                <h2 class="card-title">门派列表</h2>
+                <h2 class="card-title">灵脉模板列表</h2>
                 <div>
-                    <button id="btn-add-clan" class="btn btn-primary">新增门派</button>
-                    <button id="btn-generate-clan" class="btn btn-success">随机生成门派</button>
+                    <button id="btn-add-vein" class="btn btn-primary">新增灵脉模板</button>
+                    <button id="btn-generate-vein" class="btn btn-success">随机生成灵脉模板</button>
                 </div>
             </div>
             
             <div id="message-container"></div>
             
-            <div id="clan-table-container" class="table-responsive">
+            <div id="vein-table-container" class="table-responsive">
                 <div id="loading" class="loading">
                     <p>加载中...</p>
                 </div>
-                <table id="clan-table" style="display: none;">
+                <table id="vein-table" style="display: none;">
                     <thead>
                         <tr>
                             <th>ID</th>
-                            <th>宗门名称</th>
-                            <th>最高修士级别</th>
-                            <th>灵脉</th>
-                            <th>灵气</th>
-                            <th>灵石</th>
-                            <th>宗门擅长</th>
+                            <th>灵脉名称</th>
+                            <th>等级</th>
+                            <th>对灵气的影响</th>
+                            <th>对灵矿的影响</th>
+                            <th>对灵田的影响</th>
                             <th>操作</th>
                         </tr>
                     </thead>
-                    <tbody id="clan-table-body">
-                        <!-- 门派数据将通过JavaScript动态填充 -->
+                    <tbody id="vein-table-body">
+                        <!-- 灵脉数据将通过JavaScript动态填充 -->
                     </tbody>
                 </table>
                 <div id="empty-state" style="display: none; text-align: center; padding: 40px; color: #666;">
-                    <p>暂无门派数据</p>
+                    <p>暂无灵脉模板数据</p>
                 </div>
             </div>
         </div>
     </div>
     
-    <!-- 门派表单模态框 -->
-    <div id="clan-modal" class="modal">
+    <!-- 灵脉表单模态框 -->
+    <div id="vein-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 class="modal-title" id="modal-title">新增门派</h2>
+                <h2 class="modal-title" id="modal-title">新增灵脉模板</h2>
                 <button id="close-modal" class="close-btn">&times;</button>
             </div>
             
-            <form id="clan-form">
-                <input type="hidden" id="ID">
+            <form id="vein-form">
+                <input type="hidden" id="id">
                 
                 <div class="form-group">
-                    <label for="clanName" class="form-label">宗门名称</label>
-                    <input type="text" id="clanName" class="form-control" required>
+                    <label for="name" class="form-label">灵脉名称</label>
+                    <input type="text" id="name" class="form-control" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="level" class="form-label">等级</label>
+                    <select id="level" class="form-control" required>
+                        <option value="">请选择</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                        <option value="7">7</option>
+                        <option value="8">8</option>
+                        <option value="9">9</option>
+                        <option value="10">10</option>
+                    </select>
                 </div>
                 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="cultivationLevel" class="form-label">最高修士级别</label>
-                        <select id="cultivationLevel" class="form-control" required>
-                            <option value="">请选择</option>
-                            <option value="练气期">练气期</option>
-                            <option value="筑基期">筑基期</option>
-                            <option value="金丹期">金丹期</option>
-                            <option value="元婴期">元婴期</option>
-                            <option value="化神期">化神期</option>
-                            <option value="合体期">合体期</option>
-                            <option value="大乘期">大乘期</option>
-                        </select>
+                        <label for="spiritEnergyEffect" class="form-label">对灵气的影响</label>
+                        <input type="number" id="spiritEnergyEffect" class="form-control" min="0" required>
                     </div>
                     
                     <div class="form-group">
-                        <label for="spiritVein" class="form-label">灵脉</label>
-                        <input type="number" id="spiritVein" class="form-control" min="1" required>
-                    </div>
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="spiritEnergy" class="form-label">灵气</label>
-                        <input type="number" id="spiritEnergy" class="form-control" min="0" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="spiritStone" class="form-label">灵石</label>
-                        <input type="number" id="spiritStone" class="form-control" min="0" required>
-                    </div>
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="spiritMine" class="form-label">灵矿</label>
-                        <input type="number" id="spiritMine" class="form-control" min="0" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="spiritField" class="form-label">灵田</label>
-                        <input type="number" id="spiritField" class="form-control" min="0" required>
-                    </div>
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="spiritPlant" class="form-label">灵植</label>
-                        <input type="number" id="spiritPlant" class="form-control" min="0" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="defense" class="form-label">大阵防御度</label>
-                        <input type="number" id="defense" class="form-control" min="0" required>
-                    </div>
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="population" class="form-label">人口</label>
-                        <input type="number" id="population" class="form-control" min="0" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="cultivatorCount" class="form-label">修士数量</label>
-                        <input type="number" id="cultivatorCount" class="form-control" min="0" required>
-                    </div>
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="masterCount" class="form-label">真人数量</label>
-                        <input type="number" id="masterCount" class="form-control" min="0" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="ruleDegree" class="form-label">统治度</label>
-                        <input type="number" id="ruleDegree" class="form-control" min="0" max="100" required>
+                        <label for="spiritMineEffect" class="form-label">对灵矿的影响</label>
+                        <input type="number" id="spiritMineEffect" class="form-control" min="0" required>
                     </div>
                 </div>
                 
                 <div class="form-group">
-                    <label class="form-label">宗门擅长</label>
-                    <div id="specialtiesContainer">
-                        <!-- 宗门擅长选择框将通过JavaScript动态生成 -->
-                    </div>
-                    <button type="button" id="add-specialty" class="btn btn-sm btn-success" style="margin-top: 10px;">添加擅长</button>
+                    <label for="spiritFieldEffect" class="form-label">对灵田的影响</label>
+                    <input type="number" id="spiritFieldEffect" class="form-control" min="0" required>
                 </div>
                 
                 <div class="modal-footer">
@@ -501,6 +431,6 @@
         </div>
     </div>
     
-    <script src="js/clan-management.js"></script>
+    <script src="js/spirit-vein-management.js"></script>
 </body>
 </html>

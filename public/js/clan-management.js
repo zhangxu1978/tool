@@ -1,5 +1,10 @@
 // 门派管理系统的JavaScript代码
 
+// 存储全局配置数据
+let globalConfig = {
+    specialties: []
+};
+
 // 页面加载完成后执行
 document.addEventListener('DOMContentLoaded', function() {
     // 获取DOM元素
@@ -18,23 +23,50 @@ document.addEventListener('DOMContentLoaded', function() {
     const addSpecialtyBtn = document.getElementById('add-specialty');
     const specialtiesContainer = document.getElementById('specialtiesContainer');
     
-    // 初始化页面
-    loadClans();
-    
-    // 绑定事件监听器
-    btnAddClan.addEventListener('click', showAddClanModal);
-    btnGenerateClan.addEventListener('click', generateRandomClan);
-    closeModal.addEventListener('click', hideClanModal);
-    cancelForm.addEventListener('click', hideClanModal);
-    clanForm.addEventListener('submit', handleFormSubmit);
-    addSpecialtyBtn.addEventListener('click', addSpecialtySelect);
-    
-    // 点击模态框外部关闭模态框
-    window.addEventListener('click', function(event) {
-        if (event.target === clanModal) {
-            hideClanModal();
-        }
+    // 首先加载配置数据，然后再加载门派数据
+    loadConfig().then(() => {
+        // 初始化页面
+        loadClans();
+        
+        // 绑定事件监听器
+        btnAddClan.addEventListener('click', showAddClanModal);
+        btnGenerateClan.addEventListener('click', generateRandomClan);
+        closeModal.addEventListener('click', hideClanModal);
+        cancelForm.addEventListener('click', hideClanModal);
+        clanForm.addEventListener('submit', handleFormSubmit);
+        addSpecialtyBtn.addEventListener('click', addSpecialtySelect);
+        
+        // 点击模态框外部关闭模态框
+        window.addEventListener('click', function(event) {
+            if (event.target === clanModal) {
+                hideClanModal();
+            }
+        });
+    }).catch(error => {
+        showMessage('加载配置失败: ' + error.message, 'error');
+        // 即使配置加载失败，也尝试加载门派数据
+        loadClans();
     });
+    
+    /**
+     * 加载配置数据
+     */
+    function loadConfig() {
+        return fetch('/api/clan-config')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('获取配置数据失败');
+                }
+                return response.json();
+            })
+            .then(config => {
+                globalConfig = config;
+                // 确保specialties数组存在
+                if (!globalConfig.specialties || !Array.isArray(globalConfig.specialties)) {
+                    globalConfig.specialties = ['符箓', '剑法', '炼丹', '炼器', '御兽', '阵法', '幻术', '毒术', '体修', '雷法', '冰法', '火法'];
+                }
+            });
+    }
     
     // 加载门派列表
     function loadClans() {
@@ -281,33 +313,28 @@ document.addEventListener('DOMContentLoaded', function() {
     function addSpecialtySelect(value = '') {
         const specialtyItem = document.createElement('div');
         specialtyItem.className = 'specialty-item';
-        specialtyItem.innerHTML = `
+        
+        // 创建选择框HTML
+        let selectHtml = `
             <div style="display: flex; gap: 10px; margin-top: 10px;">
                 <select class="specialty-select form-control">
-                    <option value="">请选择</option>
-                    <option value="符箓">符箓</option>
-                    <option value="剑法">剑法</option>
-                    <option value="炼丹">炼丹</option>
-                    <option value="炼器">炼器</option>
-                    <option value="御兽">御兽</option>
-                    <option value="阵法">阵法</option>
-                    <option value="幻术">幻术</option>
-                    <option value="毒术">毒术</option>
-                    <option value="体修">体修</option>
-                    <option value="雷法">雷法</option>
-                    <option value="冰法">冰法</option>
-                    <option value="火法">火法</option>
+                    <option value="">请选择</option>`;
+        
+        // 动态添加选项
+        globalConfig.specialties.forEach(specialty => {
+            const selected = value === specialty ? 'selected' : '';
+            selectHtml += `
+                    <option value="${specialty}" ${selected}>${specialty}</option>`;
+        });
+        
+        selectHtml += `
                 </select>
                 <button type="button" class="btn btn-sm btn-danger remove-specialty" style="margin-top: auto; margin-bottom: auto;">
                     删除
                 </button>
-            </div>
-        `;
+            </div>`;
         
-        if (value) {
-            specialtyItem.querySelector('.specialty-select').value = value;
-        }
-        
+        specialtyItem.innerHTML = selectHtml;
         specialtiesContainer.appendChild(specialtyItem);
         
         // 绑定删除按钮事件
@@ -318,25 +345,23 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 重置宗门擅长选择框
     function resetSpecialties() {
-        specialtiesContainer.innerHTML = `
+        // 创建选择框HTML
+        let selectHtml = `
             <div class="specialty-item">
                 <select class="specialty-select form-control">
-                    <option value="">请选择</option>
-                    <option value="符箓">符箓</option>
-                    <option value="剑法">剑法</option>
-                    <option value="炼丹">炼丹</option>
-                    <option value="炼器">炼器</option>
-                    <option value="御兽">御兽</option>
-                    <option value="阵法">阵法</option>
-                    <option value="幻术">幻术</option>
-                    <option value="毒术">毒术</option>
-                    <option value="体修">体修</option>
-                    <option value="雷法">雷法</option>
-                    <option value="冰法">冰法</option>
-                    <option value="火法">火法</option>
+                    <option value="">请选择</option>`;
+        
+        // 动态添加选项
+        globalConfig.specialties.forEach(specialty => {
+            selectHtml += `
+                    <option value="${specialty}">${specialty}</option>`;
+        });
+        
+        selectHtml += `
                 </select>
-            </div>
-        `;
+            </div>`;
+        
+        specialtiesContainer.innerHTML = selectHtml;
     }
     
     // 显示模态框
