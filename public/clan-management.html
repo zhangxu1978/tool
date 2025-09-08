@@ -370,7 +370,7 @@
                             <th>ID</th>
                             <th>宗门名称</th>
                             <th>最高修士级别</th>
-                            <th>灵脉</th>
+                            <th>灵脉总数</th>
                             <th>灵气</th>
                             <th>灵石</th>
                             <th>宗门擅长</th>
@@ -493,6 +493,11 @@
                     <button type="button" id="add-specialty" class="btn btn-sm btn-success" style="margin-top: 10px;">添加擅长</button>
                 </div>
                 
+                <div class="form-group">
+                    <label class="form-label">灵脉管理</label>
+                    <button type="button" id="manage-spirit-veins" class="btn btn-sm btn-primary">管理灵脉</button>
+                </div>
+                
                 <div class="modal-footer">
                     <button type="button" id="cancel-form" class="btn btn-secondary">取消</button>
                     <button type="submit" class="btn btn-primary">保存</button>
@@ -504,3 +509,35 @@
     <script src="js/clan-management.js"></script>
 </body>
 </html>
+
+<!-- 灵脉管理模态框 -->
+<div id="spirit-vein-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title" id="spirit-vein-modal-title">管理灵脉</h2>
+            <button id="close-spirit-vein-modal" class="close-btn">&times;</button>
+        </div>
+        
+        <div>
+            <input type="hidden" id="current-clan-id">
+            <div id="available-veins-container">
+                <h4>可选灵脉模板</h4>
+                <div id="available-veins-list" style="max-height: 300px; overflow-y: auto;">
+                    <!-- 可选灵脉模板列表将通过JavaScript动态生成 -->
+                </div>
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <h4>已添加灵脉</h4>
+                <div id="added-veins-list">
+                    <!-- 已添加灵脉列表将通过JavaScript动态生成 -->
+                </div>
+            </div>
+        </div>
+        
+        <div class="modal-footer">
+            <button type="button" id="cancel-spirit-vein" class="btn btn-secondary">取消</button>
+            <button type="button" id="save-spirit-veins" class="btn btn-primary">确定</button>
+        </div>
+    </div>
+</div>

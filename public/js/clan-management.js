@@ -22,6 +22,20 @@ document.addEventListener('DOMContentLoaded', function() {
     const clanForm = document.getElementById('clan-form');
     const addSpecialtyBtn = document.getElementById('add-specialty');
     const specialtiesContainer = document.getElementById('specialtiesContainer');
+    const manageSpiritVeinsBtn = document.getElementById('manage-spirit-veins');
+    const spiritVeinModal = document.getElementById('spirit-vein-modal');
+    const closeSpiritVeinModal = document.getElementById('close-spirit-vein-modal');
+    const cancelSpiritVein = document.getElementById('cancel-spirit-vein');
+    const saveSpiritVeins = document.getElementById('save-spirit-veins');
+    const currentClanId = document.getElementById('current-clan-id');
+    const availableVeinsList = document.getElementById('available-veins-list');
+    const addedVeinsList = document.getElementById('added-veins-list');
+    const spiritVeinInput = document.getElementById('spiritVein');
+    
+    // 当前正在编辑的门派
+    let currentClan = null;
+    // 正在编辑的灵脉列表
+    let editingSpiritVeinList = [];
     
     // 首先加载配置数据，然后再加载门派数据
     loadConfig().then(() => {
@@ -35,6 +49,26 @@ document.addEventListener('DOMContentLoaded', function() {
         cancelForm.addEventListener('click', hideClanModal);
         clanForm.addEventListener('submit', handleFormSubmit);
         addSpecialtyBtn.addEventListener('click', addSpecialtySelect);
+        manageSpiritVeinsBtn.addEventListener('click', showSpiritVeinModal);
+        closeSpiritVeinModal.addEventListener('click', hideSpiritVeinModal);
+        cancelSpiritVein.addEventListener('click', hideSpiritVeinModal);
+        saveSpiritVeins.addEventListener('click', handleSaveSpiritVeins);
+        
+        // 当灵脉数量变化时，更新UI状态
+        spiritVeinInput.addEventListener('change', function() {
+            if (currentClan && currentClan.spiritVeinList) {
+                const spiritVeinCount = parseInt(this.value);
+                // 确保灵脉数量不超过设置的灵脉总数
+                currentClan.spiritVeinList = currentClan.spiritVeinList.slice(0, spiritVeinCount);
+            }
+        });
+        
+        // 点击灵脉模态框外部关闭模态框
+        window.addEventListener('click', function(event) {
+            if (event.target === spiritVeinModal) {
+                hideSpiritVeinModal();
+            }
+        });
         
         // 点击模态框外部关闭模态框
         window.addEventListener('click', function(event) {
@@ -102,12 +136,15 @@ document.addEventListener('DOMContentLoaded', function() {
         clanTableBody.innerHTML = '';
         
         clans.forEach(clan => {
+            // 获取灵脉总数，如果没有设置，则使用spiritVein字段的值
+            const spiritVeinCount = clan.spiritVeinList && clan.spiritVeinList.length > 0 ? clan.spiritVeinList.length : clan.spiritVein;
+            
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td>${clan.ID}</td>
                 <td>${clan.clanName}</td>
                 <td>${clan.cultivationLevel}</td>
-                <td>${clan.spiritVein}</td>
+                <td>${spiritVeinCount}</td>
                 <td>${clan.spiritEnergy}</td>
                 <td>${clan.spiritStone}</td>
                 <td>
@@ -129,52 +166,56 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // 显示添加门派模态框
-    function showAddClanModal() {
-        modalTitle.textContent = '新增门派';
-        clanForm.reset();
-        document.getElementById('ID').value = '';
-        resetSpecialties();
-        showModal();
-    }
+        function showAddClanModal() {
+            modalTitle.textContent = '新增门派';
+            clanForm.reset();
+            document.getElementById('ID').value = '';
+            resetSpecialties();
+            currentClan = null;
+            showModal();
+        }
     
     // 编辑门派
-    window.editClan = function(id) {
-        fetch(`/api/clans/${id}`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('获取门派数据失败');
-                }
-                return response.json();
-            })
-            .then(clan => {
-                modalTitle.textContent = '编辑门派';
-                document.getElementById('ID').value = clan.ID;
-                document.getElementById('clanName').value = clan.clanName;
-                document.getElementById('cultivationLevel').value = clan.cultivationLevel;
-                document.getElementById('spiritVein').value = clan.spiritVein;
-                document.getElementById('spiritEnergy').value = clan.spiritEnergy;
-                document.getElementById('spiritStone').value = clan.spiritStone;
-                document.getElementById('spiritMine').value = clan.spiritMine;
-                document.getElementById('spiritField').value = clan.spiritField;
-                document.getElementById('spiritPlant').value = clan.spiritPlant;
-                document.getElementById('defense').value = clan.defense;
-                document.getElementById('population').value = clan.population;
-                document.getElementById('cultivatorCount').value = clan.cultivatorCount;
-                document.getElementById('masterCount').value = clan.masterCount;
-                document.getElementById('ruleDegree').value = clan.ruleDegree;
-                
-                // 设置宗门擅长
-                resetSpecialties();
-                clan.specialties.forEach((specialty, index) => {
-                    if (index === 0) {
-                        document.querySelector('.specialty-select').value = specialty;
-                    } else {
-                        addSpecialtySelect(specialty);
+        window.editClan = function(id) {
+            fetch(`/api/clans/${id}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('获取门派数据失败');
                     }
-                });
-                
-                showModal();
-            })
+                    return response.json();
+                })
+                .then(clan => {
+                    modalTitle.textContent = '编辑门派';
+                    document.getElementById('ID').value = clan.ID;
+                    document.getElementById('clanName').value = clan.clanName;
+                    document.getElementById('cultivationLevel').value = clan.cultivationLevel;
+                    document.getElementById('spiritVein').value = clan.spiritVein;
+                    document.getElementById('spiritEnergy').value = clan.spiritEnergy;
+                    document.getElementById('spiritStone').value = clan.spiritStone;
+                    document.getElementById('spiritMine').value = clan.spiritMine;
+                    document.getElementById('spiritField').value = clan.spiritField;
+                    document.getElementById('spiritPlant').value = clan.spiritPlant;
+                    document.getElementById('defense').value = clan.defense;
+                    document.getElementById('population').value = clan.population;
+                    document.getElementById('cultivatorCount').value = clan.cultivatorCount;
+                    document.getElementById('masterCount').value = clan.masterCount;
+                    document.getElementById('ruleDegree').value = clan.ruleDegree;
+                    
+                    // 设置宗门擅长
+                    resetSpecialties();
+                    clan.specialties.forEach((specialty, index) => {
+                        if (index === 0) {
+                            document.querySelector('.specialty-select').value = specialty;
+                        } else {
+                            addSpecialtySelect(specialty);
+                        }
+                    });
+                    
+                    // 保存当前编辑的门派
+                    currentClan = clan;
+                    
+                    showModal();
+                })
             .catch(error => {
                 showMessage('获取门派数据失败: ' + error.message, 'error');
             });
@@ -238,6 +279,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 });
                 
+                // 初始化当前编辑的门派
+                currentClan = {
+                    ...randomClan,
+                    spiritVeinList: []
+                };
+                
                 showModal();
             })
             .catch(error => {
@@ -265,7 +312,8 @@ document.addEventListener('DOMContentLoaded', function() {
             cultivatorCount: parseInt(document.getElementById('cultivatorCount').value),
             masterCount: parseInt(document.getElementById('masterCount').value),
             ruleDegree: parseInt(document.getElementById('ruleDegree').value),
-            specialties: []
+            specialties: [],
+            spiritVeinList: []
         };
         
         // 获取所有选择的宗门擅长
@@ -275,6 +323,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 clanData.specialties.push(select.value);
             }
         });
+        
+        // 如果有灵脉列表，添加到门派数据中
+        if (currentClan && currentClan.spiritVeinList) {
+            // 确保灵脉数量不超过设置的灵脉总数
+            const spiritVeinCount = parseInt(document.getElementById('spiritVein').value);
+            clanData.spiritVeinList = currentClan.spiritVeinList.slice(0, spiritVeinCount);
+        }
         
         // 确保至少有一个宗门擅长
         if (clanData.specialties.length === 0) {
@@ -364,13 +419,220 @@ document.addEventListener('DOMContentLoaded', function() {
         specialtiesContainer.innerHTML = selectHtml;
     }
     
-    // 显示模态框
+    // 显示门派模态框
     function showModal() {
         clanModal.style.display = 'flex';
         // 确保模态框内容在可见区域
         setTimeout(() => {
             clanModal.querySelector('.modal-content').scrollTop = 0;
         }, 10);
+    }
+    
+    // 显示灵脉管理模态框
+    function showSpiritVeinModal() {
+        // 获取当前编辑的门派ID
+        const clanId = document.getElementById('ID').value;
+        if (!clanId && !currentClan) {
+            showMessage('请先保存门派信息', 'error');
+            return;
+        }
+        
+        currentClanId.value = clanId;
+        
+        // 初始化编辑的灵脉列表
+        if (currentClan && currentClan.spiritVeinList) {
+            editingSpiritVeinList = JSON.parse(JSON.stringify(currentClan.spiritVeinList));
+        } else {
+            editingSpiritVeinList = [];
+        }
+        
+        // 加载可用的灵脉模板
+        loadSpiritVeinTemplates();
+        
+        // 显示灵脉管理模态框
+        spiritVeinModal.style.display = 'flex';
+        // 确保模态框内容在可见区域
+        setTimeout(() => {
+            spiritVeinModal.querySelector('.modal-content').scrollTop = 0;
+        }, 10);
+    }
+    
+    // 隐藏灵脉管理模态框
+    function hideSpiritVeinModal() {
+        spiritVeinModal.style.display = 'none';
+    }
+    
+    // 加载灵脉模板
+    function loadSpiritVeinTemplates() {
+        availableVeinsList.innerHTML = '<div class="loading"><p>加载中...</p></div>';
+        
+        fetch('/api/spirit-veins')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('获取灵脉模板失败');
+                }
+                return response.json();
+            })
+            .then(spiritVeins => {
+                availableVeinsList.innerHTML = '';
+                
+                spiritVeins.forEach(vein => {
+                    const veinItem = document.createElement('div');
+                    veinItem.className = 'card';
+                    veinItem.style.marginBottom = '10px';
+                    
+                    let addButtonText = '添加';
+                    let addButtonDisabled = false;
+                    
+                    // 检查是否已经添加了足够的灵脉
+                    const spiritVeinCount = parseInt(spiritVeinInput.value);
+                    if (editingSpiritVeinList.length >= spiritVeinCount) {
+                        addButtonText = '已达上限';
+                        addButtonDisabled = true;
+                    }
+                    
+                    // 根据是否禁用条件性地添加disabled属性
+                    const disabledAttr = addButtonDisabled ? 'disabled' : '';
+                    
+                    veinItem.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <h5>${vein.name}</h5>
+                                <p>等级: ${vein.level}</p>
+                                <p>灵气效果: ${vein.spiritEnergyEffect} | 灵矿效果: ${vein.spiritMineEffect} | 灵田效果: ${vein.spiritFieldEffect}</p>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-primary add-vein-btn" data-vein-id="${vein.id}" ${disabledAttr}>
+                                ${addButtonText}
+                            </button>
+                        </div>
+                    `;
+                    
+                    availableVeinsList.appendChild(veinItem);
+                });
+                
+                // 绑定添加灵脉按钮事件
+                document.querySelectorAll('.add-vein-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const veinId = parseInt(this.getAttribute('data-vein-id'));
+                        addSpiritVein(veinId);
+                    });
+                });
+                
+                // 更新已添加灵脉列表
+                updateAddedVeinsList();
+            })
+            .catch(error => {
+                availableVeinsList.innerHTML = '';
+                showMessage('加载灵脉模板失败: ' + error.message, 'error');
+            });
+    }
+    
+    // 添加灵脉
+    function addSpiritVein(veinId) {
+        // 获取灵脉模板详情
+        fetch(`/api/spirit-veins/${veinId}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('获取灵脉模板详情失败');
+                }
+                return response.json();
+            })
+            .then(vein => {
+                // 检查是否已经添加了足够的灵脉
+                const spiritVeinCount = parseInt(spiritVeinInput.value);
+                if (editingSpiritVeinList.length >= spiritVeinCount) {
+                    showMessage('已达到灵脉数量上限', 'error');
+                    return;
+                }
+                
+                // 对灵脉效果进行10%的随机变动
+                const modifiedVein = {
+                    ...vein,
+                    spiritEnergyEffect: getRandomValue(vein.spiritEnergyEffect),
+                    spiritMineEffect: getRandomValue(vein.spiritMineEffect),
+                    spiritFieldEffect: getRandomValue(vein.spiritFieldEffect),
+                    id: editingSpiritVeinList.length + 1 // 为添加到门派的灵脉生成唯一ID
+                };
+                
+                // 添加到编辑的灵脉列表
+                editingSpiritVeinList.push(modifiedVein);
+                
+                // 更新UI
+                loadSpiritVeinTemplates();
+            })
+            .catch(error => {
+                showMessage('添加灵脉失败: ' + error.message, 'error');
+            });
+    }
+    
+    // 移除灵脉
+    function removeSpiritVein(veinId) {
+        editingSpiritVeinList = editingSpiritVeinList.filter(vein => vein.id !== veinId);
+        
+        // 重新为剩余灵脉分配ID
+        editingSpiritVeinList.forEach((vein, index) => {
+            vein.id = index + 1;
+        });
+        
+        // 更新UI
+        loadSpiritVeinTemplates();
+    }
+    
+    // 更新已添加灵脉列表
+    function updateAddedVeinsList() {
+        addedVeinsList.innerHTML = '';
+        
+        if (editingSpiritVeinList.length === 0) {
+            addedVeinsList.innerHTML = '<p style="text-align: center; color: #666;">暂无添加的灵脉</p>';
+            return;
+        }
+        
+        editingSpiritVeinList.forEach(vein => {
+            const veinItem = document.createElement('div');
+            veinItem.className = 'card';
+            veinItem.style.marginBottom = '10px';
+            
+            veinItem.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h5>${vein.name}</h5>
+                        <p>等级: ${vein.level}</p>
+                        <p>灵气效果: ${vein.spiritEnergyEffect} | 灵矿效果: ${vein.spiritMineEffect} | 灵田效果: ${vein.spiritFieldEffect}</p>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-danger remove-vein-btn" data-vein-id="${vein.id}">
+                        移除
+                    </button>
+                </div>
+            `;
+            
+            addedVeinsList.appendChild(veinItem);
+        });
+        
+        // 绑定移除灵脉按钮事件
+        document.querySelectorAll('.remove-vein-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const veinId = parseInt(this.getAttribute('data-vein-id'));
+                removeSpiritVein(veinId);
+            });
+        });
+    }
+    
+    // 生成随机值（在原值的90%-110%之间）
+    function getRandomValue(baseValue) {
+        const min = Math.floor(baseValue * 0.9);
+        const max = Math.ceil(baseValue * 1.1);
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+    
+    // 处理保存灵脉列表
+    function handleSaveSpiritVeins() {
+        // 更新当前编辑的门派的灵脉列表
+        if (currentClan) {
+            currentClan.spiritVeinList = editingSpiritVeinList;
+        }
+        
+        hideSpiritVeinModal();
+        showMessage('灵脉设置成功', 'success');
     }
     
     // 隐藏模态框
