@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数字竞技场</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            padding-top: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .arena-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+        .fighter-card {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border: none;
+            transition: transform 0.3s ease;
+        }
+        .fighter-card:hover {
+            transform: translateY(-5px);
+        }
+        .vs-divider {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #ff6b6b;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        .attribute-bar {
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+        .attribute-progress {
+            height: 25px;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+        .strength { background: linear-gradient(90deg, #ff6b6b, #ee5a52); }
+        .intelligence { background: linear-gradient(90deg, #4ecdc4, #44a08d); }
+        .agility { background: linear-gradient(90deg, #45b7d1, #96c93d); }
+        .constitution { background: linear-gradient(90deg, #f093fb, #f5576c); }
+        .luck { background: linear-gradient(90deg, #feca57, #ff9ff3); }
+        
+        .battle-result {
+            background: rgba(76, 175, 80, 0.1);
+            border: 2px solid #4caf50;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 10px 0;
+        }
+        .result-winner {
+            background: rgba(255, 193, 7, 0.2);
+            border-color: #ffc107;
+        }
+        .tab-content {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .nav-tabs .nav-link {
+            border-radius: 10px 10px 0 0;
+            background: rgba(255,255,255,0.8);
+            margin-right: 5px;
+        }
+        .nav-tabs .nav-link.active {
+            background: white;
+            font-weight: bold;
+        }
+        .conversion-rule {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 4px solid #007bff;
+        }
+        .battle-stats {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .btn-arena {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 25px;
+            padding: 10px 30px;
+            color: white;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        .btn-arena:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="arena-container">
+            <h1 class="text-center mb-4" style="color: #667eea; font-weight: bold;">
+                数字竞技场
+            </h1>
+            
+            <!-- 导航标签 -->
+            <ul class="nav nav-tabs" id="arenaTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="fighters-tab" data-bs-toggle="tab" data-bs-target="#fighters" type="button" role="tab">竞技者管理</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="rules-tab" data-bs-toggle="tab" data-bs-target="#rules" type="button" role="tab">转化规则</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="battle-tab" data-bs-toggle="tab" data-bs-target="#battle" type="button" role="tab">战斗竞技</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="results-tab" data-bs-toggle="tab" data-bs-target="#results" type="button" role="tab">结果统计</button>
+                </li>
+            </ul>
+            
+            <div class="tab-content" id="arenaTabContent">
+                <!-- 竞技者管理 -->
+                <div class="tab-pane fade show active" id="fighters" role="tabpanel">
+                    <h3>竞技者管理</h3>
+                    
+                    <!-- 添加新竞技者 -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5>添加新竞技者</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="fighterName" class="form-label">姓名</label>
+                                        <input type="text" class="form-control" id="fighterName" placeholder="输入竞技者姓名">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="fighterLevel" class="form-label">等级</label>
+                                        <input type="number" class="form-control" id="fighterLevel" value="1" min="1" max="100">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-2">
+                                    <div class="mb-3">
+                                        <label for="strength" class="form-label">力量</label>
+                                        <input type="number" class="form-control" id="strength" value="10" min="1" max="999">
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="mb-3">
+                                        <label for="intelligence" class="form-label">智力</label>
+                                        <input type="number" class="form-control" id="intelligence" value="10" min="1" max="999">
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="mb-3">
+                                        <label for="agility" class="form-label">敏捷</label>
+                                        <input type="number" class="form-control" id="agility" value="10" min="1" max="999">
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="mb-3">
+                                        <label for="constitution" class="form-label">体质</label>
+                                        <input type="number" class="form-control" id="constitution" value="10" min="1" max="999">
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="mb-3">
+                                        <label for="luck" class="form-label">幸运</label>
+                                        <input type="number" class="form-control" id="luck" value="10" min="1" max="999">
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="mb-3">
+                                        <label class="form-label">&nbsp;</label>
+                                        <button type="button" class="btn btn-arena w-100" onclick="addFighter()">添加</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 竞技者列表 -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>竞技者列表</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="fightersList" class="row">
+                                <!-- 竞技者卡片将在这里动态生成 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 转化规则 -->
+                <div class="tab-pane fade" id="rules" role="tabpanel">
+                    <h3>属性转化规则</h3>
+                    <p class="text-muted">设置基础属性如何转化为战斗属性</p>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="conversion-rule">
+                                <label for="attackRule" class="form-label"><strong>攻击力计算</strong></label>
+                                <input type="text" class="form-control" id="attackRule" value="力量 * 1.2 + 等级 * 0.5" placeholder="例: 力量 * 1.2 + 等级 * 0.5">
+                                <small class="form-text text-muted">可用变量: 力量, 智力, 敏捷, 体质, 幸运, 等级</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="conversion-rule">
+                                <label for="defenseRule" class="form-label"><strong>防御力计算</strong></label>
+                                <input type="text" class="form-control" id="defenseRule" value="体质 * 1.0 + 等级 * 0.3" placeholder="例: 体质 * 1.0 + 等级 * 0.3">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="conversion-rule">
+                                <label for="healthRule" class="form-label"><strong>生命值计算</strong></label>
+                                <input type="text" class="form-control" id="healthRule" value="体质 * 10 + 等级 * 5" placeholder="例: 体质 * 10 + 等级 * 5">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="conversion-rule">
+                                <label for="dodgeRule" class="form-label"><strong>闪避率计算(%)</strong></label>
+                                <input type="text" class="form-control" id="dodgeRule" value="敏捷 * 0.5 + 幸运 * 0.3" placeholder="例: 敏捷 * 0.5 + 幸运 * 0.3">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="conversion-rule">
+                                <label for="criticalRule" class="form-label"><strong>暴击率计算(%)</strong></label>
+                                <input type="text" class="form-control" id="criticalRule" value="智力 * 0.4 + 幸运 * 0.6" placeholder="例: 智力 * 0.4 + 幸运 * 0.6">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="conversion-rule">
+                                <label for="luckBonusRule" class="form-label"><strong>幸运加成计算</strong></label>
+                                <input type="text" class="form-control" id="luckBonusRule" value="幸运 * 0.1" placeholder="例: 幸运 * 0.1">
+                                <small class="form-text text-muted">随机为各属性增加0到此值的加成</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <button type="button" class="btn btn-arena" onclick="saveRules()">保存规则</button>
+                        <button type="button" class="btn btn-secondary" onclick="resetRules()">重置为默认</button>
+                    </div>
+                </div>
+                
+                <!-- 战斗竞技 -->
+                <div class="tab-pane fade" id="battle" role="tabpanel">
+                    <h3>战斗竞技</h3>
+                    
+                    <!-- 选择对战选手 -->
+                    <div class="row mb-4">
+                        <div class="col-md-5">
+                            <div class="card fighter-card">
+                                <div class="card-body">
+                                    <h5>选择参赛者A</h5>
+                                    <select class="form-select" id="fighter1Select">
+                                        <option value="">请选择竞技者</option>
+                                    </select>
+                                    <div id="fighter1Stats" class="mt-3" style="display: none;">
+                                        <!-- 竞技者A的详细属性将在这里显示 -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-center justify-content-center">
+                            <div class="vs-divider">VS</div>
+                        </div>
+                        <div class="col-md-5">
+                            <div class="card fighter-card">
+                                <div class="card-body">
+                                    <h5>选择参赛者B</h5>
+                                    <select class="form-select" id="fighter2Select">
+                                        <option value="">请选择竞技者</option>
+                                    </select>
+                                    <div id="fighter2Stats" class="mt-3" style="display: none;">
+                                        <!-- 竞技者B的详细属性将在这里显示 -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 战斗设置 -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5>战斗设置</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <label for="battleRounds" class="form-label">战斗轮数</label>
+                                    <input type="number" class="form-control" id="battleRounds" value="100" min="1" max="10000">
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="battleSpeed" class="form-label">战斗速度 (毫秒/轮)</label>
+                                    <input type="number" class="form-control" id="battleSpeed" value="50" min="1" max="1000">
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check mt-4">
+                                        <input class="form-check-input" type="checkbox" id="showDetails">
+                                        <label class="form-check-label" for="showDetails">
+                                            显示详细战斗过程
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 开始战斗按钮 -->
+                    <div class="text-center mb-4">
+                        <button type="button" class="btn btn-arena btn-lg" onclick="startBattle()" id="startBattleBtn">
+                            开始战斗！
+                        </button>
+                        <button type="button" class="btn btn-danger btn-lg" onclick="stopBattle()" id="stopBattleBtn" style="display: none;">
+                            停止战斗
+                        </button>
+                    </div>
+                    
+                    <!-- 战斗进度 -->
+                    <div id="battleProgress" style="display: none;">
+                        <div class="battle-stats">
+                            <div class="row text-center">
+                                <div class="col-md-3">
+                                    <h5 id="currentRound">第 0 轮</h5>
+                                </div>
+                                <div class="col-md-3">
+                                    <h5 id="fighter1Wins">参赛者A: 0胜</h5>
+                                </div>
+                                <div class="col-md-3">
+                                    <h5 id="fighter2Wins">参赛者B: 0胜</h5>
+                                </div>
+                                <div class="col-md-3">
+                                    <h5 id="currentWinRate">胜率: --</h5>
+                                </div>
+                            </div>
+                            <div class="progress mt-3" style="height: 30px;">
+                                <div id="battleProgressBar" class="progress-bar progress-bar-striped progress-bar-animated" 
+                                     role="progressbar" style="width: 0%">0%</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 战斗详情 -->
+                    <div id="battleDetails" class="mt-4" style="display: none;">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>战斗详情</h5>
+                            </div>
+                            <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                                <div id="battleLog"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 结果统计 -->
+                <div class="tab-pane fade" id="results" role="tabpanel">
+                    <h3>战斗结果统计</h3>
+                    
+                    <div id="battleResults" class="mt-4">
+                        <!-- 战斗结果将在这里显示 -->
+                        <div class="text-center text-muted">
+                            <p>暂无战斗记录，请先进行战斗！</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/arena.js"></script>
+</body>
+</html>
