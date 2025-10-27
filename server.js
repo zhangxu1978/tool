@@ -132,25 +132,57 @@ const uploadImage = multer({
 
 /**
  * 获取所有音频文件列表
+ * 从bgm和sfx目录中获取所有音频文件
  */
 app.get('/api/sound', (req, res) => {
-  fs.readdir('sound', (err, files) => {
-    if (err) {
-      return res.status(500).json({ error: '无法读取音频文件' });
+  const bgmDir = 'sound/bgm/';
+  const sfxDir = 'sound/sfx/';
+  let allAudioFiles = [];
+  
+  try {
+    // 读取bgm目录中的文件
+    if (fs.existsSync(bgmDir)) {
+      const bgmFiles = fs.readdirSync(bgmDir);
+      bgmFiles.forEach(file => {
+        try {
+          const stats = fs.statSync(path.join(bgmDir, file));
+          allAudioFiles.push({
+            name: file,
+            path: `/sound/bgm/${file}`,
+            size: stats.size,
+            createdAt: stats.birthtime,
+            type: '音乐'
+          });
+        } catch (err) {
+          console.error(`读取BGM文件信息失败: ${file}`, err);
+        }
+      });
     }
     
-    const audioFiles = files.map(file => {
-      const stats = fs.statSync(path.join('sound', file));
-      return {
-        name: file,
-        path: `/sound/${file}`,
-        size: stats.size,
-        createdAt: stats.birthtime
-      };
-    });
+    // 读取sfx目录中的文件
+    if (fs.existsSync(sfxDir)) {
+      const sfxFiles = fs.readdirSync(sfxDir);
+      sfxFiles.forEach(file => {
+        try {
+          const stats = fs.statSync(path.join(sfxDir, file));
+          allAudioFiles.push({
+            name: file,
+            path: `/sound/sfx/${file}`,
+            size: stats.size,
+            createdAt: stats.birthtime,
+            type: '音效'
+          });
+        } catch (err) {
+          console.error(`读取SFX文件信息失败: ${file}`, err);
+        }
+      });
+    }
     
-    res.json(audioFiles);
-  });
+    res.json(allAudioFiles);
+  } catch (err) {
+    console.error('读取音频文件失败:', err);
+    res.status(500).json({ error: '无法读取音频文件' });
+  }
 });
 
 /**
@@ -416,6 +448,7 @@ app.post('/api/dialogue/save', (req, res) => {
 
 /**
  * 按名称和类型检索音频文件
+ * 选音乐从bgm目录搜索，选音效从sfx目录搜索
  */
 app.get('/api/sound/search', (req, res) => {
   const { name, type } = req.query;
@@ -443,13 +476,39 @@ app.get('/api/sound/search', (req, res) => {
       );
     }
     
-    // 获取文件的完整信息
+    // 获取文件的完整信息，根据类型确定文件路径
     const result = filteredFiles.map(file => {
       try {
-        const stats = fs.statSync(path.join('sound', file.filename));
+        let filePath;
+        let fileUrl;
+        
+        // 根据文件类型确定目录
+        if (file.type && file.type.toLowerCase() === '音乐') {
+          filePath = path.join('sound/bgm', file.filename);
+          fileUrl = `/sound/bgm/${file.filename}`;
+        } else if (file.type && file.type.toLowerCase() === '音效') {
+          filePath = path.join('sound/sfx', file.filename);
+          fileUrl = `/sound/sfx/${file.filename}`;
+        } else {
+          // 默认尝试两个目录
+          const bgmPath = path.join('sound/bgm', file.filename);
+          const sfxPath = path.join('sound/sfx', file.filename);
+          
+          if (fs.existsSync(bgmPath)) {
+            filePath = bgmPath;
+            fileUrl = `/sound/bgm/${file.filename}`;
+          } else if (fs.existsSync(sfxPath)) {
+            filePath = sfxPath;
+            fileUrl = `/sound/sfx/${file.filename}`;
+          } else {
+            throw new Error('文件不存在');
+          }
+        }
+        
+        const stats = fs.statSync(filePath);
         return {
           ...file,
-          path: `/sound/${file.filename}`,
+          path: fileUrl,
           size: stats.size,
           createdAt: stats.birthtime
         };
@@ -457,7 +516,9 @@ app.get('/api/sound/search', (req, res) => {
         // 文件可能已被删除，返回基本信息
         return {
           ...file,
-          path: `/sound/${file.filename}`,
+          path: file.type && file.type.toLowerCase() === '音乐' 
+            ? `/sound/bgm/${file.filename}` 
+            : `/sound/sfx/${file.filename}`,
           size: 0,
           createdAt: new Date()
         };
