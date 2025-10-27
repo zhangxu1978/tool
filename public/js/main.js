@@ -83,9 +83,9 @@ document.addEventListener('DOMContentLoaded', function() {
         fetch(window.getApiUrl('/data/DialogueList.json'))
             .then(response => response.json())
             .then(data => {
-                if (data.dialogues) {
+                if (data) {
                     // 检查是否有完全匹配的选项
-                    const matchedOption = data.dialogues.find(d => 
+                    const matchedOption = data.find(d => 
                         (d.name ? `${d.name} - 对话 ${d.id}` : `对话 ${d.id}`) === inputValue
                     );
                     
@@ -112,8 +112,8 @@ document.addEventListener('DOMContentLoaded', function() {
             fetch('/data/DialogueList.json')
                 .then(response => response.json())
                 .then(data => {
-                    if (data.dialogues) {
-                        const selectedDialogue = data.dialogues.find(d => d.id === selectedId);
+                    if (data) {
+                        const selectedDialogue = data.find(d => d.id === selectedId);
                         if (selectedDialogue) {
                             document.getElementById('dialogueText').value = selectedDialogue.text;
                             // 更新搜索输入框显示的文本
@@ -328,7 +328,7 @@ document.addEventListener('DOMContentLoaded', function() {
         fetch('/data/DialogueList.json')
             .then(response => response.json())
             .then(data => {
-                if (!data.dialogues || data.dialogues.length === 0) {
+                if (!data || data.length === 0) {
                     branchTargetsDiv.innerHTML = '<p class="text-muted">没有可用的对话</p>';
                     return;
                 }
@@ -352,7 +352,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     select.appendChild(emptyOption);
                     
                     // 添加所有对话作为选项
-                    data.dialogues.forEach(dialogue => {
+                    data.forEach(dialogue => {
                         const optionElement = document.createElement('option');
                         optionElement.value = dialogue.id;
                         optionElement.textContent = dialogue.name ? `${dialogue.name} - 对话 ${dialogue.id}` : `对话 ${dialogue.id}`;
@@ -1237,14 +1237,14 @@ function loadDialogues() {
     fetch('/data/DialogueList.json')
         .then(response => response.json())
         .then(data => {
-            if (!data.dialogues || data.dialogues.length === 0) {
+            if (!data || data.length === 0) {
                 return;
             }
             
             // 保存当前选中的对话名称
             let selectedDialogueName = '';
             if (currentHiddenValue) {
-                const selectedDialogue = data.dialogues.find(d => d.id === currentHiddenValue);
+                const selectedDialogue = data.find(d => d.id === currentHiddenValue);
                 if (selectedDialogue) {
                     selectedDialogueName = selectedDialogue.name ? 
                         `${selectedDialogue.name} - 对话 ${selectedDialogue.id}` : 
@@ -1252,7 +1252,7 @@ function loadDialogues() {
                 }
             }
             
-            data.dialogues.forEach(dialogue => {
+            data.forEach(dialogue => {
                 // 更新select元素（为了保持向后兼容）
                 const selectOption = document.createElement('option');
                 selectOption.value = dialogue.id;
@@ -1358,7 +1358,7 @@ function loadAudioFilesForSoundSelect() {
             }
             soundFiles.forEach(file => {
                 const option = document.createElement('option');
-                option.value =`/sound/${file.filename}`;
+                option.value =`/sound/sfx/${file.filename}`;
                 option.textContent =file.name || file.filename;
                 soundFileSelect.appendChild(option);
             });
@@ -1449,7 +1449,7 @@ function loadAudioFilesForMusicSelect() {
                 checkbox.type = 'checkbox';
                 checkbox.className = 'form-check-input';
                 checkbox.id = `music-${file.filename}`;
-                checkbox.value =`/sound/${file.filename}`;
+                checkbox.value =`/sound/bgm/${file.filename}`;
                 
                 const label = document.createElement('label');
                 label.className = 'form-check-label';
@@ -1499,16 +1499,16 @@ function saveDialogue() {
     fetch('/data/DialogueList.json')
         .then(response => response.json())
         .then(data => {
-            if (!data.dialogues) {
-                data.dialogues = [];
+            if (!data) {
+                data = [];
             }
             
             if (selectedId) {
                 // 更新现有对话
-                const dialogueIndex = data.dialogues.findIndex(d => d.id === selectedId);
+                const dialogueIndex = data.findIndex(d => d.id === selectedId);
                 if (dialogueIndex !== -1) {
                     // 弹出一个输入框让用户录入对话的名称
-                    const dialogueName = prompt('请输入对话名称', data.dialogues[dialogueIndex].name || '');
+                    const dialogueName = prompt('请输入对话名称', data[dialogueIndex].name || '');
                     if (dialogueName === null) {
                         return Promise.reject(new Error('取消保存'));
                     }
@@ -1517,8 +1517,8 @@ function saveDialogue() {
                         return Promise.reject(new Error('请输入对话名称'));
                     }
                     
-                    data.dialogues[dialogueIndex].text = dialogueText;
-                    data.dialogues[dialogueIndex].name = dialogueName;
+                    data[dialogueIndex].text = dialogueText;
+                    data[dialogueIndex].name = dialogueName;
                 }
             } else {
                 // 添加新对话
@@ -1533,11 +1533,11 @@ function saveDialogue() {
                 }
                 
                 // 生成新的ID
-                const newId = data.dialogues.length > 0 ? 
-                    (Math.max(...data.dialogues.map(d => parseInt(d.id))) + 1).toString() : '1';
+                const newId = data.length > 0 ? 
+                    (Math.max(...data.map(d => parseInt(d.id))) + 1).toString() : '1';
                 
                 // 添加新对话
-                data.dialogues.push({
+                data.push({
                     id: newId,
                     name: dialogueName,
                     text: dialogueText
@@ -1594,12 +1594,12 @@ function deleteDialogue() {
         fetch('/data/DialogueList.json')
             .then(response => response.json())
             .then(data => {
-                if (!data.dialogues) {
-                    data.dialogues = [];
+                if (!data) {
+                    data = [];
                 }
                 
                 // 过滤掉要删除的对话
-                data.dialogues = data.dialogues.filter(dialogue => dialogue.id !== selectedId);
+                data = data.filter(dialogue => dialogue.id !== selectedId);
                 
                 // 保存回文件
                 return fetch('/api/dialogue/save', {
@@ -1722,8 +1722,8 @@ function parseAndPlayDialogue(dialogueText) {
                                 fetch('/data/DialogueList.json')
                                     .then(response => response.json())
                                     .then(data => {
-                                        if (data.dialogues) {
-                                            const targetDialogue = data.dialogues.find(d => d.id === targetDialogueId);
+                                        if (data) {
+                                            const targetDialogue = data.find(d => d.id === targetDialogueId);
                                             if (targetDialogue) {
                                                 // 解析并播放目标对话
                                                 parseAndPlayDialogue(targetDialogue.text);
