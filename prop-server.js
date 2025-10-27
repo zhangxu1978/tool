@@ -17,7 +17,7 @@ router.use((req, res, next) => {
 });
 
 // 定义文件路径
-const jsonFilePath = path.join(__dirname, 'jsonData', 'PropList.json');
+const jsonFilePath = path.join(__dirname, 'data', 'PropList.json');
 
 /**
  * 确保JSON文件存在

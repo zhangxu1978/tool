@@ -12,9 +12,9 @@ const port = 3000;
 
 // 配置静态文件服务
 app.use(express.static('public'));
-app.use('/audio', express.static('audio'));
-app.use('/images', express.static('images'));
-app.use('/jsonData', express.static('jsonData'));
+app.use('/sound', express.static('sound'));
+app.use('/img', express.static('img'));
+app.use('/data', express.static('data'));
 app.use(express.json());
 
 // 导入门派管理模块
@@ -34,9 +34,39 @@ const playerServer = require('./player-server');
 app.use(playerServer);
 
 // 配置文件上传
-const audioStorage = multer.diskStorage({
+const soundStorage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, 'audio/');
+    cb(null, 'sound/');
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + path.extname(file.originalname));
+  }
+});
+
+// BGM文件存储配置
+const bgmStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    // 确保bgm目录存在
+    const bgmDir = 'sound/bgm/';
+    if (!fs.existsSync(bgmDir)) {
+      fs.mkdirSync(bgmDir, { recursive: true });
+    }
+    cb(null, bgmDir);
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + path.extname(file.originalname));
+  }
+});
+
+// SFX文件存储配置
+const sfxStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    // 确保sfx目录存在
+    const sfxDir = 'sound/sfx/';
+    if (!fs.existsSync(sfxDir)) {
+      fs.mkdirSync(sfxDir, { recursive: true });
+    }
+    cb(null, sfxDir);
   },
   filename: function (req, file, cb) {
     cb(null, Date.now() + path.extname(file.originalname));
@@ -45,15 +75,39 @@ const audioStorage = multer.diskStorage({
 
 const imageStorage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, 'images/');
+    cb(null, 'img/');
   },
   filename: function (req, file, cb) {
     cb(null, Date.now() + path.extname(file.originalname));
   }
 });
 
-const uploadAudio = multer({ 
-  storage: audioStorage,
+const uploadSound = multer({ 
+  storage: soundStorage,
+  fileFilter: function (req, file, cb) {
+    // 只接受音频文件
+    if (file.mimetype.startsWith('audio/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('只允许上传音频文件！'));
+    }
+  }
+});
+
+const uploadBgm = multer({ 
+  storage: bgmStorage,
+  fileFilter: function (req, file, cb) {
+    // 只接受音频文件
+    if (file.mimetype.startsWith('audio/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('只允许上传音频文件！'));
+    }
+  }
+});
+
+const uploadSfx = multer({ 
+  storage: sfxStorage,
   fileFilter: function (req, file, cb) {
     // 只接受音频文件
     if (file.mimetype.startsWith('audio/')) {
@@ -79,17 +133,17 @@ const uploadImage = multer({
 /**
  * 获取所有音频文件列表
  */
-app.get('/api/audio', (req, res) => {
-  fs.readdir('audio', (err, files) => {
+app.get('/api/sound', (req, res) => {
+  fs.readdir('sound', (err, files) => {
     if (err) {
       return res.status(500).json({ error: '无法读取音频文件' });
     }
     
     const audioFiles = files.map(file => {
-      const stats = fs.statSync(path.join('audio', file));
+      const stats = fs.statSync(path.join('sound', file));
       return {
         name: file,
-        path: `/audio/${file}`,
+        path: `/sound/${file}`,
         size: stats.size,
         createdAt: stats.birthtime
       };
@@ -102,17 +156,17 @@ app.get('/api/audio', (req, res) => {
 /**
  * 获取所有图片文件列表
  */
-app.get('/api/images', (req, res) => {
-  fs.readdir('images', (err, files) => {
+app.get('/api/img', (req, res) => {
+  fs.readdir('img', (err, files) => {
     if (err) {
       return res.status(500).json({ error: '无法读取图片文件' });
     }
     
     const imageFiles = files.map(file => {
-      const stats = fs.statSync(path.join('images', file));
+      const stats = fs.statSync(path.join('img', file));
       return {
         name: file,
-        path: `/images/${file}`,
+        path: `/img/${file}`,
         size: stats.size,
         createdAt: stats.birthtime
       };
@@ -125,7 +179,7 @@ app.get('/api/images', (req, res) => {
 /**
  * 上传音频文件
  */
-app.post('/api/audio/upload', uploadAudio.single('audioFile'), (req, res) => {
+app.post('/api/sound/upload', uploadSound.single('soundFile'), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: '没有选择文件或文件类型不正确' });
   }
@@ -134,8 +188,46 @@ app.post('/api/audio/upload', uploadAudio.single('audioFile'), (req, res) => {
     success: true, 
     file: {
       name: req.file.filename,
-      path: `/audio/${req.file.filename}`,
+      path: `/sound/${req.file.filename}`,
       size: req.file.size
+    }
+  });
+});
+
+/**
+ * 上传BGM文件
+ */
+app.post('/api/sound/bgm/upload', uploadBgm.single('bgmFile'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: '没有选择文件或文件类型不正确' });
+  }
+  
+  res.json({ 
+    success: true, 
+    file: {
+      name: req.file.filename,
+      path: `/sound/bgm/${req.file.filename}`,
+      size: req.file.size,
+      type: '音乐'
+    }
+  });
+});
+
+/**
+ * 上传SFX文件
+ */
+app.post('/api/sound/sfx/upload', uploadSfx.single('sfxFile'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: '没有选择文件或文件类型不正确' });
+  }
+  
+  res.json({ 
+    success: true, 
+    file: {
+      name: req.file.filename,
+      path: `/sound/sfx/${req.file.filename}`,
+      size: req.file.size,
+      type: '音效'
     }
   });
 });
@@ -143,7 +235,7 @@ app.post('/api/audio/upload', uploadAudio.single('audioFile'), (req, res) => {
 /**
  * 上传图片文件
  */
-app.post('/api/images/upload', uploadImage.single('imageFile'), (req, res) => {
+app.post('/api/img/upload', uploadImage.single('imageFile'), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: '没有选择文件或文件类型不正确' });
   }
@@ -152,7 +244,7 @@ app.post('/api/images/upload', uploadImage.single('imageFile'), (req, res) => {
     success: true, 
     file: {
       name: req.file.filename,
-      path: `/images/${req.file.filename}`,
+      path: `/img/${req.file.filename}`,
       size: req.file.size
     }
   });
@@ -161,9 +253,9 @@ app.post('/api/images/upload', uploadImage.single('imageFile'), (req, res) => {
 /**
  * 删除音频文件
  */
-app.delete('/api/audio/:filename', (req, res) => {
+app.delete('/api/sound/:filename', (req, res) => {
   const filename = req.params.filename;
-  const filePath = path.join('audio', filename);
+  const filePath = path.join('sound', filename);
   
   fs.unlink(filePath, (err) => {
     if (err) {
@@ -177,9 +269,9 @@ app.delete('/api/audio/:filename', (req, res) => {
 /**
  * 删除图片文件
  */
-app.delete('/api/images/:filename', (req, res) => {
+app.delete('/api/img/:filename', (req, res) => {
   const filename = req.params.filename;
-  const filePath = path.join('images', filename);
+  const filePath = path.join('img', filename);
   
   fs.unlink(filePath, (err) => {
     if (err) {
@@ -193,9 +285,9 @@ app.delete('/api/images/:filename', (req, res) => {
 /**
  * 获取音频文件关联的JSON数据
  */
-app.get('/api/audio/json/:filename', (req, res) => {
+app.get('/api/sound/json/:filename', (req, res) => {
   const filename = req.params.filename;
-  const jsonFilePath = path.join('jsonData', 'audio.json');
+  const jsonFilePath = path.join('data', 'sound.json');
   
   try {
     if (!fs.existsSync(jsonFilePath)) {
@@ -218,9 +310,9 @@ app.get('/api/audio/json/:filename', (req, res) => {
 /**
  * 保存音频文件关联的JSON数据
  */
-app.post('/api/audio/json/:filename', (req, res) => {
+app.post('/api/sound/json/:filename', (req, res) => {
   const filename = req.params.filename;
-  const jsonFilePath = path.join('jsonData', 'audio.json');
+  const jsonFilePath = path.join('data', 'sound.json');
   const { name, type } = req.body;
   
   try {
@@ -251,9 +343,9 @@ app.post('/api/audio/json/:filename', (req, res) => {
 /**
  * 获取图片文件关联的JSON数据
  */
-app.get('/api/images/json/:filename', (req, res) => {
+app.get('/api/img/json/:filename', (req, res) => {
   const filename = req.params.filename;
-  const jsonFilePath = path.join('jsonData', 'images.json');
+  const jsonFilePath = path.join('data', 'img.json');
   
   try {
     if (!fs.existsSync(jsonFilePath)) {
@@ -276,9 +368,9 @@ app.get('/api/images/json/:filename', (req, res) => {
 /**
  * 保存图片文件关联的JSON数据
  */
-app.post('/api/images/json/:filename', (req, res) => {
+app.post('/api/img/json/:filename', (req, res) => {
   const filename = req.params.filename;
-  const jsonFilePath = path.join('jsonData', 'images.json');
+  const jsonFilePath = path.join('data', 'img.json');
   const { name, type } = req.body;
   
   try {
@@ -310,7 +402,7 @@ app.post('/api/images/json/:filename', (req, res) => {
  * 保存对话数据
  */
 app.post('/api/dialogue/save', (req, res) => {
-  const jsonFilePath = path.join('jsonData', 'DialogueList.json');
+  const jsonFilePath = path.join('data', 'DialogueList.json');
   const dialogueData = req.body;
   
   try {
@@ -325,9 +417,9 @@ app.post('/api/dialogue/save', (req, res) => {
 /**
  * 按名称和类型检索音频文件
  */
-app.get('/api/audio/search', (req, res) => {
+app.get('/api/sound/search', (req, res) => {
   const { name, type } = req.query;
-  const jsonFilePath = path.join('jsonData', 'audio.json');
+  const jsonFilePath = path.join('data', 'sound.json');
   
   try {
     if (!fs.existsSync(jsonFilePath)) {
@@ -354,10 +446,10 @@ app.get('/api/audio/search', (req, res) => {
     // 获取文件的完整信息
     const result = filteredFiles.map(file => {
       try {
-        const stats = fs.statSync(path.join('audio', file.filename));
+        const stats = fs.statSync(path.join('sound', file.filename));
         return {
           ...file,
-          path: `/audio/${file.filename}`,
+          path: `/sound/${file.filename}`,
           size: stats.size,
           createdAt: stats.birthtime
         };
@@ -365,7 +457,7 @@ app.get('/api/audio/search', (req, res) => {
         // 文件可能已被删除，返回基本信息
         return {
           ...file,
-          path: `/audio/${file.filename}`,
+          path: `/sound/${file.filename}`,
           size: 0,
           createdAt: new Date()
         };
@@ -386,9 +478,9 @@ app.get('/api/audio/search', (req, res) => {
 /**
  * 按名称和类型检索图片文件
  */
-app.get('/api/images/search', (req, res) => {
+app.get('/api/img/search', (req, res) => {
   const { name, type } = req.query;
-  const jsonFilePath = path.join('jsonData', 'images.json');
+  const jsonFilePath = path.join('data', 'img.json');
   
   try {
     if (!fs.existsSync(jsonFilePath)) {
@@ -415,10 +507,10 @@ app.get('/api/images/search', (req, res) => {
     // 获取文件的完整信息
     const result = filteredFiles.map(file => {
       try {
-        const stats = fs.statSync(path.join('images', file.filename));
+        const stats = fs.statSync(path.join('img', file.filename));
         return {
           ...file,
-          path: `/images/${file.filename}`,
+          path: `/img/${file.filename}`,
           size: stats.size,
           createdAt: stats.birthtime
         };
@@ -426,7 +518,7 @@ app.get('/api/images/search', (req, res) => {
         // 文件可能已被删除，返回基本信息
         return {
           ...file,
-          path: `/images/${file.filename}`,
+          path: `/img/${file.filename}`,
           size: 0,
           createdAt: new Date()
         };

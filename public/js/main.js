@@ -3,7 +3,21 @@
  * 实现音频和图片文件的管理功能
  */
 
+// 在NW.js环境中加载初始化脚本
+if (typeof nw !== 'undefined') {
+    // 在NW.js环境中动态加载nw-init.js
+    const script = document.createElement('script');
+    script.src = '/js/nw-init.js';
+    document.head.appendChild(script);
+}
+
 document.addEventListener('DOMContentLoaded', function() {
+    // 确保window.getApiUrl存在
+    if (!window.getApiUrl) {
+        window.getApiUrl = function(endpoint) {
+            return endpoint; // 默认使用相对路径
+        };
+    }
     // 初始化加载文件列表
     loadAudioFiles();
     
@@ -66,7 +80,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // 查找匹配的选项
-        fetch('/jsonData/DialogueList.json')
+        fetch(window.getApiUrl('/data/DialogueList.json'))
             .then(response => response.json())
             .then(data => {
                 if (data.dialogues) {
@@ -95,7 +109,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (selectedId) {
             hiddenInput.value = selectedId;
             
-            fetch('/jsonData/DialogueList.json')
+            fetch('/data/DialogueList.json')
                 .then(response => response.json())
                 .then(data => {
                     if (data.dialogues) {
@@ -311,7 +325,7 @@ document.addEventListener('DOMContentLoaded', function() {
         branchTargetsDiv.innerHTML = '';
         
         // 先加载所有对话供选择
-        fetch('/jsonData/DialogueList.json')
+        fetch('/data/DialogueList.json')
             .then(response => response.json())
             .then(data => {
                 if (!data.dialogues || data.dialogues.length === 0) {
@@ -365,9 +379,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // 删除对话按钮
     document.getElementById('deleteDialogue').addEventListener('click', deleteDialogue);
     
-    // 音频上传区域点击事件
-    document.getElementById('audioUploadArea').addEventListener('click', function() {
-        document.getElementById('audioFileInput').click();
+    // BGM上传区域点击事件
+    document.getElementById('bgmUploadArea').addEventListener('click', function() {
+        document.getElementById('bgmFileInput').click();
+    });
+    
+    // SFX上传区域点击事件
+    document.getElementById('sfxUploadArea').addEventListener('click', function() {
+        document.getElementById('sfxFileInput').click();
     });
     
     // 图片上传区域点击事件
@@ -375,10 +394,17 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('imageFileInput').click();
     });
     
-    // 音频文件选择事件
-    document.getElementById('audioFileInput').addEventListener('change', function(e) {
+    // BGM文件选择事件
+    document.getElementById('bgmFileInput').addEventListener('change', function(e) {
         if (e.target.files.length > 0) {
-            uploadAudioFile(e.target.files[0]);
+            uploadBgmFile(e.target.files[0]);
+        }
+    });
+    
+    // SFX文件选择事件
+    document.getElementById('sfxFileInput').addEventListener('change', function(e) {
+        if (e.target.files.length > 0) {
+            uploadSfxFile(e.target.files[0]);
         }
     });
     
@@ -389,21 +415,21 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // 拖放上传功能 - 音频
-    const audioDropArea = document.getElementById('audioUploadArea');
-    audioDropArea.addEventListener('dragover', function(e) {
+    // 拖放上传功能 - BGM
+    const bgmDropArea = document.getElementById('bgmUploadArea');
+    bgmDropArea.addEventListener('dragover', function(e) {
         e.preventDefault();
         e.stopPropagation();
         this.style.borderColor = '#007bff';
     });
     
-    audioDropArea.addEventListener('dragleave', function(e) {
+    bgmDropArea.addEventListener('dragleave', function(e) {
         e.preventDefault();
         e.stopPropagation();
         this.style.borderColor = '#ddd';
     });
     
-    audioDropArea.addEventListener('drop', function(e) {
+    bgmDropArea.addEventListener('drop', function(e) {
         e.preventDefault();
         e.stopPropagation();
         this.style.borderColor = '#ddd';
@@ -411,7 +437,36 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.dataTransfer.files.length > 0) {
             const file = e.dataTransfer.files[0];
             if (file.type.startsWith('audio/')) {
-                uploadAudioFile(file);
+                uploadBgmFile(file);
+            } else {
+                alert('请上传音频文件！');
+            }
+        }
+    });
+    
+    // 拖放上传功能 - SFX
+    const sfxDropArea = document.getElementById('sfxUploadArea');
+    sfxDropArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        this.style.borderColor = '#007bff';
+    });
+    
+    sfxDropArea.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        this.style.borderColor = '#ddd';
+    });
+    
+    sfxDropArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        this.style.borderColor = '#ddd';
+        
+        if (e.dataTransfer.files.length > 0) {
+            const file = e.dataTransfer.files[0];
+            if (file.type.startsWith('audio/')) {
+                uploadSfxFile(file);
             } else {
                 alert('请上传音频文件！');
             }
@@ -461,7 +516,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         deleteModal.hide();
     });
-});
+}
+
+);
 
 /**
  * 加载音频文件列表
@@ -473,7 +530,7 @@ function loadAudioFiles() {
     audioList.innerHTML = '';
     loading.style.display = 'block';
     
-    fetch('/api/audio')
+    fetch(window.getApiUrl('/api/sound'))
         .then(response => response.json())
         .then(files => {
             loading.style.display = 'none';
@@ -508,7 +565,7 @@ function searchAudioFiles(name, type) {
     loading.style.display = 'block';
     
     // 构建搜索URL
-    let url = '/api/audio/search?';
+    let url = window.getApiUrl('/api/sound/search?');
     if (name) url += `name=${encodeURIComponent(name)}&`;
     if (type) url += `type=${encodeURIComponent(type)}`;
     
@@ -549,7 +606,7 @@ function loadImageFiles() {
     imageList.innerHTML = '';
     loading.style.display = 'block';
     
-    fetch('/api/images')
+    fetch(window.getApiUrl('/api/img'))
         .then(response => response.json())
         .then(files => {
             loading.style.display = 'none';
@@ -584,7 +641,7 @@ function searchImageFiles(name, type) {
     loading.style.display = 'block';
     
     // 构建搜索URL
-    let url = '/api/images/search?';
+    let url = window.getApiUrl('/api/img/search?');
     if (name) url += `name=${encodeURIComponent(name)}&`;
     if (type) url += `type=${encodeURIComponent(type)}`;
     
@@ -634,7 +691,7 @@ function createAudioFileItem(file) {
     const fileName = document.createElement('h5');
     
     // 检查是否有关联的JSON数据
-    fetch(`/api/audio/json/${file.name}`)
+    fetch(`/api/sound/json/${file.name}`)
         .then(response => response.json())
         .then(data => {
             if (data.success && data.data) {
@@ -688,7 +745,7 @@ function createAudioFileItem(file) {
     jsonButton.textContent = '关联数据';
     jsonButton.addEventListener('click', function() {
         // 检查是否已有关联数据
-        fetch(`/api/audio/json/${file.name}`)
+        fetch(`/api/sound/json/${file.name}`)
             .then(response => response.json())
             .then(data => {
                 const audioJsonModal = document.getElementById('audioJsonModal');
@@ -758,7 +815,7 @@ function createImageFileItem(file) {
     const fileName = document.createElement('h5');
     
     // 检查是否有关联的JSON数据
-    fetch(`/api/images/json/${file.name}`)
+    fetch(`/api/img/json/${file.name}`)
         .then(response => response.json())
         .then(data => {
             if (data.success && data.data) {
@@ -863,19 +920,110 @@ function createImageFileItem(file) {
 }
 
 /**
- * 上传音频文件
- * @param {File} file - 要上传的音频文件
+ * 上传BGM文件
+ * @param {File} file - 要上传的BGM文件
  */
-function uploadAudioFile(file) {
+function uploadBgmFile(file) {
     const formData = new FormData();
-    formData.append('audioFile', file);
+    formData.append('bgmFile', file);
     
     const audioList = document.getElementById('audioList');
     const loading = document.getElementById('audioLoading');
     
     loading.style.display = 'block';
     
-    fetch('/api/audio/upload', {
+    fetch(window.getApiUrl('/api/sound/bgm/upload'), {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // 保存文件关联信息到JSON
+            saveAudioFileInfo(data.file.name, file.name, '音乐').then(() => {
+                loadAudioFiles(); // 重新加载音频列表
+            });
+        } else {
+            alert(`上传失败: ${data.error}`);
+            loading.style.display = 'none';
+        }
+    })
+    .catch(error => {
+        alert(`上传失败: ${error.message}`);
+        loading.style.display = 'none';
+        console.error('上传BGM文件失败:', error);
+    });
+}
+
+/**
+ * 上传SFX文件
+ * @param {File} file - 要上传的SFX文件
+ */
+function uploadSfxFile(file) {
+    const formData = new FormData();
+    formData.append('sfxFile', file);
+    
+    const audioList = document.getElementById('audioList');
+    const loading = document.getElementById('audioLoading');
+    
+    loading.style.display = 'block';
+    
+    fetch(window.getApiUrl('/api/sound/sfx/upload'), {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // 保存文件关联信息到JSON
+            saveAudioFileInfo(data.file.name, file.name, '音效').then(() => {
+                loadAudioFiles(); // 重新加载音频列表
+            });
+        } else {
+            alert(`上传失败: ${data.error}`);
+            loading.style.display = 'none';
+        }
+    })
+    .catch(error => {
+        alert(`上传失败: ${error.message}`);
+        loading.style.display = 'none';
+        console.error('上传SFX文件失败:', error);
+    });
+}
+
+/**
+ * 保存音频文件关联信息
+ * @param {string} filename - 服务器上的文件名
+ * @param {string} originalName - 原始文件名
+ * @param {string} type - 文件类型（音乐/音效）
+ * @returns {Promise}
+ */
+function saveAudioFileInfo(filename, originalName, type) {
+    return fetch(`/api/sound/json/${filename}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ 
+            name: originalName.replace(/\.[^/.]+$/, ""), // 移除文件扩展名
+            type: type 
+          })
+        }).then(response => response.json());
+    }
+/**
+ * 上传音频文件
+ * @param {File} file - 要上传的音频文件
+ */
+function uploadAudioFile(file) {
+    const formData = new FormData();
+    formData.append('soundFile', file);
+    
+    const audioList = document.getElementById('audioList');
+    const loading = document.getElementById('audioLoading');
+    
+    loading.style.display = 'block';
+    
+    fetch(window.getApiUrl('/api/sound/upload'), {
         method: 'POST',
         body: formData
     })
@@ -896,36 +1044,107 @@ function uploadAudioFile(file) {
 }
 
 /**
+ * 压缩PNG图片
+ * @param {File} file - 原始PNG文件
+ * @returns {Promise<Blob>} - 压缩后的PNG Blob
+ */
+function compressPNG(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = function(event) {
+            const img = new Image();
+            img.src = event.target.result;
+            img.onload = function() {
+                // 创建Canvas元素
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                // 设置Canvas尺寸为原始图片尺寸
+                canvas.width = img.width;
+                canvas.height = img.height;
+                
+                // 清除Canvas并设置透明背景
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // 绘制图片到Canvas（保留透明通道）
+                ctx.drawImage(img, 0, 0);
+                
+                // 将Canvas内容转换为压缩的PNG Blob
+                // quality参数在PNG中影响不大，但保留它以兼容API
+                canvas.toBlob(
+                    (blob) => {
+                        if (blob) {
+                            resolve(blob);
+                        } else {
+                            reject(new Error('PNG压缩失败'));
+                        }
+                    },
+                    'image/png',
+                    0.8 // 压缩质量，对于PNG主要影响压缩算法的选择
+                );
+            };
+            img.onerror = function() {
+                reject(new Error('图片加载失败'));
+            };
+        };
+        reader.onerror = function() {
+            reject(new Error('文件读取失败'));
+        };
+    });
+}
+
+/**
  * 上传图片文件
  * @param {File} file - 要上传的图片文件
  */
-function uploadImageFile(file) {
-    const formData = new FormData();
-    formData.append('imageFile', file);
-    
+async function uploadImageFile(file) {
     const imageList = document.getElementById('imageList');
     const loading = document.getElementById('imageLoading');
     
     loading.style.display = 'block';
     
-    fetch('/api/images/upload', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
+    try {
+        let fileToUpload = file;
+        
+        // 检查是否为PNG图片，如果是则进行压缩
+        if (file.type === 'image/png') {
+            // 显示压缩中提示
+            alert('正在压缩PNG图片，请稍候...');
+            // 压缩图片
+            const compressedBlob = await compressPNG(file);
+            // 创建新的File对象，保留原始文件名和类型
+            fileToUpload = new File([compressedBlob], file.name, { type: 'image/png' });
+            
+            // 显示压缩结果
+            const originalSize = (file.size / 1024).toFixed(2);
+            const compressedSize = (fileToUpload.size / 1024).toFixed(2);
+            const reduction = ((1 - fileToUpload.size / file.size) * 100).toFixed(1);
+            console.log(`PNG图片压缩完成: ${originalSize}KB -> ${compressedSize}KB (减少${reduction}%)`);
+        }
+        
+        // 创建表单数据并上传
+        const formData = new FormData();
+        formData.append('imageFile', fileToUpload);
+        
+        const response = await fetch(window.getApiUrl('/api/img/upload'), {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
         if (data.success) {
             loadImageFiles(); // 重新加载图片列表
         } else {
             alert(`上传失败: ${data.error}`);
-            loading.style.display = 'none';
         }
-    })
-    .catch(error => {
-        alert(`上传失败: ${error.message}`);
+    } catch (error) {
+        alert(`处理失败: ${error.message}`);
+        console.error('图片处理或上传失败:', error);
+    } finally {
         loading.style.display = 'none';
-        console.error('上传图片文件失败:', error);
-    });
+    }
 }
 
 /**
@@ -936,7 +1155,7 @@ function deleteAudioFile(filename) {
     const loading = document.getElementById('audioLoading');
     loading.style.display = 'block';
     
-    fetch(`/api/audio/${filename}`, {
+    fetch(window.getApiUrl(`/api/sound/${filename}`), {
         method: 'DELETE'
     })
     .then(response => response.json())
@@ -963,7 +1182,7 @@ function deleteImageFile(filename) {
     const loading = document.getElementById('imageLoading');
     loading.style.display = 'block';
     
-    fetch(`/api/images/${filename}`, {
+    fetch(window.getApiUrl(`/api/img/${filename}`), {
         method: 'DELETE'
     })
     .then(response => response.json())
@@ -1066,7 +1285,7 @@ function loadImagesForCharacterSelect() {
     const roleImageSelect = document.getElementById('roleImage');
     
     // 从images.json获取图片数据
-    fetch('/jsonData/images.json')
+    fetch(window.getApiUrl('/data/img.json'))
         .then(response => response.json())
         .then(data => {
             roleImageSelect.innerHTML = '';
@@ -1094,7 +1313,7 @@ function loadImagesForCharacterSelect() {
             characterImages.forEach(image => {
                 const option = document.createElement('option');
                 // 构建完整的图片路径
-                option.value = `/images/${image.filename}`;
+                option.value = `/img/${image.filename}`;
                 option.textContent = image.name || image.filename;
                 roleImageSelect.appendChild(option);
             });
@@ -1116,7 +1335,7 @@ function loadAudioFilesForSoundSelect() {
     const soundFileSelect = document.getElementById('soundFile');
     
     // 获取所有音频文件
-    fetch('/jsonData/audio.json')
+    fetch(window.getApiUrl('/data/sound.json'))
         .then(response => response.json())
         .then(data => {
             soundFileSelect.innerHTML = '';
@@ -1139,7 +1358,7 @@ function loadAudioFilesForSoundSelect() {
             }
             soundFiles.forEach(file => {
                 const option = document.createElement('option');
-                option.value =`/audio/${file.filename}`;
+                option.value =`/sound/${file.filename}`;
                 option.textContent =file.name || file.filename;
                 soundFileSelect.appendChild(option);
             });
@@ -1160,7 +1379,7 @@ function loadImagesForBackgroundSelect() {
     const backgroundImageSelect = document.getElementById('backgroundImage');
     
     // 从images.json获取图片数据
-    fetch('/jsonData/images.json')
+    fetch(window.getApiUrl('/data/img.json'))
         .then(response => response.json())
         .then(data => {
             backgroundImageSelect.innerHTML = '';
@@ -1187,7 +1406,7 @@ function loadImagesForBackgroundSelect() {
             backgroundImages.forEach(image => {
                 const option = document.createElement('option');
                 // 构建完整的图片路径
-                option.value = `/images/${image.filename}`;
+                option.value = `/img/${image.filename}`;
                 option.textContent = image.name || image.filename;
                 backgroundImageSelect.appendChild(option);
             });
@@ -1208,7 +1427,7 @@ function loadAudioFilesForMusicSelect() {
     const musicListDiv = document.getElementById('musicList');
     
     // 获取所有音频文件
-    fetch('/jsonData/audio.json')
+    fetch(window.getApiUrl('/data/sound.json'))
         .then(response => response.json())
         .then(data => {
             musicListDiv.innerHTML = '';
@@ -1230,7 +1449,7 @@ function loadAudioFilesForMusicSelect() {
                 checkbox.type = 'checkbox';
                 checkbox.className = 'form-check-input';
                 checkbox.id = `music-${file.filename}`;
-                checkbox.value =`/audio/${file.filename}`;
+                checkbox.value =`/sound/${file.filename}`;
                 
                 const label = document.createElement('label');
                 label.className = 'form-check-label';
@@ -1326,7 +1545,7 @@ function saveDialogue() {
             }
             
             // 保存回文件
-            return fetch('/api/dialogue/save', {
+            return fetch(window.getApiUrl('/api/dialogue/save'), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -1569,7 +1788,7 @@ function parseAndPlayDialogue(dialogueText) {
                         // 检查图片路径是否是res://格式或实际路径
                         if (imagePath.startsWith('res://')) {
                             // 模拟res://路径，实际项目中可能需要转换
-                            characterImage.src = '/images/default-character.png';
+                            characterImage.src = '/img/default-character.png';
                             characterImage.alt = '角色图片';
                         } else {
                             // 使用实际路径
@@ -1825,7 +2044,7 @@ document.getElementById('saveAudioJsonBtn').addEventListener('click', function()
         return;
     }
     
-    fetch(`/api/audio/json/${filename}`, {
+    fetch(`/api/sound/json/${filename}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -1862,7 +2081,7 @@ document.getElementById('saveImageJsonBtn').addEventListener('click', function()
         return;
     }
     
-    fetch(`/api/images/json/${filename}`, {
+    fetch(`/api/img/json/${filename}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
