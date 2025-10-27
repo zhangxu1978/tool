@@ -1234,7 +1234,7 @@ function loadDialogues() {
     // 清空datalist
     dialogueOptions.innerHTML = '';
     
-    fetch('/jsonData/DialogueList.json')
+    fetch('/data/DialogueList.json')
         .then(response => response.json())
         .then(data => {
             if (!data.dialogues || data.dialogues.length === 0) {
@@ -1496,7 +1496,7 @@ function saveDialogue() {
         return;
     }
     
-    fetch('/jsonData/DialogueList.json')
+    fetch('/data/DialogueList.json')
         .then(response => response.json())
         .then(data => {
             if (!data.dialogues) {
@@ -1591,7 +1591,7 @@ function deleteDialogue() {
     
     // 弹出确认框
     if (confirm('确定要删除这个对话吗？此操作不可撤销。')) {
-        fetch('/jsonData/DialogueList.json')
+        fetch('/data/DialogueList.json')
             .then(response => response.json())
             .then(data => {
                 if (!data.dialogues) {
@@ -1719,7 +1719,7 @@ function parseAndPlayDialogue(dialogueText) {
                             const targetDialogueId = branchTargets[option.trim()];
                             if (targetDialogueId) {
                                 // 查找并加载目标对话
-                                fetch('/jsonData/DialogueList.json')
+                                fetch('/data/DialogueList.json')
                                     .then(response => response.json())
                                     .then(data => {
                                         if (data.dialogues) {
