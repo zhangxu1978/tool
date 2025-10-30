@@ -80,6 +80,19 @@
         <button onclick="confirmPropSelection()">确认</button>
         <button onclick="closePropModal()">取消</button>
     </div>
+    <div class="prop-filter-container">
+        <input type="text" id="propFilterId" placeholder="按ID筛选" oninput="filterProps()">
+        <input type="text" id="propFilterName" placeholder="按名称筛选" oninput="filterProps()">
+        <select id="propFilterType" onchange="filterProps()">
+            <option value="">全部类型</option>
+            <option value="法宝">法宝</option>
+            <option value="丹药">丹药</option>
+            <option value="书籍">书籍</option>
+            <option value="任务道具">任务道具</option>
+            <option value="装备">装备</option>
+            <option value="资源">资源</option>
+        </select>
+    </div>
     <table class="prop-table" id="propTable">
         <thead>
             <tr>
@@ -88,12 +101,69 @@
                 <th>名称</th>
                 <th>描述</th>
                 <th>数量</th>
+                <th>类型</th>
             </tr>
         </thead>
         <tbody id="propTableBody">
         </tbody>
     </table>
 </div>
+
+<script>
+// 筛选道具函数
+function filterProps() {
+    const filterId = document.getElementById('propFilterId').value.toLowerCase();
+    const filterName = document.getElementById('propFilterName').value.toLowerCase();
+    const filterType = document.getElementById('propFilterType').value;
+    const rows = document.getElementById('propTableBody').getElementsByTagName('tr');
+    
+    for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        const idCell = row.cells[1]; // ID列
+        const nameCell = row.cells[2]; // 名称列
+        const typeCell = row.cells[5]; // 类型列
+        // 获取类型信息（假设存储在data-type属性中）
+       // const type = row.getAttribute('data-type') || '';
+        
+        let idMatch = true;
+        let nameMatch = true;
+        let typeMatch = true;
+        
+        if (filterId) {
+            idMatch = idCell.textContent.toLowerCase()===filterId;
+        }
+        
+        if (filterName) {
+            nameMatch = nameCell.textContent.toLowerCase().includes(filterName);
+        }
+        
+        if (filterType) {
+            typeMatch = typeCell.textContent.toLowerCase()===filterType;
+        }
+        
+        row.style.display = (idMatch && nameMatch && typeMatch) ? '' : 'none';
+    }
+}
+
+// 初始化类型筛选下拉框
+function initPropTypeFilter(types) {
+    const typeFilter = document.getElementById('propFilterType');
+    // 清空现有选项（保留第一个全部类型选项）
+    while (typeFilter.options.length > 1) {
+        typeFilter.remove(1);
+    }
+    
+    // 添加类型选项
+    types.forEach(type => {
+        if (type && type.trim()) {
+            const option = document.createElement('option');
+            option.value = type;
+            option.textContent = type;
+            typeFilter.appendChild(option);
+        }
+    });
+}
+</script>
 
 <div id="skillSelectModal" class="prop-modal">
     <div class="prop-modal-buttons">

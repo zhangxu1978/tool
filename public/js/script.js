@@ -902,6 +902,7 @@ function showPropSelector(callback, preSelectedProps = []) {
             <td>${prop.Name}</td>
             <td>${prop.Desc || ''}</td>
             <td><input type="number" value="${quantity}" min="0"></td> <!-- 新增数量列 -->
+            <td>${prop.Type || ''}</td> <!-- 新增类型列 -->
         `;
         tbody.appendChild(tr);
     });
