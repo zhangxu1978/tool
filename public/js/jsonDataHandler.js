@@ -19,6 +19,18 @@ function writeJsonFile(fileName, data) {
             }
         });
     }
+    // 处理材料，只保留id和数量和价格
+    if (Array.isArray(dataToWrite)) {
+        dataToWrite.forEach(item => {
+            if (item.Ingredients && Array.isArray(item.Ingredients)) {
+                item.Ingredients = item.Ingredients.map(ingredient => ({
+                    Id: ingredient.Id,
+                    Quantity: ingredient.Quantity,
+                    Price: ingredient.Price
+                }));
+            }
+        });
+    }
     
     console.log(`写入文件: ${filePath}`);
     console.log(dataToWrite);
@@ -51,7 +63,7 @@ async function readJsonFile(filename) {
 // 查找目录下所有json文件
 function findJsonFile() {
     // 这里需要手动列出文件名，因为浏览器无法直接读取目录
-    return ['PlayerList.json','FeedbackList.json', 'MapList.json', 'MapRelationshipList.json', 'PropList.json', 'SkillList.json', 'EventList.json', 'CareerList.json', 'FanyiList.json'];
+    return ['PlayerList.json','RecipeList.json','FeedbackList.json', 'MapList.json', 'MapRelationshipList.json', 'PropList.json', 'SkillList.json', 'EventList.json', 'CareerList.json', 'FanyiList.json'];
 }
 
 async function loadAllJsonFiles() {

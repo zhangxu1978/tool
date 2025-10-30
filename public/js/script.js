@@ -11,7 +11,8 @@ let fanyiData = {
     "FanyiList": {"Name":"字段","ChName":"中文名","Id":"主键","Type":"分类"},
     "SkillList": {},
     "MapList": {},
-    "MapRelationshipList": {}
+    "MapRelationshipList": {},
+     "RecipeList": {}
 };
 let showData = [];
 let maxId = 0;
@@ -51,7 +52,11 @@ function handleFileUpload(event) {
                 }
                 else if (key == "PropList") {
                     document.getElementById('showItems').style.display = 'block'; // 显示道具
-                } else if (key == "SkillList") {
+                }
+                 else if (key == "RecipeList") {
+                    document.getElementById('showRecipes').style.display = 'block'; // 显示配方
+                }
+                 else if (key == "SkillList") {
                     document.getElementById('showSkills').style.display = 'block'; // 显示技能
                 } else if (key == "EventList") {
                     document.getElementById('showEvents').style.display = 'block'; // 显示事件
@@ -73,7 +78,10 @@ function handleFileUpload(event) {
                         }
                         else if (it["Type"] == "道具") {
                             fanyiData.PropList[it["Name"]] = it["ChName"];
-                        } else if (it["Type"] == "事件") {
+                        }else if (it["Type"] == "配方") {
+                            fanyiData.RecipeList[it["Name"]] = it["ChName"];
+                        }
+                         else if (it["Type"] == "事件") {
                             fanyiData.EventList[it["Name"]] = it["ChName"];
                         } else if (it["Type"] == "技能") {
                             fanyiData.SkillList[it["Name"]] = it["ChName"];
@@ -114,7 +122,7 @@ function showSection(section) {
     currentSection = section;
     clearOptionsExceptFirst();
     let key = "";
-    if (currentSection == "PlayerList"||currentSection == "FanyiList" || currentSection == "CareerList" || currentSection == "PropList" || currentSection == "SkillList" || currentSection == "EventList"|| currentSection == "MapRelationshipList"|| currentSection == "MapList") key = "Type";
+    if (currentSection == "PlayerList"||currentSection == "RecipeList"||currentSection == "FanyiList" || currentSection == "CareerList" || currentSection == "PropList" || currentSection == "SkillList" || currentSection == "EventList"|| currentSection == "MapRelationshipList"|| currentSection == "MapList") key = "Type";
     if (currentSection == "FeedbackList") key = "Name";
     if (key != "")
         data[currentSection].forEach(
@@ -314,7 +322,7 @@ function openAddModal() {
                 
                 rowDiv.appendChild(button);
                 rowDiv.appendChild(input);
-            } else if (key === "Props") {
+            } else if (key === "Props"||key === "Ingredients") {
                 const button = document.createElement('button');
                 button.textContent = "选择道具";
                 button.style.margin = "5px";
@@ -409,7 +417,7 @@ function openAddModal() {
                 
                 rowDiv.appendChild(button);
                 rowDiv.appendChild(input);
-            } else {
+            }else {
                 // 其他字段保持不变
                 const input = document.createElement('input');
                 input.type = 'text';
@@ -463,7 +471,7 @@ function confirmAdd() {
                 }
             } else if (fieldName !== "Props" && fieldName !== "Skills" && 
                       fieldName !== "Npcs" && fieldName !== "Events" && 
-                      fieldName !== "Feedback") {
+                      fieldName !== "Feedback"&&fieldName !== "Ingredients") {
                 item[fieldName] = field.value;
             }
         }
@@ -473,7 +481,7 @@ function confirmAdd() {
             const fieldName = field.name;
             if (fieldName === "Props" || fieldName === "Skills" || 
                 fieldName === "Npcs" || fieldName === "Events" || 
-                fieldName === "Feedback") {
+                fieldName === "Feedback"||fieldName === "Ingredients") {
                 try {
                     item[fieldName] = JSON.parse(field.value || '[]');
                 } catch (e) {
@@ -588,7 +596,7 @@ button.onclick = () => {
 
 rowDiv.appendChild(button);
 rowDiv.appendChild(input);
-            } else if (key === "Props") {
+            } else if (key === "Props"||key === "Ingredients") {
                 const button = document.createElement('button');
                 const existingProps = Array.isArray(item[key]) ? item[key] : [];
                 button.textContent = `已选择 ${existingProps.length} 个道具`;
@@ -689,7 +697,7 @@ rowDiv.appendChild(input);
                 
                 rowDiv.appendChild(button);
                 rowDiv.appendChild(input);
-            } else {
+            }else {
                 const input = document.createElement('input');
                 input.type = 'text';
                 input.value = item[key];
@@ -1085,6 +1093,8 @@ async function loadJsonData() {
             }
              else if (key === "PropList") {
                 document.getElementById('showItems').style.display = 'block'; // 显示道具
+            } else if (key === "RecipeList") {
+                document.getElementById('showRecipes').style.display = 'block'; // 显示配方
             } else if (key === "SkillList") {
                 document.getElementById('showSkills').style.display = 'block'; // 显示技能
             } else if (key === "EventList") {
@@ -1107,7 +1117,11 @@ async function loadJsonData() {
                         }
                      else if (it["Type"] == "道具") {
                         fanyiData.PropList[it["Name"]] = it["ChName"];
-                    } else if (it["Type"] == "事件") {
+                    } 
+                    else if (it["Type"] == "配方") {
+                        fanyiData.RecipeList[it["Name"]] = it["ChName"];
+                    } 
+                    else if (it["Type"] == "事件") {
                         fanyiData.EventList[it["Name"]] = it["ChName"];
                     } else if (it["Type"] == "技能") {
                         fanyiData.SkillList[it["Name"]] = it["ChName"];
