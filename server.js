@@ -429,7 +429,28 @@ app.post('/api/img/json/:filename', (req, res) => {
     res.status(500).json({ error: '保存JSON数据失败' });
   }
 });
-
+//保存json数据
+app.post('/data/:filename', (req, res) => {
+  //console.log('请求参数:', req.body);
+  const filename = req.params.filename;
+  const jsonFilePath = path.join('data', filename);
+  
+  try {
+    // 由于使用了express.json()中间件，req.body已经是解析后的对象
+    const jsonData = JSON.stringify(req.body, null, 2);
+    
+    // 确保data目录存在
+    if (!fs.existsSync('data')) {
+      fs.mkdirSync('data', { recursive: true });
+    }
+    
+    fs.writeFileSync(jsonFilePath, jsonData, 'utf8');
+    res.json({ success: true, message: '数据保存成功' });
+  } catch (error) {
+    console.error('保存JSON数据失败:', error);
+    res.status(500).json({ error: '保存JSON数据失败: ' + error.message });
+  }
+});
 /**
  * 保存对话数据
  */

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据管理</title>
+    <script src="js/jsonDataHandler.js" type="module"></script>
+<script src="js/script.js" type="module"></script>
+    <link rel="stylesheet" href="css/styles.css" type="text/css">
+        <!-- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"> -->
+</head>
+<body>
+    <div class="custom-tooltip"></div>
+<!-- Start of Selection -->
+<div class="container">
+    <div class="sidebar">
+        <ul>
+            <li id="uploadData" style="display: none;" onclick="uploadData()">加载</li>
+            <li style="display: none;" id="showFanyis" onclick="showSection('FanyiList')">翻译</li>
+            <li style="display: none;" id="showPlayer" onclick="showSection('PlayerList')">角色</li>
+            <li style="display: none;" id="showFeedback" onclick="showSection('FeedbackList')">反馈</li>
+            <li style="display: none;" id="showItems" onclick="showSection('PropList')">道具</li>
+            <li style="display: none;" id="showSkills" onclick="showSection('SkillList')">技能</li>
+            <li style="display: none;" id="showEvents" onclick="showSection('EventList')">事件</li>
+            <li style="display: none;" id="showCareers" onclick="showSection('CareerList')">职业</li>
+            <li style="display: none;" id="showMaps" onclick="showSection('MapList')">地图</li>
+            <li style="display: none;" id="showMapRelationships" onclick="showSection('MapRelationshipList')">地图关系</li>
+        </ul>
+    </div>
+    <div class="main-content">
+      
+        <div class="buttons">
+            <button onclick="openAddModal()">新增</button>
+            <button onclick="sortById()">排序</button>
+            <button onclick="downloadData()">下载</button>
+            <button onclick="downloadDataCsv()">下载Csv</button>
+            <button onclick="openAiDialog()">问问AI</button>
+            <select id="shaixuan"><option value="-1">全部</option></select>
+        </div>
+        <div id="data-display"></div>
+    </div>
+    
+<!-- Start of Selection -->
+<input style="display: none;" type="file" id="fileInput" accept=".json" multiple onchange="handleFileUpload(event)">
+
+</div>
+
+<!-- AI Dialog -->
+<div id="aiDialog" class="ai-dialog" style="display: none;">
+    <div class="ai-dialog-content">
+        <div class="ai-dialog-header">
+            <span class="close-ai-dialog" onclick="closeAiDialog()">&times;</span>
+        </div>
+        <iframe id="aiFrame" src="a.html" style="width: 100%; height: calc(100% - 40px); border: none;"></iframe>
+    </div>
+</div>
+
+<!-- Modal for adding and editing -->
+<div id="modal" style="display:none;">
+  
+    <button onclick="confirmAdd()">确认</button>
+    <button onclick="closeModal()">取消</button>
+    <button style="display:none" onclick="loadExample()">样例</button>
+    <button id="imageSelectBtn" style="display:none" onclick="openImageSelector()">选择图片</button>
+</div>
+
+<!-- Image Selector Modal -->
+<div id="imageSelectorModal" class="image-selector-modal" style="display:none;">
+    <div class="image-selector-modal-content">
+        <div class="image-selector-modal-header">
+            <span class="close-image-selector-modal" onclick="closeImageSelectorModal()">&times;</span>
+        </div>
+        <div id="imageGrid" class="image-grid"></div>
+    </div>
+</div>
+
+<div id="propSelectModal" class="prop-modal">
+    <div class="prop-modal-buttons">
+        <button onclick="confirmPropSelection()">确认</button>
+        <button onclick="closePropModal()">取消</button>
+    </div>
+    <table class="prop-table" id="propTable">
+        <thead>
+            <tr>
+                <th><input type="checkbox" onclick="toggleAllProps(this)"></th>
+                <th>ID</th>
+                <th>名称</th>
+                <th>描述</th>
+                <th>数量</th>
+            </tr>
+        </thead>
+        <tbody id="propTableBody">
+        </tbody>
+    </table>
+</div>
+
+<div id="skillSelectModal" class="prop-modal">
+    <div class="prop-modal-buttons">
+        <button onclick="confirmSkillSelection()">确认</button>
+        <button onclick="closeSkillModal()">取消</button>
+    </div>
+    <table class="prop-table" id="skillTable">
+        <thead>
+            <tr>
+                <th><input type="checkbox" onclick="toggleAllSkills(this)"></th>
+                <th>ID</th>
+                <th>名称</th>
+                <th>描述</th>
+            </tr>
+        </thead>
+        <tbody id="skillTableBody">
+        </tbody>
+    </table>
+</div>
+<div id="playerSelectModal" class="prop-modal">
+    <div class="prop-modal-buttons">
+        <button onclick="confirmPlayerSelection()">确认</button>
+        <button onclick="closePlayerModal()">取消</button>
+    </div>
+    <table class="prop-table" id="playerTable">
+        <thead>
+            <tr>
+                <th><input type="checkbox" onclick="toggleAllPlayers(this)"></th>
+                <th>ID</th>
+                <th>姓名</th>
+                <th>描述</th>
+            </tr>
+        </thead>
+        <tbody id="playerTableBody">
+        </tbody>
+    </table>
+</div>
+<div id="eventSelectModal" class="prop-modal">
+    <div class="prop-modal-buttons">
+        <button onclick="confirmEventSelection()">确认</button>
+        <button onclick="closeEventModal()">取消</button>
+    </div>
+    <table class="prop-table" id="eventTable">
+        <thead>
+            <tr>
+                <th><input type="checkbox" onclick="toggleAllEvents(this)"></th>
+                <th>ID</th>
+                <th>名称</th>
+                <th>描述</th>
+            </tr>
+        </thead>
+        <tbody id="eventTableBody">
+        </tbody>
+    </table>
+</div>
+<div id="feedbackSelectModal" class="prop-modal">
+    <div id="feedbackContent" class="feedback-content">
+    </div>
+</div>
+<!-- End of Selection -->
+</body>
+</html>

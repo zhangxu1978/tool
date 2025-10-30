@@ -1,0 +1,433 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;  
+}
+
+.container {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    width: 100vw;  /* 充满屏幕宽度 */
+    height: 100vh; /* 充满屏幕高度 */
+    position: absolute; /* 绝对定位 */
+    top: 0; /* 顶部对齐 */
+    left: 0; /* 左侧对齐 */
+}
+
+.sidebar {  
+    width: 100px;
+    height: 90%;
+    background-color: #333;
+    color: #fff;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    position: fixed; /* 改为固定定位 */
+    top: 20px; /* 向下移动20px */
+    z-index: 1000; /* 设置z-index以确保不被main-content遮挡 */
+}
+
+.sidebar ul {   
+    list-style-type: none;
+    padding: 0;
+}
+
+.sidebar ul li {
+    cursor: pointer;
+    padding: 10px;
+    border-bottom: 1px solid #555;
+} 
+
+.main-content {
+    flex: 1;
+    margin-left: 20px;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    position: absolute; /* 绝对定位 */
+    top: 0; /* 顶部对齐 */
+    left: 0; /* 左侧对齐 */
+    width: 100%; /* 充满宽度 */
+}
+
+.buttons {
+    margin-top: 0px;
+    display: flex;
+    justify-content: center;
+}
+
+.buttons button {
+    margin: 5px;
+    padding: 10px 20px;
+    cursor: pointer;
+    border: none;
+    border-radius: 5px; /* 圆角 */
+    background-color: #a5c7edef; /* 按钮背景色 */
+    color: #fff; /* 按钮文字颜色 */
+    transition: background-color 0.3s; /* 背景色过渡效果 */
+}
+
+.buttons button:hover {
+    background-color: #b7c3d1; /* 悬停时的背景色 */
+}
+
+.buttons button {
+    margin: 5px;
+    padding: 10px 20px;
+    cursor: pointer;
+}
+
+#modal {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #fff;
+    padding: 20px;  
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    width: 600px; /* 宽500像素 */
+    height: auto; /* 高400像素 */
+    overflow: auto; /* 超出部分用滚动条 */
+}
+
+#modal input {
+
+    padding: 10px;
+    margin-bottom: 3px;
+    margin-left: 5px;
+    display: inline-block; /* 使input在一行显示 */
+    vertical-align: middle; /* 垂直居中对齐 */
+    box-sizing: border-box; /* 包含内边距和边框在宽度内 */
+    border: 1px solid #ccc; /* 边框 */
+    border-radius: 5px; /* 圆角 */
+    outline: none; /* 移除默认轮廓线 */
+    transition: border-color 0.3s; /* 边框颜色过渡效果 */
+}
+
+#modal input:focus {
+    border: 2px solid rgba(0, 0, 255, 0.7); /* 聚焦时边框颜色变为蓝色 */
+    box-shadow: 0 0 5px rgba(0, 0, 255, 0.7); /* 聚焦时添加阴影 */
+}
+
+#modal button {
+    margin-bottom: 5px;
+    padding: 10px 20px;
+    cursor: pointer;
+    border: none;
+    border-radius: 5px; /* 圆角 */
+    background-color: #a5c7edef; /* 按钮背景色 */
+    color: #fff; /* 按钮文字颜色 */
+    transition: background-color 0.3s; /* 背景色过渡效果 */
+}
+
+#modal button:hover {
+    background-color: #b7c3d1; /* 悬停时的背景色 */
+}
+
+.card {
+    width: 150px;
+    background-color: #fff; /* 卡片背景色 */
+    border-radius: 10px; /* 圆角 */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* 阴影效果 */
+    padding: 20px; /* 内边距 */
+    margin: 10px; /* 外边距 */
+    transition: transform 0.2s; /* 过渡效果 */
+    display: inline-block; /* 使卡片能够动态排列 */
+    vertical-align: top; /* 顶部对齐 */
+}
+
+#data-display {
+    margin-left: 100px; /* 向右移动100px */
+    display: flex; /* 使用flex布局 */
+    flex-wrap: wrap; /* 允许换行 */
+}
+
+.card:hover {
+    transform: scale(1.05); /* 悬停时放大效果 */
+}
+
+.buttons  select {
+    /* 外观设置 */
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-color: #f9f9f9; /* 背景颜色，可根据需求调整 */
+    border: 1px solid #ddd; /* 边框 */
+    border-radius: 5px; /* 圆角 */
+    padding: 8px 12px; /* 内边距，使选项内容不那么紧凑 */
+    font-size: 14px; /* 字体大小 */
+    color: #333; /* 字体颜色 */
+    /* 下拉箭头样式 */
+    background-image: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="6" viewBox="0 0 10 6"><path d="M1 1L5 5L9 1" fill="%23333"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    height: 38px;
+    width: 100px;
+    margin-top: 5px;
+}
+
+select:hover {
+    border-color: #999; /* 鼠标悬停时边框颜色变化 */
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.2); /* 添加阴影效果 */
+}
+
+select:focus {
+    outline: none; /* 去除默认聚焦轮廓 */
+    border-color: #007bff; /* 聚焦时边框颜色 */
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5); /* 聚焦时的阴影效果 */
+}
+
+.prop-modal {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    width: 80%;
+    max-height: 80vh;
+    overflow: auto;
+    z-index: 2000;
+    margin-left: 50px;
+}
+
+.prop-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.prop-table th, .prop-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+.prop-table th {
+    background-color: #f4f4f4;
+}
+
+.prop-modal-buttons {
+    position: sticky;
+    top: 0;
+    background-color: #fff;
+    padding: 10px 0;
+    z-index: 2001;
+}
+
+.feedback-content {
+    padding: 20px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.feedback-list {
+    margin-bottom: 20px;
+}
+
+.feedback-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px;
+    margin: 5px 0;
+    background-color: #f5f5f5;
+    border-radius: 4px;
+}
+
+.feedback-item .remove-btn {
+    background: none;
+    border: none;
+    color: #ff4444;
+    cursor: pointer;
+    font-size: 18px;
+    padding: 0 5px;
+}
+
+.feedback-input-area {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.feedback-input-area input {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.feedback-input-area button {
+    padding: 8px 15px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.feedback-input-area button:hover {
+    background-color: #45a049;
+}
+
+.feedback-header-area {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.feedback-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.feedback-info {
+    display: flex;
+    gap: 20px;
+}
+
+.feedback-info span {
+    color: #666;
+    font-size: 14px;
+}
+
+.familiarity {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.familiarity-value {
+    font-weight: bold;
+    color: #4CAF50;
+}
+
+.familiarity-bar {
+    width: 100%;
+    height: 6px;
+    background-color: #eee;
+    border-radius: 3px;
+    margin: 10px 0 20px;
+    overflow: hidden;
+}
+
+.familiarity-progress {
+    height: 100%;
+    background-color: #4CAF50;
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+.ai-dialog {
+    display: none;
+    position: fixed;
+    z-index: 9999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.ai-dialog-content {
+    position: relative;
+    background-color: #fefefe;
+    margin: 2% auto;
+    width: 90%;
+    height: 90%;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.ai-dialog-header {
+    padding: 8px;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    border-radius: 8px 8px 0 0;
+}
+
+.close-ai-dialog {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-right: 10px;
+}
+
+.close-ai-dialog:hover,
+.close-ai-dialog:focus {
+    color: #000;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.image-selector-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 2000;
+}
+
+.image-selector-modal-content {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    width: 80%;
+    max-height: 80vh;
+    overflow: auto;
+}
+
+.image-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, 32px);
+    gap: 2px;
+    padding: 10px;
+}
+
+.image-tile {
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+    border: 1px solid transparent;
+}
+
+.image-tile:hover {
+    border-color: #007bff;
+}
+
+.image-tile.selected {
+    border-color: #ff0000;
+}
+
+.close-image-selector-modal {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    font-size: 24px;
+    cursor: pointer;
+}
