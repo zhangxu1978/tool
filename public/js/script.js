@@ -301,6 +301,98 @@ function openAddModal() {
                         });
                     };
                     
+                    // 添加选择对话按钮
+                    const selectDialogBtn = document.createElement('button');
+                    selectDialogBtn.textContent = '选择对话';
+                    selectDialogBtn.onclick = async () => {
+                        try {
+                            // 从DialogueList.json加载对话数据
+                            const response = await fetch('../../data/DialogueList.json');
+                            if (!response.ok) {
+                                throw new Error('加载对话数据失败');
+                            }
+                            const dialogues = await response.json();
+                            
+                            // 创建对话选择弹窗
+                            const dialogSelector = document.createElement('div');
+                            dialogSelector.style.cssText = `
+                                position: fixed;
+                                top: 50%;
+                                left: 50%;
+                                transform: translate(-50%, -50%);
+                                background: white;
+                                padding: 20px;
+                                border-radius: 8px;
+                                box-shadow: 0 0 20px rgba(0,0,0,0.2);
+                                z-index: 3000;
+                                width: 70%;
+                                max-width: 600px;
+                                max-height: 60vh;
+                                overflow-y: auto;
+                            `;
+                            
+                            const selectorTitle = document.createElement('h3');
+                            selectorTitle.textContent = '选择对话';
+                            dialogSelector.appendChild(selectorTitle);
+                            
+                            const dialogueList = document.createElement('div');
+                            dialogueList.style.marginTop = '15px';
+                            
+                            dialogues.forEach(dialogue => {
+                                const dialogueItem = document.createElement('div');
+                                dialogueItem.style.cssText = `
+                                    padding: 10px;
+                                    border: 1px solid #ddd;
+                                    border-radius: 4px;
+                                    margin-bottom: 10px;
+                                    cursor: pointer;
+                                    transition: background-color 0.2s;
+                                `;
+                                dialogueItem.onmouseover = () => {
+                                    dialogueItem.style.backgroundColor = '#f5f5f5';
+                                };
+                                dialogueItem.onmouseout = () => {
+                                    dialogueItem.style.backgroundColor = 'white';
+                                };
+                                
+                                const dialogueName = document.createElement('div');
+                                dialogueName.style.fontWeight = 'bold';
+                                dialogueName.textContent = dialogue.name || `对话 ${dialogue.id}`;
+                                
+                                const dialogueId = document.createElement('div');
+                                dialogueId.style.fontSize = '12px';
+                                dialogueId.style.color = '#666';
+                                dialogueId.textContent = `ID: ${dialogue.id}`;
+                                
+                                dialogueItem.appendChild(dialogueName);
+                                dialogueItem.appendChild(dialogueId);
+                                
+                                dialogueItem.onclick = () => {
+                                    // 将选中的对话text内容复制到文本框
+                                    textarea.value = dialogue.text || '';
+                                    document.body.removeChild(dialogSelector);
+                                };
+                                
+                                dialogueList.appendChild(dialogueItem);
+                            });
+                            
+                            const closeSelectorBtn = document.createElement('button');
+                            closeSelectorBtn.textContent = '关闭';
+                            closeSelectorBtn.style.marginTop = '15px';
+                            closeSelectorBtn.onclick = () => {
+                                document.body.removeChild(dialogSelector);
+                            };
+                            
+                            dialogSelector.appendChild(dialogueList);
+                            dialogSelector.appendChild(closeSelectorBtn);
+                            document.body.appendChild(dialogSelector);
+                            
+                        } catch (error) {
+                            console.error('选择对话时出错:', error);
+                            alert('加载对话数据失败，请稍后重试');
+                        }
+                    };
+                    
                     const textarea = document.createElement('textarea');
                     textarea.style.cssText = `
                         width: 100%;
@@ -315,6 +407,7 @@ function openAddModal() {
                     buttonContainer.appendChild(confirmBtn);
                     buttonContainer.appendChild(cancelBtn);
                     buttonContainer.appendChild(copyBtn); // 添加复制按钮到按钮容器
+                    buttonContainer.appendChild(selectDialogBtn); // 添加选择对话按钮到按钮容器
                     storyDialog.appendChild(buttonContainer);
                     storyDialog.appendChild(textarea);
                     document.body.appendChild(storyDialog);
@@ -574,6 +667,98 @@ button.onclick = () => {
             console.error('复制失败:', err);
         });
     };
+    
+    // 添加选择对话按钮
+    const selectDialogBtn = document.createElement('button');
+    selectDialogBtn.textContent = '选择对话';
+    selectDialogBtn.onclick = async () => {
+        try {
+            // 从DialogueList.json加载对话数据
+            const response = await fetch('../../data/DialogueList.json');
+            if (!response.ok) {
+                throw new Error('加载对话数据失败');
+            }
+            const dialogues = await response.json();
+            
+            // 创建对话选择弹窗
+            const dialogSelector = document.createElement('div');
+            dialogSelector.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: white;
+                padding: 20px;
+                border-radius: 8px;
+                box-shadow: 0 0 20px rgba(0,0,0,0.2);
+                z-index: 3000;
+                width: 70%;
+                max-width: 600px;
+                max-height: 60vh;
+                overflow-y: auto;
+            `;
+            
+            const selectorTitle = document.createElement('h3');
+            selectorTitle.textContent = '选择对话';
+            dialogSelector.appendChild(selectorTitle);
+            
+            const dialogueList = document.createElement('div');
+            dialogueList.style.marginTop = '15px';
+            
+            dialogues.forEach(dialogue => {
+                const dialogueItem = document.createElement('div');
+                dialogueItem.style.cssText = `
+                    padding: 10px;
+                    border: 1px solid #ddd;
+                    border-radius: 4px;
+                    margin-bottom: 10px;
+                    cursor: pointer;
+                    transition: background-color 0.2s;
+                `;
+                dialogueItem.onmouseover = () => {
+                    dialogueItem.style.backgroundColor = '#f5f5f5';
+                };
+                dialogueItem.onmouseout = () => {
+                    dialogueItem.style.backgroundColor = 'white';
+                };
+                
+                const dialogueName = document.createElement('div');
+                dialogueName.style.fontWeight = 'bold';
+                dialogueName.textContent = dialogue.name || `对话 ${dialogue.id}`;
+                
+                const dialogueId = document.createElement('div');
+                dialogueId.style.fontSize = '12px';
+                dialogueId.style.color = '#666';
+                dialogueId.textContent = `ID: ${dialogue.id}`;
+                
+                dialogueItem.appendChild(dialogueName);
+                dialogueItem.appendChild(dialogueId);
+                
+                dialogueItem.onclick = () => {
+                    // 将选中的对话text内容复制到文本框
+                    textarea.value = dialogue.text || '';
+                    document.body.removeChild(dialogSelector);
+                };
+                
+                dialogueList.appendChild(dialogueItem);
+            });
+            
+            const closeSelectorBtn = document.createElement('button');
+            closeSelectorBtn.textContent = '关闭';
+            closeSelectorBtn.style.marginTop = '15px';
+            closeSelectorBtn.onclick = () => {
+                document.body.removeChild(dialogSelector);
+            };
+            
+            dialogSelector.appendChild(dialogueList);
+            dialogSelector.appendChild(closeSelectorBtn);
+            document.body.appendChild(dialogSelector);
+            
+        } catch (error) {
+            console.error('选择对话时出错:', error);
+            alert('加载对话数据失败，请稍后重试');
+        }
+    };
                     
     const textarea = document.createElement('textarea');
     textarea.style.cssText = `
@@ -589,6 +774,7 @@ button.onclick = () => {
     buttonContainer.appendChild(confirmBtn);
     buttonContainer.appendChild(cancelBtn);
     buttonContainer.appendChild(copyBtn); // 添加复制按钮到按钮容器
+    buttonContainer.appendChild(selectDialogBtn); // 添加选择对话按钮到按钮容器
     storyDialog.appendChild(buttonContainer);
     storyDialog.appendChild(textarea);
     document.body.appendChild(storyDialog);
