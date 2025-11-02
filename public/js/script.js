@@ -233,6 +233,256 @@ function updateDisplay() {
     }
 }
 
+// 条件设计弹出框相关变量
+let conditionCallback = null;
+let currentConditionValue = '';
+
+// 创建条件设计弹出框
+function createConditionModal() {
+    // 检查是否已存在条件设计弹出框
+    if (document.getElementById('conditionModal')) {
+        return;
+    }
+    
+    const modal = document.createElement('div');
+    modal.id = 'conditionModal';
+    modal.className = 'condition-modal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000;
+        display: none;
+    `;
+    
+    const modalContent = document.createElement('div');
+    modalContent.className = 'condition-modal-content';
+    modalContent.style.cssText = `
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        width: 90%;
+        max-width: 800px;
+        max-height: 80vh;
+        overflow-y: auto;
+    `;
+    
+    const modalHeader = document.createElement('div');
+    modalHeader.className = 'condition-modal-header';
+    modalHeader.innerHTML = '<h3>条件设计</h3>';
+    
+    const modalBody = document.createElement('div');
+    modalBody.className = 'condition-modal-body';
+    modalBody.style.marginBottom = '20px';
+    
+    // 类别选择
+    modalBody.innerHTML = `
+        <div class="form-group" style="margin-bottom: 15px;">
+            <label for="conditionType">类别:</label>
+            <select id="conditionType" style="width: 100%; padding: 5px;"></select>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 15px;">
+            <label for="conditionProperty">属性:</label>
+            <select id="conditionProperty" style="width: 100%; padding: 5px;">
+            <option value="Id" data-value="Id">Id</option>
+            </select>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 15px;">
+            <label>运算符:</label>
+            <div id="operators" style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button class="operator-btn" data-operator="+" style="padding: 5px 10px;">+</button>
+                <button class="operator-btn" data-operator="-" style="padding: 5px 10px;">-</button>
+                <button class="operator-btn" data-operator="*" style="padding: 5px 10px;">*</button>
+                <button class="operator-btn" data-operator="/" style="padding: 5px 10px;">/</button>
+                <button class="operator-btn" data-operator="(" style="padding: 5px 10px;">(</button>
+                <button class="operator-btn" data-operator=")" style="padding: 5px 10px;">)</button>
+            </div>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 15px;">
+            <label for="conditionComparator">比较符:</label>
+            <select id="conditionComparator" style="width: 100%; padding: 5px;">
+                <option value=">">大于</option>
+                <option value="<">小于</option>
+                <option value="==">等于</option>
+                <option value=">=">大于等于</option>
+                <option value="<=">小于等于</option>
+                <option value="includes">包括</option>
+                <option value="startsWith">以此开始</option>
+                <option value="endsWith">以此结束</option>
+                <option value="exists">存在</option>
+                <option value="notExists">不存在</option>
+            </select>
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 15px;">
+            <label for="conditionValue">比较值:</label>
+            <input type="text" id="conditionValue" style="width: 100%; padding: 5px;">
+        </div>
+        
+        <div class="form-group" style="margin-bottom: 15px;">
+            <label for="conditionExpression">条件表达式:</label>
+            <input type="text" id="conditionExpression" readonly style="width: 100%; padding: 5px; background-color: #f5f5f5;">
+        </div>
+    `;
+    
+    const modalFooter = document.createElement('div');
+    modalFooter.className = 'condition-modal-footer';
+    modalFooter.style.textAlign = 'right';
+    modalFooter.innerHTML = `
+        <button id="testCondition" style="padding: 8px 16px; margin-right: 10px;">测试</button>
+        <button id="cancelCondition" style="padding: 8px 16px; margin-right: 10px;">取消</button>
+        <button id="confirmCondition" style="padding: 8px 16px;">确认</button>
+    `;
+    
+    modalContent.appendChild(modalHeader);
+    modalContent.appendChild(modalBody);
+    modalContent.appendChild(modalFooter);
+    modal.appendChild(modalContent);
+    
+    document.body.appendChild(modal);
+    
+    // 绑定事件
+    document.getElementById('conditionType').addEventListener('change', updatePropertySelect);
+    document.querySelectorAll('.operator-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const operator = this.getAttribute('data-operator');
+            const expressionInput = document.getElementById('conditionExpression');
+            expressionInput.value += operator;
+        });
+    });
+    
+    document.getElementById('conditionProperty').addEventListener('change', function() {
+        const propertySelect = document.getElementById('conditionProperty');
+        const selectedOption = propertySelect.options[propertySelect.selectedIndex];
+        if (selectedOption) {
+            const value = selectedOption.getAttribute('data-value') || selectedOption.value;
+            const expressionInput = document.getElementById('conditionExpression');
+            expressionInput.value += value;
+        }
+    });
+    
+    document.getElementById('conditionValue').addEventListener('change', function() {
+        const value = this.value;
+        const expressionInput = document.getElementById('conditionExpression');
+        expressionInput.value += '"' + value + '"';
+    });
+    
+    document.getElementById('confirmCondition').addEventListener('click', confirmCondition);
+    document.getElementById('cancelCondition').addEventListener('click', closeConditionModal);
+    document.getElementById('testCondition').addEventListener('click', testCondition);
+    
+    // 点击模态框外部关闭
+    modal.addEventListener('click', function(event) {
+        if (event.target === modal) {
+            closeConditionModal();
+        }
+    });
+}
+
+// 初始化类别和属性选择
+function initConditionSelects() {
+    const typeSelect = document.getElementById('conditionType');
+    typeSelect.innerHTML = '';
+    
+    // 从FanyiList中获取所有类型
+    const types = [...new Set(data.FanyiList.map(item => item.Type))];
+    types.forEach(type => {
+        const option = document.createElement('option');
+        option.value = type;
+        option.textContent = type;
+        typeSelect.appendChild(option);
+    });
+    
+    // 初始更新属性选择
+    updatePropertySelect();
+}
+
+// 根据选择的类别更新属性选择
+function updatePropertySelect() {
+    const typeSelect = document.getElementById('conditionType');
+    const propertySelect = document.getElementById('conditionProperty');
+    const selectedType = typeSelect.value;
+    
+    propertySelect.innerHTML = '';
+    
+    // 根据选择的类型筛选属性
+    const properties = data.FanyiList.filter(item => item.Type === selectedType);
+    properties.forEach(prop => {
+        const option = document.createElement('option');
+        option.value = prop.ChName;
+        option.setAttribute('data-value', prop.Name);
+        option.textContent = prop.ChName;
+        propertySelect.appendChild(option);
+    });
+    
+    // 默认选择ID属性
+    const idOption = Array.from(propertySelect.options).find(opt => 
+        opt.getAttribute('data-value') === 'Id'
+    );
+    if (idOption) {
+        idOption.selected = true;
+    }
+}
+
+// 显示条件设计弹出框
+function showConditionEditor(callback, initialCondition = '') {
+    // 确保条件设计弹出框已创建
+    createConditionModal();
+    
+    conditionCallback = callback;
+    currentConditionValue = initialCondition;
+    
+    // 设置初始条件表达式
+    document.getElementById('conditionExpression').value = initialCondition;
+    
+    // 初始化选择框
+    if (data.FanyiList) {
+        initConditionSelects();
+    }
+    
+    // 显示弹出框
+    document.getElementById('conditionModal').style.display = 'flex';
+}
+
+// 确认条件
+function confirmCondition() {
+    const expression = document.getElementById('conditionExpression').value;
+    if (conditionCallback) {
+        conditionCallback(expression);
+    }
+    closeConditionModal();
+}
+
+// 关闭条件设计弹出框
+function closeConditionModal() {
+    const modal = document.getElementById('conditionModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+    conditionCallback = null;
+}
+
+// 测试条件
+function testCondition() {
+    const expression = document.getElementById('conditionExpression').value;
+    alert('测试条件: ' + expression + '\n\n注: 这里仅做展示，实际测试需要根据业务逻辑实现');
+}
+
+// 注册全局函数
+window.showConditionEditor = showConditionEditor;
+window.confirmCondition = confirmCondition;
+window.closeConditionModal = closeConditionModal;
+window.testCondition = testCondition;
+
 function openAddModal() {
     const firstRecord = showData[0];
     if (firstRecord) {
@@ -248,7 +498,26 @@ function openAddModal() {
         Object.keys(firstRecord).forEach((key, index) => {
             let fy = fanyiData[currentSection][key] ? fanyiData[currentSection][key] : key;
             
-            if (key === "Story") {
+            // 处理触发条件字段
+            if (key === "Condition" && currentSection === "EventList") {
+                const button = document.createElement('button');
+                button.textContent = "设计条件";
+                button.style.margin = "5px";
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = key;
+                input.value = '';
+                
+                button.onclick = () => {
+                    showConditionEditor((condition) => {
+                        input.value = condition;
+                        button.textContent = condition ? `条件已设置` : "设计条件";
+                    }, input.value);
+                };
+                
+                rowDiv.appendChild(button);
+                rowDiv.appendChild(input);
+            } else if (key === "Story") {
                 const button = document.createElement('button');
                 button.textContent = "编辑故事";
                 button.style.margin = "5px";
@@ -782,6 +1051,24 @@ button.onclick = () => {
 
 rowDiv.appendChild(button);
 rowDiv.appendChild(input);
+            } else if (key === "Condition" && currentSection === "EventList") {
+                const button = document.createElement('button');
+                button.textContent = item[key] ? `条件已设置` : "设计条件";
+                button.style.margin = "5px";
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = key;
+                input.value = item[key] || '';
+                
+                button.onclick = () => {
+                    showConditionEditor((condition) => {
+                        input.value = condition;
+                        button.textContent = condition ? `条件已设置` : "设计条件";
+                    }, input.value);
+                };
+                
+                rowDiv.appendChild(button);
+                rowDiv.appendChild(input);
             } else if (key === "Props"||key === "Ingredients") {
                 const button = document.createElement('button');
                 const existingProps = Array.isArray(item[key]) ? item[key] : [];
