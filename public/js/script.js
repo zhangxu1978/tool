@@ -304,9 +304,11 @@ function createConditionModal() {
                 <button class="operator-btn" data-operator="*" style="padding: 5px 10px;">*</button>
                 <button class="operator-btn" data-operator="/" style="padding: 5px 10px;">/</button>
                 <button class="operator-btn" data-operator="(" style="padding: 5px 10px;">(</button>
-                <button class="operator-btn" data-operator=")" style="padding: 5px 10px;">)</button>
+                <button class="operator-btn" data-operator=")" style="padding: 5px 10px;">)</button> 
                 <button class="operator-btn" data-operator="&&" style="padding: 5px 10px;">与(&&)</button>
                 <button class="operator-btn" data-operator="||" style="padding: 5px 10px;">或(||)</button>
+                <button class="operator-btn" data-operator="?" style="padding: 5px 10px;">?</button>
+                <button class="operator-btn" data-operator=":" style="padding: 5px 10px;">:</button>
                 <button class="operator-btn" data-operator="result" style="padding: 5px 10px;">结果</button>
             </div>
         </div>
@@ -381,10 +383,11 @@ function createConditionModal() {
     document.getElementById('conditionProperty').addEventListener('change', function() {
         const propertySelect = document.getElementById('conditionProperty');
         const selectedOption = propertySelect.options[propertySelect.selectedIndex];
+        const selectedType = document.getElementById('conditionType').value;
         if (selectedOption) {
             const value = selectedOption.getAttribute('data-value') || selectedOption.value;
             const expressionInput = document.getElementById('conditionExpression');
-            expressionInput.value += value;
+            expressionInput.value += selectedType+"."+ value;
             expressionInput.focus();
         }
     });
