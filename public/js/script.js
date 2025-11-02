@@ -291,7 +291,6 @@ function createConditionModal() {
         <div class="form-group" style="margin-bottom: 15px;">
             <label for="conditionProperty">属性:</label>
             <select id="conditionProperty" style="width: 100%; padding: 5px;">
-            <option value="Id" data-value="Id">Id</option>
             </select>
         </div>
         
@@ -414,9 +413,19 @@ function updatePropertySelect() {
     
     propertySelect.innerHTML = '';
     
+    // 始终添加Id选项作为第一个选项
+    const idOption = document.createElement('option');
+    idOption.value = 'Id';
+    idOption.setAttribute('data-value', 'Id');
+    idOption.textContent = 'Id';
+    propertySelect.appendChild(idOption);
+    
     // 根据选择的类型筛选属性
     const properties = data.FanyiList.filter(item => item.Type === selectedType);
     properties.forEach(prop => {
+        // 跳过已经添加的Id选项
+        if (prop.Name === 'Id') return;
+        
         const option = document.createElement('option');
         option.value = prop.ChName;
         option.setAttribute('data-value', prop.Name);
@@ -425,12 +434,7 @@ function updatePropertySelect() {
     });
     
     // 默认选择ID属性
-    const idOption = Array.from(propertySelect.options).find(opt => 
-        opt.getAttribute('data-value') === 'Id'
-    );
-    if (idOption) {
-        idOption.selected = true;
-    }
+    idOption.selected = true;
 }
 
 // 显示条件设计弹出框
