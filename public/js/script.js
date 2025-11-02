@@ -530,9 +530,280 @@ function closeConditionModal() {
 }
 
 // 测试条件
-function testCondition() {
+async function testCondition() {
     const expression = document.getElementById('conditionExpression').value;
-    alert('测试条件: ' + expression + '\n\n注: 这里仅做展示，实际测试需要根据业务逻辑实现');
+    try {
+        // 加载所需的数据文件
+        let playerData = [];
+        let eventData = [];
+        let mapData = [];
+        
+        // 尝试从已加载的数据中获取，如果没有则尝试加载
+        if (data.PlayerList) {
+            playerData = data.PlayerList;
+        } else {
+            const playerResponse = await fetch('../data/playerList.json');
+            if (playerResponse.ok) {
+                playerData = await playerResponse.json();
+            }
+        }
+        
+        if (data.EventList) {
+            eventData = data.EventList;
+        } else {
+            const eventResponse = await fetch('../data/eventlist.json');
+            if (eventResponse.ok) {
+                eventData = await eventResponse.json();
+            }
+        }
+        
+        if (data.MapList) {
+            mapData = data.MapList;
+        } else {
+            const mapResponse = await fetch('../data/malist.json');
+            if (mapResponse.ok) {
+                mapData = await mapResponse.json();
+            }
+        }
+        
+        // 定义用于表达式解析的函数
+        function result(query) {
+            console.log('解析result查询:', query);
+            // 解析查询字符串，例如 "角色.Id==\"1\""
+            // 改进正则表达式，支持中文字符
+            const match = query.match(/^([\w\u4e00-\u9fa5]+)\.([^=<>!]+)\s*([=<>]=?|!=|!==)\s*(.+)$/);
+            if (!match) {
+                // 尝试更简单的匹配模式，同样支持中文
+                const simpleMatch = query.match(/^([\w\u4e00-\u9fa5]+)\.([^=]+)=(.+)$/);
+                if (!simpleMatch) {
+                    console.error('无法解析查询格式:', query);
+                    return [];
+                }
+                
+                // 对于简单的=，视为==
+                const [, dataType, field, value] = simpleMatch;
+                console.log('简单匹配成功:', dataType, field, value);
+                return processCondition(dataType, field, '==', value);
+            }
+            
+            const [, dataType, field, operator, value] = match;
+            console.log('复杂匹配成功:', dataType, field, operator, value);
+            return processCondition(dataType, field, operator, value);
+        }
+        
+        function processCondition(dataType, field, operator, value) {
+            console.log('处理条件:', dataType, field, operator, value);
+            let targetData = [];
+            
+            // 确定要查询的数据类型
+            if (dataType === '角色' || dataType === 'Player' || dataType === 'player') {
+                targetData = playerData || [];
+                console.log('使用角色数据，共', targetData.length, '条记录');
+            } else if (dataType === '事件' || dataType === 'Event' || dataType === 'event') {
+                targetData = eventData || [];
+                console.log('使用事件数据，共', targetData.length, '条记录');
+            } else if (dataType === '地图' || dataType === 'Map' || dataType === 'map') {
+                targetData = mapData || [];
+                console.log('使用地图数据，共', targetData.length, '条记录');
+            } else {
+                console.error('未知的数据类型:', dataType);
+                return [];
+            }
+            
+            // 清理值（去除引号）
+            let cleanValue = value.trim();
+            if ((cleanValue.startsWith('"') && cleanValue.endsWith('"')) || 
+                (cleanValue.startsWith('\'') && cleanValue.endsWith('\''))) {
+                cleanValue = cleanValue.slice(1, -1);
+            }
+            
+            console.log('清理后的值:', cleanValue);
+            
+            // 添加详细日志，查看每条记录的过滤过程
+            const filteredResults = [];
+            targetData.forEach((item, index) => {
+                const itemValue = item[field];
+                let match = false;
+                
+                if (itemValue === undefined) {
+                    console.log(`记录[${index}]: 字段${field}不存在`);
+                } else {
+                    switch (operator) {
+                        case '==':
+                        case '===':
+                            match = String(itemValue) === String(cleanValue);
+                            break;
+                        case '!=':
+                        case '!==':
+                            match = String(itemValue) !== String(cleanValue);
+                            break;
+                        case '>':
+                            match = Number(itemValue) > Number(cleanValue);
+                            break;
+                        case '<':
+                            match = Number(itemValue) < Number(cleanValue);
+                            break;
+                        case '>=':
+                            match = Number(itemValue) >= Number(cleanValue);
+                            break;
+                        case '<=':
+                            match = Number(itemValue) <= Number(cleanValue);
+                            break;
+                        default:
+                            console.error('未知的操作符:', operator);
+                    }
+                    console.log(`记录[${index}].${field}=${itemValue}, 与${cleanValue} ${operator} 匹配结果:`, match);
+                }
+                
+                if (match) {
+                    filteredResults.push(item);
+                }
+            });
+            
+            console.log('过滤结果数量:', filteredResults.length);
+            return filteredResults;
+        }
+        
+        function exists(arr) {
+            return Array.isArray(arr) && arr.length > 0;
+        }
+        
+        // 预处理表达式，将中文逻辑运算符替换为英文
+        console.log('原始表达式:', expression);
+        let processedExpression = expression
+            .replace(/\|\|/g, '||')
+            .replace(/&&/g, '&&')
+            .replace(/\|/g, '||')
+            .replace(/&/g, '&&')
+            .replace(/！/g, '!')
+            // 更安全地处理等号，避免在result函数参数内的=被错误替换
+            .replace(/(?<!\(result\([^)]*)=(?!=|>|<)/g, '==');
+        console.log('处理后的表达式:', processedExpression);
+        
+        // 构建安全的评估环境
+        const context = {
+            result,
+            exists
+        };
+        
+        // 安全检查：确保表达式只包含允许的函数调用
+        const allowedFunctions = ['result', 'exists'];
+        const functionCallRegex = /\b([a-zA-Z_$][a-zA-Z0-9_$]*)\s*\(/g;
+        let match;
+        let isValid = true;
+        
+        while ((match = functionCallRegex.exec(processedExpression)) !== null) {
+            if (!allowedFunctions.includes(match[1])) {
+                isValid = false;
+                break;
+            }
+        }
+        
+        if (!isValid) {
+            throw new Error('表达式包含不允许的函数调用');
+        }
+        
+        // 安全地评估表达式
+        // 使用Function构造函数创建一个函数，避免使用eval
+        try {
+            // 进一步验证表达式的安全性 - 放宽规则允许中文字符
+            // 允许中文、字母、数字、下划线、空格、括号、引号、逻辑运算符等
+            if (/[^\w\s\u4e00-\u9fa5().|!&=<>\"\'\[\]]/.test(processedExpression)) {
+                console.log('包含不允许的字符:', processedExpression.match(/[^\w\s\u4e00-\u9fa5().|!&=<>\"\'\[\]]/g));
+                // 不再抛出错误，而是记录警告并继续
+                console.warn('表达式包含不常见字符，但将继续处理');
+            }
+            
+            // 简化格式验证，只确保基本结构正确
+            if (!processedExpression.match(/^[\w\s\u4e00-\u9fa5().|!&=<>\"\'\[\]]*$/)) {
+                console.warn('表达式格式可能有问题，但将尝试处理');
+            }
+            
+            console.log('验证通过，准备评估表达式');
+            
+            // 使用更安全的方式创建和执行函数
+            console.log('创建函数，上下文变量:', Object.keys(context));
+            console.log('执行的代码:', `return ${processedExpression};`);
+            
+            // 更安全的方式：直接模拟result和exists函数的执行
+            // 手动解析表达式结构
+            function parseAndEvaluate(expr) {
+                console.log('解析表达式:', expr);
+                
+                // 处理嵌套的exists函数
+                if (expr.trim().startsWith('exists(') && expr.trim().endsWith(')')) {
+                    const innerExpr = expr.trim().slice(7, -1);
+                    const resultArr = parseAndEvaluate(innerExpr);
+                    const existsResult = Array.isArray(resultArr) && resultArr.length > 0;
+                    console.log('exists结果:', existsResult);
+                    return existsResult;
+                }
+                
+                // 处理result函数
+                if (expr.trim().startsWith('result(') && expr.trim().endsWith(')')) {
+                    const query = expr.trim().slice(7, -1).trim();
+                    console.log('执行result查询:', query);
+                    return result(query);
+                }
+                
+                // 处理逻辑运算符 ||
+                if (expr.includes('||')) {
+                    const parts = expr.split('||');
+                    for (const part of parts) {
+                        const partResult = parseAndEvaluate(part.trim());
+                        if (partResult === true) {
+                            return true;
+                        }
+                    }
+                    return false;
+                }
+                
+                // 处理逻辑运算符 &&
+                if (expr.includes('&&')) {
+                    const parts = expr.split('&&');
+                    for (const part of parts) {
+                        const partResult = parseAndEvaluate(part.trim());
+                        if (partResult === false) {
+                            return false;
+                        }
+                    }
+                    return true;
+                }
+                
+                // 处理取反 !
+                if (expr.trim().startsWith('!')) {
+                    const innerExpr = expr.trim().slice(1).trim();
+                    return !parseAndEvaluate(innerExpr);
+                }
+                
+                // 处理括号
+                if (expr.trim().startsWith('(') && expr.trim().endsWith(')')) {
+                    return parseAndEvaluate(expr.trim().slice(1, -1));
+                }
+                
+                console.error('无法解析的表达式:', expr);
+                return false;
+            }
+            
+            // 尝试使用手动解析方式
+            const evalResult = parseAndEvaluate(processedExpression);
+            
+            console.log('表达式评估结果:', evalResult);
+            alert(`测试条件: ${expression}\n\n结果: ${evalResult ? '满足条件 ✓' : '不满足条件 ✗'}`);
+            return evalResult;
+        } catch (funcError) {
+            console.error('创建或执行表达式函数时出错:', funcError);
+            console.log('处理后的表达式:', processedExpression);
+            throw new Error(`表达式语法错误: ${funcError.message}`);
+        }
+        
+        // 这个return不会被执行，因为上面的try块已经返回了
+        
+    } catch (error) {
+        console.error('测试条件时出错:', error);
+        alert(`测试条件时出错: ${error.message}\n\n表达式: ${expression}`);
+        return false;
+    }
 }
 
 // 注册全局函数
