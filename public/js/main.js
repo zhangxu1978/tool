@@ -86,13 +86,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (data) {
                     // 检查是否有完全匹配的选项
                     const matchedOption = data.find(d => 
-                        (d.name ? `${d.name} - 对话 ${d.id}` : `对话 ${d.id}`) === inputValue
+                        (d.Name ? `${d.Name} - 对话 ${d.Id}` : `对话 ${d.Id}`) === inputValue
                     );
                     
                     if (matchedOption) {
-                        hiddenInput.value = matchedOption.id;
-                        selectElement.value = matchedOption.id;
-                        document.getElementById('dialogueText').value = matchedOption.text;
+                        hiddenInput.value = matchedOption.Id;
+                        selectElement.value = matchedOption.Id;
+                        document.getElementById('dialogueText').value = matchedOption.Text;
                     }
                 }
             })
@@ -113,13 +113,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(response => response.json())
                 .then(data => {
                     if (data) {
-                        const selectedDialogue = data.find(d => d.id === selectedId);
+                        const selectedDialogue = data.find(d => d.Id === selectedId);   
                         if (selectedDialogue) {
-                            document.getElementById('dialogueText').value = selectedDialogue.text;
+                            document.getElementById('dialogueText').value = selectedDialogue.Text;
                             // 更新搜索输入框显示的文本
-                            searchInput.value = selectedDialogue.name ? 
-                                `${selectedDialogue.name} - 对话 ${selectedDialogue.id}` : 
-                                `对话 ${selectedDialogue.id}`;
+                            searchInput.value = selectedDialogue.Name ? 
+                                `${selectedDialogue.Name} - 对话 ${selectedDialogue.Id}` : 
+                                `对话 ${selectedDialogue.Id}`;
                         }
                     }
                 })
@@ -342,7 +342,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     label.textContent = `"${option}" 的目标对话`;
                     
                     const select = document.createElement('select');
-                    select.id = `targetDialogue_${index}`;
+                    select.Id = `targetDialogue_${index}`;
                     select.className = 'form-select';
                     
                     // 添加空选项
@@ -354,8 +354,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     // 添加所有对话作为选项
                     data.forEach(dialogue => {
                         const optionElement = document.createElement('option');
-                        optionElement.value = dialogue.id;
-                        optionElement.textContent = dialogue.name ? `${dialogue.name} - 对话 ${dialogue.id}` : `对话 ${dialogue.id}`;
+                        optionElement.value = dialogue.Id;
+                        optionElement.textContent = dialogue.Name ? `${dialogue.Name} - 对话 ${dialogue.Id}` : `对话 ${dialogue.Id}`;
                         select.appendChild(optionElement);
                     });
                     
@@ -1244,25 +1244,25 @@ function loadDialogues() {
             // 保存当前选中的对话名称
             let selectedDialogueName = '';
             if (currentHiddenValue) {
-                const selectedDialogue = data.find(d => d.id === currentHiddenValue);
+                const selectedDialogue = data.find(d => d.Id === currentHiddenValue);
                 if (selectedDialogue) {
-                    selectedDialogueName = selectedDialogue.name ? 
-                        `${selectedDialogue.name} - 对话 ${selectedDialogue.id}` : 
-                        `对话 ${selectedDialogue.id}`;
+                    selectedDialogueName = selectedDialogue.Name ? 
+                        `${selectedDialogue.Name} - 对话 ${selectedDialogue.Id}` : 
+                        `对话 ${selectedDialogue.Id}`;
                 }
             }
             
             data.forEach(dialogue => {
                 // 更新select元素（为了保持向后兼容）
                 const selectOption = document.createElement('option');
-                selectOption.value = dialogue.id;
-                selectOption.textContent = dialogue.name ? `${dialogue.name} - 对话 ${dialogue.id}` : `对话 ${dialogue.id}`;
+                selectOption.value = dialogue.Id;
+                selectOption.textContent = dialogue.Name ? `${dialogue.Name} - 对话 ${dialogue.Id}` : `对话 ${dialogue.Id}`;
                 dialogueSelect.appendChild(selectOption);
                 
                 // 更新datalist元素（用于搜索）
                 const datalistOption = document.createElement('option');
-                datalistOption.value = dialogue.name ? `${dialogue.name} - 对话 ${dialogue.id}` : `对话 ${dialogue.id}`;
-                datalistOption.setAttribute('data-id', dialogue.id);
+                datalistOption.value = dialogue.Name ? `${dialogue.Name} - 对话 ${dialogue.Id}` : `对话 ${dialogue.Id}`;
+                datalistOption.setAttribute('data-id', dialogue.Id);
                 dialogueOptions.appendChild(datalistOption);
             });
             
@@ -1505,10 +1505,10 @@ function saveDialogue() {
             
             if (selectedId) {
                 // 更新现有对话
-                const dialogueIndex = data.findIndex(d => d.id === selectedId);
+                const dialogueIndex = data.findIndex(d => d.Id === selectedId);
                 if (dialogueIndex !== -1) {
                     // 弹出一个输入框让用户录入对话的名称
-                    const dialogueName = prompt('请输入对话名称', data[dialogueIndex].name || '');
+                    const dialogueName = prompt('请输入对话名称', data[dialogueIndex].Name || '');
                     if (dialogueName === null) {
                         return Promise.reject(new Error('取消保存'));
                     }
@@ -1517,8 +1517,8 @@ function saveDialogue() {
                         return Promise.reject(new Error('请输入对话名称'));
                     }
                     
-                    data[dialogueIndex].text = dialogueText;
-                    data[dialogueIndex].name = dialogueName;
+                    data[dialogueIndex].Text = dialogueText;
+                    data[dialogueIndex].Name = dialogueName;
                 }
             } else {
                 // 添加新对话
@@ -1534,13 +1534,13 @@ function saveDialogue() {
                 
                 // 生成新的ID
                 const newId = data.length > 0 ? 
-                    (Math.max(...data.map(d => parseInt(d.id))) + 1).toString() : '1';
+                    (Math.max(...data.map(d => parseInt(d.Id))) + 1).toString() : '1';
                 
                 // 添加新对话
                 data.push({
-                    id: newId,
-                    name: dialogueName,
-                    text: dialogueText
+                    Id: newId,
+                    Name: dialogueName,
+                    Text: dialogueText
                 });
             }
             
@@ -1599,10 +1599,10 @@ function deleteDialogue() {
                 }
                 
                 // 过滤掉要删除的对话
-                data = data.filter(dialogue => dialogue.id !== selectedId);
+                data = data.filter(dialogue => dialogue.Id !== selectedId);
                 
                 // 保存回文件
-                return fetch('/api/dialogue/save', {
+                return fetch(window.getApiUrl('/api/dialogue/save'), {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -1723,10 +1723,10 @@ function parseAndPlayDialogue(dialogueText) {
                                     .then(response => response.json())
                                     .then(data => {
                                         if (data) {
-                                            const targetDialogue = data.find(d => d.id === targetDialogueId);
+                                            const targetDialogue = data.find(d => d.Id === targetDialogueId);
                                             if (targetDialogue) {
                                                 // 解析并播放目标对话
-                                                parseAndPlayDialogue(targetDialogue.text);
+                                                parseAndPlayDialogue(targetDialogue.Text);
                                             } else {
                                                 console.error('未找到目标对话:', targetDialogueId);
                                             }
