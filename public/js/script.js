@@ -281,17 +281,19 @@ function createConditionModal() {
     modalBody.className = 'condition-modal-body';
     modalBody.style.marginBottom = '20px';
     
-    // 类别选择
+    // 类别选择和属性选择 - 同一行
     modalBody.innerHTML = `
-        <div class="form-group" style="margin-bottom: 15px;">
-            <label for="conditionType">类别:</label>
-            <select id="conditionType" style="width: 100%; padding: 5px;"></select>
-        </div>
-        
-        <div class="form-group" style="margin-bottom: 15px;">
-            <label for="conditionProperty">属性:</label>
-            <select id="conditionProperty" style="width: 100%; padding: 5px;">
-            </select>
+        <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+            <div class="form-group" style="flex: 1;">
+                <label for="conditionType">类别:</label>
+                <select id="conditionType" style="width: 100%; padding: 5px;"></select>
+            </div>
+            
+            <div class="form-group" style="flex: 1;">
+                <label for="conditionProperty">属性:</label>
+                <select id="conditionProperty" style="width: 100%; padding: 5px;">
+                </select>
+            </div>
         </div>
         
         <div class="form-group" style="margin-bottom: 15px;">
@@ -303,33 +305,38 @@ function createConditionModal() {
                 <button class="operator-btn" data-operator="/" style="padding: 5px 10px;">/</button>
                 <button class="operator-btn" data-operator="(" style="padding: 5px 10px;">(</button>
                 <button class="operator-btn" data-operator=")" style="padding: 5px 10px;">)</button>
+                <button class="operator-btn" data-operator="&&" style="padding: 5px 10px;">与(&&)</button>
+                <button class="operator-btn" data-operator="||" style="padding: 5px 10px;">或(||)</button>
+                <button class="operator-btn" data-operator="result" style="padding: 5px 10px;">结果</button>
+            </div>
+        </div>
+        
+        <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+            <div class="form-group" style="flex: 1;">
+                <label for="conditionComparator">比较符:</label>
+                <select id="conditionComparator" style="width: 100%; padding: 5px;">
+                    <option value=">">大于</option>
+                    <option value="<">小于</option>
+                    <option value="==">等于</option>
+                    <option value=">=">大于等于</option>
+                    <option value="<=">小于等于</option>
+                    <option value="includes">包括</option>
+                    <option value="startsWith">以此开始</option>
+                    <option value="endsWith">以此结束</option>
+                    <option value="exists">存在</option>
+                    <option value="notExists">不存在</option>
+                </select>
+            </div>
+            
+            <div class="form-group" style="flex: 1;">
+                <label for="conditionValue">比较值:</label>
+                <input type="text" id="conditionValue" style="width: 100%; padding: 5px;">
             </div>
         </div>
         
         <div class="form-group" style="margin-bottom: 15px;">
-            <label for="conditionComparator">比较符:</label>
-            <select id="conditionComparator" style="width: 100%; padding: 5px;">
-                <option value=">">大于</option>
-                <option value="<">小于</option>
-                <option value="==">等于</option>
-                <option value=">=">大于等于</option>
-                <option value="<=">小于等于</option>
-                <option value="includes">包括</option>
-                <option value="startsWith">以此开始</option>
-                <option value="endsWith">以此结束</option>
-                <option value="exists">存在</option>
-                <option value="notExists">不存在</option>
-            </select>
-        </div>
-        
-        <div class="form-group" style="margin-bottom: 15px;">
-            <label for="conditionValue">比较值:</label>
-            <input type="text" id="conditionValue" style="width: 100%; padding: 5px;">
-        </div>
-        
-        <div class="form-group" style="margin-bottom: 15px;">
-            <label for="conditionExpression">条件表达式:</label>
-            <input type="text" id="conditionExpression" readonly style="width: 100%; padding: 5px; background-color: #f5f5f5;">
+            <label for="conditionExpression">条件表达式 (可手工编辑):</label>
+            <input type="text" id="conditionExpression" style="width: 100%; padding: 5px;">
         </div>
     `;
     
@@ -352,10 +359,22 @@ function createConditionModal() {
     // 绑定事件
     document.getElementById('conditionType').addEventListener('change', updatePropertySelect);
     document.querySelectorAll('.operator-btn').forEach(btn => {
+        // 为运算符按钮添加样式
+        btn.style.cssText = "padding: 6px 12px; background-color: #f0f0f0; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; transition: all 0.2s;";
+        btn.onmouseover = function() {
+            this.style.backgroundColor = '#e0e0e0';
+            this.style.borderColor = '#bbb';
+        };
+        btn.onmouseout = function() {
+            this.style.backgroundColor = '#f0f0f0';
+            this.style.borderColor = '#ddd';
+        };
+        
         btn.addEventListener('click', function() {
             const operator = this.getAttribute('data-operator');
             const expressionInput = document.getElementById('conditionExpression');
             expressionInput.value += operator;
+            expressionInput.focus();
         });
     });
     
@@ -366,18 +385,46 @@ function createConditionModal() {
             const value = selectedOption.getAttribute('data-value') || selectedOption.value;
             const expressionInput = document.getElementById('conditionExpression');
             expressionInput.value += value;
+            expressionInput.focus();
         }
     });
     
     document.getElementById('conditionValue').addEventListener('change', function() {
         const value = this.value;
-        const expressionInput = document.getElementById('conditionExpression');
-        expressionInput.value += '"' + value + '"';
+        if (value) {
+            const expressionInput = document.getElementById('conditionExpression');
+            expressionInput.value += '"' + value + '"';
+            expressionInput.focus();
+        }
     });
     
-    document.getElementById('confirmCondition').addEventListener('click', confirmCondition);
-    document.getElementById('cancelCondition').addEventListener('click', closeConditionModal);
-    document.getElementById('testCondition').addEventListener('click', testCondition);
+    // 为比较符添加选择事件
+    document.getElementById('conditionComparator').addEventListener('change', function() {
+        const comparator = this.value;
+        const expressionInput = document.getElementById('conditionExpression');
+        expressionInput.value += comparator;
+        expressionInput.focus();
+    });
+    
+    // 为确认、取消和测试按钮添加样式
+    const confirmConditionBtn = document.getElementById('confirmCondition');
+    confirmConditionBtn.style.cssText = "padding: 8px 16px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; transition: background-color 0.3s; margin-right: 8px;";
+    confirmConditionBtn.onmouseover = function() { this.style.backgroundColor = '#45a049'; };
+    confirmConditionBtn.onmouseout = function() { this.style.backgroundColor = '#4CAF50'; };
+    
+    const cancelConditionBtn = document.getElementById('cancelCondition');
+    cancelConditionBtn.style.cssText = "padding: 8px 16px; background-color: #f44336; color: white; border: none; border-radius: 4px; cursor: pointer; transition: background-color 0.3s; margin-right: 8px;";
+    cancelConditionBtn.onmouseover = function() { this.style.backgroundColor = '#d32f2f'; };
+    cancelConditionBtn.onmouseout = function() { this.style.backgroundColor = '#f44336'; };
+    
+    const testConditionBtn = document.getElementById('testCondition');
+    testConditionBtn.style.cssText = "padding: 8px 16px; background-color: #2196F3; color: white; border: none; border-radius: 4px; cursor: pointer; transition: background-color 0.3s; margin-right: 8px;";
+    testConditionBtn.onmouseover = function() { this.style.backgroundColor = '#1976D2'; };
+    testConditionBtn.onmouseout = function() { this.style.backgroundColor = '#2196F3'; };
+    
+    confirmConditionBtn.addEventListener('click', confirmCondition);
+    cancelConditionBtn.addEventListener('click', closeConditionModal);
+    testConditionBtn.addEventListener('click', testCondition);
     
     // 点击模态框外部关闭
     modal.addEventListener('click', function(event) {
@@ -393,7 +440,7 @@ function initConditionSelects() {
     typeSelect.innerHTML = '';
     
     // 从FanyiList中获取所有类型
-    const types = [...new Set(data.FanyiList.map(item => item.Type))];
+    const types = ["",...new Set(data.FanyiList.map(item => item.Type))];
     types.forEach(type => {
         const option = document.createElement('option');
         option.value = type;
@@ -412,6 +459,13 @@ function updatePropertySelect() {
     const selectedType = typeSelect.value;
     
     propertySelect.innerHTML = '';
+
+        // 始终添加Id选项作为第一个选项
+    const NullOption = document.createElement('option');
+    NullOption.value = '';
+    NullOption.setAttribute('data-value', '');
+    NullOption.textContent = '';
+    propertySelect.appendChild(NullOption);
     
     // 始终添加Id选项作为第一个选项
     const idOption = document.createElement('option');
@@ -434,7 +488,7 @@ function updatePropertySelect() {
     });
     
     // 默认选择ID属性
-    idOption.selected = true;
+    NullOption.selected = true;
 }
 
 // 显示条件设计弹出框
@@ -506,7 +560,9 @@ function openAddModal() {
             if (key === "Condition" && currentSection === "EventList") {
                 const button = document.createElement('button');
                 button.textContent = "设计条件";
-                button.style.margin = "5px";
+                button.style.cssText = "padding: 8px 16px; margin: 5px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; transition: background-color 0.3s;";
+                button.onmouseover = function() { this.style.backgroundColor = '#45a049'; };
+                button.onmouseout = function() { this.style.backgroundColor = '#4CAF50'; };
                 const input = document.createElement('input');
                 input.type = 'hidden';
                 input.name = key;
@@ -1058,7 +1114,9 @@ rowDiv.appendChild(input);
             } else if (key === "Condition" && currentSection === "EventList") {
                 const button = document.createElement('button');
                 button.textContent = item[key] ? `条件已设置` : "设计条件";
-                button.style.margin = "5px";
+                button.style.cssText = "padding: 8px 16px; margin: 5px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; transition: background-color 0.3s;";
+                button.onmouseover = function() { this.style.backgroundColor = '#45a049'; };
+                button.onmouseout = function() { this.style.backgroundColor = '#4CAF50'; };
                 const input = document.createElement('input');
                 input.type = 'hidden';
                 input.name = key;
