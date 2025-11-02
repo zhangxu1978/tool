@@ -310,6 +310,8 @@ function createConditionModal() {
                 <button class="operator-btn" data-operator="?" style="padding: 5px 10px;">?</button>
                 <button class="operator-btn" data-operator=":" style="padding: 5px 10px;">:</button>
                 <button class="operator-btn" data-operator="result" style="padding: 5px 10px;">结果</button>
+                <button class="operator-btn" data-operator="[" style="padding: 5px 10px;">[</button>
+                <button class="operator-btn" data-operator="]" style="padding: 5px 10px;">]</button> 
             </div>
         </div>
         
@@ -429,12 +431,7 @@ function createConditionModal() {
     cancelConditionBtn.addEventListener('click', closeConditionModal);
     testConditionBtn.addEventListener('click', testCondition);
     
-    // 点击模态框外部关闭
-    modal.addEventListener('click', function(event) {
-        if (event.target === modal) {
-            closeConditionModal();
-        }
-    });
+    // 移除点击模态框外部关闭的功能，只有点击取消按钮才能关闭
 }
 
 // 初始化类别和属性选择
