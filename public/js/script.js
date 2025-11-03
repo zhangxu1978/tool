@@ -1791,11 +1791,25 @@ function extractFromPlayer() {
     inputFields.forEach(input => {
         const fieldName = input.name;
         if (fieldName && matchingPlayer.hasOwnProperty(fieldName) && fieldName !== 'Id') {
-            input.value = matchingPlayer[fieldName];
+            // 特殊处理Props和Skills字段，它们以JSON字符串形式存储在隐藏input中
+            if (fieldName === 'Props' || fieldName === 'Skills') {
+                const dataArray = matchingPlayer[fieldName] || [];
+                input.value = JSON.stringify(dataArray);
+                
+                // 更新对应的按钮显示文本
+                const button = input.previousElementSibling;
+                if (button && button.tagName === 'BUTTON') {
+                    const fieldText = fieldName === 'Props' ? '道具' : '技能';
+                    button.textContent = `已选择 ${dataArray.length} 个${fieldText}`;
+                }
+            } else {
+                // 普通字段直接复制值
+                input.value = matchingPlayer[fieldName];
+            }
         }
     });
     
-    alert('成功从角色提取信息');
+    alert('成功从角色提取信息，包括道具和技能数据');
 }
 function downloadDataCsv() {
     // 假设 showData 是一个包含对象的数组，对象具有相同的属性
