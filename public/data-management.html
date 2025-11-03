@@ -64,6 +64,7 @@
     <button onclick="closeModal()">取消</button>
     <button style="display:none" onclick="loadExample()">样例</button>
     <button id="imageSelectBtn" style="display:none" onclick="openImageSelector()">选择图片</button>
+    <button id="extractFromPlayerBtn" style="display:none" onclick="extractFromPlayer()">从角色里提取信息</button>
 </div>
 
 <!-- Image Selector Modal -->
@@ -111,6 +112,8 @@
 </div>
 
 <script>
+
+
 // 筛选道具函数
 function filterProps() {
     const filterId = document.getElementById('propFilterId').value.toLowerCase();

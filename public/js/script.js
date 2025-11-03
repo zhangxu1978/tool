@@ -164,6 +164,7 @@ window.toggleAllSkills = toggleAllSkills;
 window.toggleAllProps = toggleAllProps;
 window.toggleAllPlayers = toggleAllPlayers;
 window.toggleAllEvents = toggleAllEvents;
+window.extractFromPlayer = extractFromPlayer;
 
 
 
@@ -1012,6 +1013,14 @@ function openAddModal() {
         } else {
             imageSelectBtn.style.display = 'none';
         }
+        
+        // 控制从角色提取信息按钮的显示
+        const extractFromPlayerBtn = document.getElementById('extractFromPlayerBtn');
+        if (currentSection === 'PlayerData') {
+            extractFromPlayerBtn.style.display = 'inline-block';
+        } else {
+            extractFromPlayerBtn.style.display = 'none';
+        }
         let rowDiv = document.createElement('div');
         Object.keys(firstRecord).forEach((key, index) => {
             let fy = fanyiData[currentSection][key] ? fanyiData[currentSection][key] : key;
@@ -1400,6 +1409,14 @@ function openEditModal(item) {
         } else {
             imageSelectBtn.style.display = 'none';
         }
+        
+        // 控制从角色提取信息按钮的显示
+        const extractFromPlayerBtn = document.getElementById('extractFromPlayerBtn');
+        if (currentSection === 'PlayerData') {
+            extractFromPlayerBtn.style.display = 'inline-block';
+        } else {
+            extractFromPlayerBtn.style.display = 'none';
+        }
         let rowDiv = document.createElement('div');
         Object.keys(item).forEach((key, index) => {
             let fy = fanyiData[currentSection][key] ? fanyiData[currentSection][key] : key;
@@ -1740,6 +1757,45 @@ function downloadData() {
     a.download = currentSection+'.json';
     a.click();
     URL.revokeObjectURL(url);
+}
+
+function extractFromPlayer() {
+    // 检查是否在玩家页面
+    if (currentSection !== 'PlayerData') {
+        alert('此功能仅在玩家页面可用');
+        return;
+    }
+    
+    // 获取当前模态窗口中的ID输入框
+    const idInput = document.querySelector('#modal input[name="Id"]');
+    if (!idInput || !idInput.value) {
+        alert('请先输入要提取的角色ID');
+        return;
+    }
+    
+    const targetId = idInput.value;
+    
+    // 查找对应的角色数据
+    const playerList = data['PlayerList'] || [];
+    const matchingPlayer = playerList.find(player => player.Id === targetId);
+    
+    if (!matchingPlayer) {
+        alert('未找到ID为' + targetId + '的角色数据');
+        return;
+    }
+    
+    // 复制数据到当前模态窗口
+    const modal = document.getElementById('modal');
+    const inputFields = modal.querySelectorAll('input');
+    
+    inputFields.forEach(input => {
+        const fieldName = input.name;
+        if (fieldName && matchingPlayer.hasOwnProperty(fieldName) && fieldName !== 'Id') {
+            input.value = matchingPlayer[fieldName];
+        }
+    });
+    
+    alert('成功从角色提取信息');
 }
 function downloadDataCsv() {
     // 假设 showData 是一个包含对象的数组，对象具有相同的属性
