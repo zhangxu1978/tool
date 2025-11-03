@@ -710,6 +710,9 @@ async function testCondition() {
         function exists(arr) {
             return Array.isArray(arr) && arr.length > 0;
         }
+        function notExists(arr) {
+            return !exists(arr);
+        }
         
         // 预处理表达式，将中文逻辑运算符替换为英文
         console.log('原始表达式:', expression);
@@ -726,11 +729,12 @@ async function testCondition() {
         // 构建安全的评估环境
         const context = {
             result,
-            exists
+            exists,
+            notExists
         };
         
         // 安全检查：确保表达式只包含允许的函数调用
-        const allowedFunctions = ['result', 'exists'];
+        const allowedFunctions = ['result', 'exists', 'notExists'];
         const functionCallRegex = /\b([a-zA-Z_$][a-zA-Z0-9_$]*)\s*\(/g;
         let match;
         let isValid = true;
@@ -787,6 +791,15 @@ async function testCondition() {
                     const query = expr.trim().slice(7, -1).trim();
                     console.log('执行result查询:', query);
                     return result(query);
+                }
+                
+                // 处理notExists函数
+                if (expr.trim().startsWith('notExists(') && expr.trim().endsWith(')')) {
+                    const innerExpr = expr.trim().slice(10, -1);
+                    const resultArr = parseAndEvaluate(innerExpr);
+                    const notExistsResult = !Array.isArray(resultArr) || resultArr.length === 0;
+                    console.log('notExists结果:', notExistsResult);
+                    return notExistsResult;
                 }
                 
                 // 处理逻辑运算符 ||
