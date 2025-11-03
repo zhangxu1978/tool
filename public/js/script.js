@@ -12,7 +12,8 @@ let fanyiData = {
     "SkillList": {},
     "MapList": {},
     "MapRelationshipList": {},
-     "RecipeList": {}
+     "RecipeList": {},
+     "PlayerData": {}
 };
 let showData = [];
 let maxId = 0;
@@ -46,7 +47,9 @@ function handleFileUpload(event) {
                 data[key] = JSON.parse(e.target.result); // 将文件名作为属性，文件内容作为数组对象放入data
                 if (key == "PlayerList") {
                     document.getElementById('showPlayer').style.display = 'block'; // 显示角色
-                } 
+                } else if (key == "PlayerData") {
+                    document.getElementById('showPlayerData').style.display = 'block'; // 显示玩家
+                }
                 else if (key == "FeedbackList") {
                     document.getElementById('showFeedbacks').style.display = 'block'; // 显示反馈
                 }
@@ -72,7 +75,9 @@ function handleFileUpload(event) {
                     data["FanyiList"].forEach(it => {
                         if (it["Type"] == "角色") {
                             fanyiData.PlayerList[it["Name"]] = it["ChName"];
-                        } 
+                        } else if (it["Type"] == "玩家") {
+                            fanyiData.PlayerData[it["Name"]] = it["ChName"];
+                        }
                         else if (it["Type"] == "反馈") {
                             fanyiData.FeedbackList[it["Name"]] = it["ChName"];
                         }
@@ -122,7 +127,7 @@ function showSection(section) {
     currentSection = section;
     clearOptionsExceptFirst();
     let key = "";
-    if (currentSection == "PlayerList"||currentSection == "RecipeList"||currentSection == "FanyiList" || currentSection == "CareerList" || currentSection == "PropList" || currentSection == "SkillList" || currentSection == "EventList"|| currentSection == "MapRelationshipList"|| currentSection == "MapList") key = "Type";
+    if (currentSection == "PlayerList" || currentSection == "PlayerData" || currentSection == "RecipeList"||currentSection == "FanyiList" || currentSection == "CareerList" || currentSection == "PropList" || currentSection == "SkillList" || currentSection == "EventList"|| currentSection == "MapRelationshipList"|| currentSection == "MapList") key = "Type";
     if (currentSection == "FeedbackList") key = "Name";
     if (key != "")
         data[currentSection].forEach(
@@ -2078,6 +2083,8 @@ async function loadJsonData() {
             // 处理显示逻辑
             if (key === "PlayerList") {
                 document.getElementById('showPlayer').style.display = 'block'; // 显示角色
+            } else if (key === "PlayerData") {
+                document.getElementById('showPlayerData').style.display = 'block'; // 显示玩家
             }
             else if (key === "FeedbackList") {
                 document.getElementById('showFeedback').style.display = 'block'; // 显示反馈
@@ -2102,7 +2109,10 @@ async function loadJsonData() {
                 data["FanyiList"].forEach(it => {
                     if (it["Type"] == "角色") {
                         fanyiData.PlayerList[it["Name"]] = it["ChName"];
+                    } else if (it["Type"] == "玩家") {
+                        fanyiData.PlayerData[it["Name"]] = it["ChName"];
                     }
+
                     else if(it["Type"] == "反馈") {
                         fanyiData.FeedbackList[it["Name"]] = it["ChName"];
                         }

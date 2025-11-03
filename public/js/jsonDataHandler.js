@@ -63,7 +63,7 @@ async function readJsonFile(filename) {
 // 查找目录下所有json文件
 function findJsonFile() {
     // 这里需要手动列出文件名，因为浏览器无法直接读取目录
-    return ['PlayerList.json','RecipeList.json','FeedbackList.json', 'MapList.json', 'MapRelationshipList.json', 'PropList.json', 'SkillList.json', 'EventList.json', 'CareerList.json', 'FanyiList.json'];
+    return ['PlayerList.json','PlayerData.json','RecipeList.json','FeedbackList.json', 'MapList.json', 'MapRelationshipList.json', 'PropList.json', 'SkillList.json', 'EventList.json', 'CareerList.json', 'FanyiList.json'];
 }
 
 async function loadAllJsonFiles() {
