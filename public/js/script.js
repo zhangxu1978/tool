@@ -1271,7 +1271,7 @@ function openAddModal() {
                 
                 rowDiv.appendChild(button);
                 rowDiv.appendChild(input);
-            } else if (key === "Events") {
+            } else if (key === "Events"||key === "Tasks") {
                 const button = document.createElement('button');
                 button.textContent = "选择事件";
                 button.style.margin = "5px";
@@ -1668,7 +1668,7 @@ rowDiv.appendChild(input);
                 
                 rowDiv.appendChild(button);
                 rowDiv.appendChild(input);
-            } else if (key === "Events") {
+            } else if (key === "Events"||key === "Tasks") {
                 const button = document.createElement('button');
                 const existingEvents = Array.isArray(item[key]) ? item[key] : [];
                 button.textContent = `已选择 ${existingEvents.length} 个事件`;
