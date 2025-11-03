@@ -309,7 +309,7 @@ function createConditionModal() {
                 <button class="operator-btn" data-operator="||" style="padding: 5px 10px;">或(||)</button>
                 <button class="operator-btn" data-operator="?" style="padding: 5px 10px;">?</button>
                 <button class="operator-btn" data-operator=":" style="padding: 5px 10px;">:</button>
-                <button class="operator-btn" data-operator="result" style="padding: 5px 10px;">结果</button>
+                <button class="operator-btn" data-operator="resultList" style="padding: 5px 10px;">结果集</button>
                 <button class="operator-btn" data-operator="[" style="padding: 5px 10px;">[</button>
                 <button class="operator-btn" data-operator="]" style="padding: 5px 10px;">]</button> 
             </div>
@@ -540,6 +540,7 @@ async function testCondition() {
         let propData = [];
         let skillData = [];
         let careerData = [];
+        let playerData = [];
         
         // 尝试从已加载的数据中获取，如果没有则尝试加载
         if (data.PlayerList) {
@@ -596,9 +597,18 @@ async function testCondition() {
             }
         }
         
+        if (data.PlayerData) {
+            playerData = data.PlayerData;
+        } else {
+            const playerResponse = await fetch('../data/playerData.json');
+            if (playerResponse.ok) {
+                playerData = await playerResponse.json();
+            }
+        }
+        
         // 定义用于表达式解析的函数
-        function result(query) {
-            console.log('解析result查询:', query);
+        function resultList(query) {
+            console.log('解析resultList查询:', query);
             // 解析查询字符串，例如 "角色.Id==\"1\""
             // 改进正则表达式，支持中文字符
             //const match = query.match(/^([\w\u4e00-\u9fa5]+)\.([^=<>!]+)\s*([=<>]=?|!=|!==|===)\s*(.+)$/);
@@ -650,6 +660,10 @@ async function testCondition() {
             else if (dataType === '职业' || dataType === 'Career' || dataType === 'career') {
                 targetData = careerData || [];
                 console.log('使用职业数据，共', targetData.length, '条记录');
+            } 
+            else if (dataType === '玩家' || dataType === 'PlayerData' || dataType === 'playerData') {
+                targetData = playerData || [];
+                console.log('使用玩家数据，共', targetData.length, '条记录');
             } 
             else {
                 console.error('未知的数据类型:', dataType);
@@ -726,18 +740,18 @@ async function testCondition() {
             .replace(/&/g, '&&')
             .replace(/！/g, '!')
             // 更安全地处理等号，避免在result函数参数内的=被错误替换
-            .replace(/(?<!\(result\([^)]*)=(?!=|>|<)/g, '==');
+            .replace(/(?<!\(resultList\([^)]*)=(?!=|>|<)/g, '==');
         console.log('处理后的表达式:', processedExpression);
         
         // 构建安全的评估环境
         const context = {
-            result,
+            resultList,
             exists,
             notExists
         };
         
         // 安全检查：确保表达式只包含允许的函数调用
-        const allowedFunctions = ['result', 'exists', 'notExists'];
+        const allowedFunctions = ['resultList', 'exists', 'notExists'];
         const functionCallRegex = /\b([a-zA-Z_$][a-zA-Z0-9_$]*)\s*\(/g;
         let match;
         let isValid = true;
@@ -789,11 +803,11 @@ async function testCondition() {
                     return existsResult;
                 }
                 
-                // 处理result函数
-                if (expr.trim().startsWith('result(') && expr.trim().endsWith(')')) {
-                    const query = expr.trim().slice(7, -1).trim();
-                    console.log('执行result查询:', query);
-                    return result(query);
+                // 处理resultList函数
+                if (expr.trim().startsWith('resultList(') && expr.trim().endsWith(')')) {
+                    const query = expr.trim().slice(11, -1).trim();
+                    console.log('执行resultList查询:', query);
+                    return resultList(query);
                 }
                 
                 // 处理notExists函数
