@@ -601,7 +601,8 @@ async function testCondition() {
             console.log('解析result查询:', query);
             // 解析查询字符串，例如 "角色.Id==\"1\""
             // 改进正则表达式，支持中文字符
-            const match = query.match(/^([\w\u4e00-\u9fa5]+)\.([^=<>!]+)\s*([=<>]=?|!=|!==)\s*(.+)$/);
+            //const match = query.match(/^([\w\u4e00-\u9fa5]+)\.([^=<>!]+)\s*([=<>]=?|!=|!==|===)\s*(.+)$/);
+            const match = query.match(/^([\w\u4e00-\u9fa5]+)\.([^=<>!]+)\s*(===|!==|==|!=|<=|>=|<|>)\s*(.+)$/);
             if (!match) {
                 // 尝试更简单的匹配模式，同样支持中文
                 const simpleMatch = query.match(/^([\w\u4e00-\u9fa5]+)\.([^=]+)=(.+)$/);
@@ -618,6 +619,8 @@ async function testCondition() {
             
             const [, dataType, field, operator, value] = match;
             console.log('复杂匹配成功:', dataType, field, operator, value);
+            // let r=;
+            // console.log('处理结果:', r);
             return processCondition(dataType, field, operator, value);
         }
         
@@ -802,9 +805,60 @@ async function testCondition() {
                     return notExistsResult;
                 }
                 
+                // 处理比较运算符
+                const comparisonOperators = ['>=', '<=', '==', '===', '!=', '!==', '>', '<'];
+                for (const op of comparisonOperators) {
+                    if (expr.includes(op)) {
+                        // 确保运算符不在字符串或括号内
+                        const parts = splitAtTopLevel(expr, op);
+                        if (parts.length === 2) {
+                            const left = parseAndEvaluate(parts[0].trim());
+                            const right = parseAndEvaluate(parts[1].trim());
+                            console.log(`比较: ${left} ${op} ${right}`);
+                            switch(op) {
+                                case '>': return left > right;
+                                case '<': return left < right;
+                                case '>=': return left >= right;
+                                case '<=': return left <= right;
+                                case '==': return left == right;
+                                case '===': return left === right;
+                                case '!=': return left != right;
+                                case '!==': return left !== right;
+                            }
+                        }
+                    }
+                }
+                
+                // 处理数组索引和属性访问
+                const arrayAccessMatch = expr.match(/^(.*?)\[(\d+)\]$/);
+                if (arrayAccessMatch) {
+                    const baseExpr = arrayAccessMatch[1].trim();
+                    const index = parseInt(arrayAccessMatch[2]);
+                    console.log(`访问数组索引: ${baseExpr}[${index}]`);
+                    const baseResult = parseAndEvaluate(baseExpr);
+                    if (Array.isArray(baseResult) && index >= 0 && index < baseResult.length) {
+                        return baseResult[index];
+                    }
+                    return undefined;
+                }
+                
+                // 处理属性访问 (使用字符串键)
+                const propAccessMatch = expr.match(/^(.*?)\[("[^"]*"|'[^']*')\]$/);
+                if (propAccessMatch) {
+                    const baseExpr = propAccessMatch[1].trim();
+                    // 移除引号
+                    const propName = propAccessMatch[2].slice(1, -1);
+                    console.log(`访问属性: ${baseExpr}["${propName}"]`);
+                    const baseResult = parseAndEvaluate(baseExpr);
+                    if (baseResult !== null && typeof baseResult === 'object') {
+                        return baseResult[propName];
+                    }
+                    return undefined;
+                }
+                
                 // 处理逻辑运算符 ||
                 if (expr.includes('||')) {
-                    const parts = expr.split('||');
+                    const parts = splitAtTopLevel(expr, '||');
                     for (const part of parts) {
                         const partResult = parseAndEvaluate(part.trim());
                         if (partResult === true) {
@@ -816,7 +870,7 @@ async function testCondition() {
                 
                 // 处理逻辑运算符 &&
                 if (expr.includes('&&')) {
-                    const parts = expr.split('&&');
+                    const parts = splitAtTopLevel(expr, '&&');
                     for (const part of parts) {
                         const partResult = parseAndEvaluate(part.trim());
                         if (partResult === false) {
@@ -837,8 +891,68 @@ async function testCondition() {
                     return parseAndEvaluate(expr.trim().slice(1, -1));
                 }
                 
+                // 处理字面量值
+                if (expr.trim() === 'true') return true;
+                if (expr.trim() === 'false') return false;
+                if (expr.trim() === 'null') return null;
+                if (expr.trim() === 'undefined') return undefined;
+                
+                // 处理数字字面量
+                if (!isNaN(expr.trim()) && isFinite(expr.trim())) {
+                    return parseFloat(expr.trim());
+                }
+                
+                // 处理字符串字面量
+                if ((expr.startsWith('"') && expr.endsWith('"')) || 
+                    (expr.startsWith('\'') && expr.endsWith('\''))) {
+                    return expr.slice(1, -1);
+                }
+                
                 console.error('无法解析的表达式:', expr);
                 return false;
+            }
+            
+            // 辅助函数：在顶层拆分字符串，忽略括号内的内容
+            function splitAtTopLevel(str, delimiter) {
+                let result = [];
+                let current = '';
+                let depth = 0;
+                let inString = null;
+                
+                for (let i = 0; i < str.length; i++) {
+                    const char = str[i];
+                    
+                    // 处理字符串边界
+                    if (char === '"' || char === '\'') {
+                        if (inString === char) {
+                            // 检查是否是转义的引号
+                            if (i > 0 && str[i-1] !== '\\') {
+                                inString = null;
+                            }
+                        } else if (inString === null) {
+                            inString = char;
+                        }
+                    }
+                    
+                    // 只在不在字符串内时处理括号和分隔符
+                    if (inString === null) {
+                        if (char === '(' || char === '[') {
+                            depth++;
+                        } else if (char === ')' || char === ']') {
+                            depth--;
+                        } else if (depth === 0 && str.slice(i).startsWith(delimiter)) {
+                            result.push(current);
+                            current = '';
+                            i += delimiter.length - 1;
+                            continue;
+                        }
+                    }
+                    
+                    current += char;
+                }
+                
+                result.push(current);
+                return result;
             }
             
             // 尝试使用手动解析方式
