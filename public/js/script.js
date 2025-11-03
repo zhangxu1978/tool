@@ -534,17 +534,20 @@ async function testCondition() {
     const expression = document.getElementById('conditionExpression').value;
     try {
         // 加载所需的数据文件
-        let playerData = [];
+        let characterData = [];
         let eventData = [];
         let mapData = [];
+        let propData = [];
+        let skillData = [];
+        let careerData = [];
         
         // 尝试从已加载的数据中获取，如果没有则尝试加载
         if (data.PlayerList) {
-            playerData = data.PlayerList;
+            characterData = data.PlayerList;
         } else {
             const playerResponse = await fetch('../data/playerList.json');
             if (playerResponse.ok) {
-                playerData = await playerResponse.json();
+                characterData = await playerResponse.json();
             }
         }
         
@@ -563,6 +566,33 @@ async function testCondition() {
             const mapResponse = await fetch('../data/malist.json');
             if (mapResponse.ok) {
                 mapData = await mapResponse.json();
+            }
+        }
+        
+        if (data.PropList) {
+            propData = data.PropList;
+        } else {
+            const propResponse = await fetch('../data/propList.json');
+            if (propResponse.ok) {
+                propData = await propResponse.json();
+            }
+        }
+        
+        if (data.SkillList) {
+            skillData = data.SkillList;
+        } else {
+            const skillResponse = await fetch('../data/skillList.json');
+            if (skillResponse.ok) {
+                skillData = await skillResponse.json();
+            }
+        }
+        
+        if (data.CareerList) {
+            careerData = data.CareerList;
+        } else {
+            const careerResponse = await fetch('../data/careerList.json');
+            if (careerResponse.ok) {
+                careerData = await careerResponse.json();
             }
         }
         
@@ -597,7 +627,7 @@ async function testCondition() {
             
             // 确定要查询的数据类型
             if (dataType === '角色' || dataType === 'Player' || dataType === 'player') {
-                targetData = playerData || [];
+                targetData = characterData || [];
                 console.log('使用角色数据，共', targetData.length, '条记录');
             } else if (dataType === '事件' || dataType === 'Event' || dataType === 'event') {
                 targetData = eventData || [];
@@ -605,7 +635,20 @@ async function testCondition() {
             } else if (dataType === '地图' || dataType === 'Map' || dataType === 'map') {
                 targetData = mapData || [];
                 console.log('使用地图数据，共', targetData.length, '条记录');
-            } else {
+            } 
+            else if (dataType === '道具' || dataType === 'Prop' || dataType === 'prop') {
+                targetData = propData || [];
+                console.log('使用道具数据，共', targetData.length, '条记录');
+            } 
+            else if (dataType === '技能' || dataType === 'Skill' || dataType === 'skill') {
+                targetData = skillData || [];
+                console.log('使用技能数据，共', targetData.length, '条记录');
+            } 
+            else if (dataType === '职业' || dataType === 'Career' || dataType === 'career') {
+                targetData = careerData || [];
+                console.log('使用职业数据，共', targetData.length, '条记录');
+            } 
+            else {
                 console.error('未知的数据类型:', dataType);
                 return [];
             }
