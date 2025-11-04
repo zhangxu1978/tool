@@ -138,9 +138,22 @@
         }
         input[type="number"] {
             padding: 8px;
-            width: 200px;
+            width: 80px;
             border: 1px solid #ced4da;
             border-radius: 4px;
+        }
+        .probability-controls {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #e8f4f8;
+            border-radius: 8px;
+            border: 1px solid #b3d9e6;
+        }
+        .probability-controls label {
+            font-size: 14px;
+        }
+        .probability-controls input[type="number"] {
+            margin-right: 5px;
         }
         .results-table {
             width: 100%;
@@ -185,6 +198,11 @@
             margin-top: 0;
             color: #495057;
         }
+        .algorithm-info h4 {
+            margin-top: 15px;
+            margin-bottom: 10px;
+            color: #495057;
+        }
         .algorithm-info ul {
             margin-bottom: 0;
         }
@@ -204,11 +222,62 @@
                 <li>相生关系：如果相生位置是一阴一阳，则会发生变异（金生水，金阴水阳=强化变异，金阳水阴=弱化变异）</li>
                 <li>相克关系：如果相克位置同质（双阴或双阳，但不包括双无），则变为<span class="highlight">废</span>的状态</li>
             </ul>
+            
+            <h4>灵根种类判断规则：</h4>
+            <ul>
+                <li>出现废的都是废灵根</li>
+                <li>五行没有出现阳灵根的也是废灵根</li>
+                <li>单灵根阳是天灵根</li>
+                <li>双灵根强化变异是天灵根，无变异是地灵根、弱化变异是普通灵根</li>
+                <li>三灵根强化变异的是地灵根，无变异是普通灵根，弱化变异的是杂灵根</li>
+                <li>四灵根强化变异是普通灵根，没有变异的杂灵根，没有强化变异有弱化变异的是废灵根</li>
+            </ul>
+            
+            <h4>异化灵根（1/10几率）：</h4>
+            <ul>
+                <li>金生水：强化变异→雷灵根，弱化变异→冰灵根</li>
+                <li>水生木：强化变异→草灵根，弱化变异→毒灵根</li>
+                <li>木生火：强化变异→光灵根，弱化变异→风灵根</li>
+                <li>火生土：强化变异→炎灵根，弱化变异→暗灵根</li>
+                <li>土生金：强化变异→磁灵根，弱化变异→岩灵根</li>
+            </ul>
+            
+            <h4>道体（1/100几率）：</h4>
+            <ul>
+                <li>全阳：太初道体</li>
+                <li>全阴：混沌道体</li>
+                <li>全无：阴阳道体</li>
+            </ul>
         </div>
 
         <div class="generator-panel">
             <div class="panel">
                 <h2>单次灵根生成</h2>
+                
+                <div class="probability-controls">
+                    <div class="input-group">
+                        <label>灵根状态概率设置（总和必须为100%）：</label>
+                    </div>
+                    <div class="input-group">
+                        <label for="probNone">无灵根概率：</label>
+                        <input type="number" id="probNone" value="33" min="0" max="100">
+                        <span>%</span>
+                    </div>
+                    <div class="input-group">
+                        <label for="probYang">阳灵根概率：</label>
+                        <input type="number" id="probYang" value="33" min="0" max="100">
+                        <span>%</span>
+                    </div>
+                    <div class="input-group">
+                        <label for="probYin">阴灵根概率：</label>
+                        <input type="number" id="probYin" value="34" min="0" max="100">
+                        <span>%</span>
+                    </div>
+                    <div id="probabilityError" style="color: red; margin-top: 10px; display: none;">
+                        错误：概率总和必须为100%
+                    </div>
+                </div>
+                
                 <div class="root-display" id="singleRootDisplay">
                     <!-- 灵根显示区域 -->
                 </div>
@@ -241,13 +310,15 @@
             <div class="results-table-container">
                 <table class="results-table" id="probabilityTable">
                     <thead>
-                        <tr>
-                            <th>灵根组合</th>
-                            <th>出现次数</th>
-                            <th>概率</th>
-                            <th>详细状态</th>
-                        </tr>
-                    </thead>
+                    <tr>
+                        <th>灵根组合</th>
+                        <th>出现次数</th>
+                        <th>概率</th>
+                        <th>灵根类型</th>
+                        <th>特殊属性</th>
+                        <th>详细状态</th>
+                    </tr>
+                </thead>
                     <tbody>
                         <!-- 概率结果将在这里显示 -->
                     </tbody>
@@ -277,17 +348,74 @@
                 '火': '金'
             }
         };
+        
+        // 定义异化灵根映射
+        const mutationMap = {
+            '金生水': {
+                '强化变异': '雷灵根',
+                '弱化变异': '冰灵根'
+            },
+            '水生木': {
+                '强化变异': '草灵根',
+                '弱化变异': '毒灵根'
+            },
+            '木生火': {
+                '强化变异': '光灵根',
+                '弱化变异': '风灵根'
+            },
+            '火生土': {
+                '强化变异': '炎灵根',
+                '弱化变异': '暗灵根'
+            },
+            '土生金': {
+                '强化变异': '磁灵根',
+                '弱化变异': '岩灵根'
+            }
+        };
 
+        // 验证概率设置是否有效
+        function validateProbabilities() {
+            const probNone = parseInt(document.getElementById('probNone').value) || 0;
+            const probYang = parseInt(document.getElementById('probYang').value) || 0;
+            const probYin = parseInt(document.getElementById('probYin').value) || 0;
+            
+            const total = probNone + probYang + probYin;
+            const errorElement = document.getElementById('probabilityError');
+            
+            if (total !== 100) {
+                errorElement.style.display = 'block';
+                return false;
+            }
+            
+            errorElement.style.display = 'none';
+            return true;
+        }
+        
+        // 根据概率随机选择状态
+        function selectStateByProbability() {
+            const probNone = parseInt(document.getElementById('probNone').value) || 0;
+            const probYang = parseInt(document.getElementById('probYang').value) || 0;
+            const probYin = parseInt(document.getElementById('probYin').value) || 0;
+            
+            const random = Math.random() * 100;
+            
+            if (random < probNone) {
+                return '无';
+            } else if (random < probNone + probYang) {
+                return '阳';
+            } else {
+                return '阴';
+            }
+        }
+        
         // 生成初始灵根状态
         function generateInitialRoots() {
             const elements = ['金', '木', '水', '火', '土'];
-            const states = ['无', '阳', '阴'];
             const roots = {};
             
             elements.forEach(element => {
-                // 随机选择三种状态之一
-                const randomIndex = Math.floor(Math.random() * 3);
-                roots[element] = states[randomIndex];
+                // 根据概率选择状态
+                roots[element] = selectStateByProbability();
             });
             
             return roots;
@@ -298,45 +426,139 @@
             const processedRoots = { ...roots };
             const variations = [];
             const weaknesses = [];
+            const elementsToDisable = []; // 存储需要变为废的灵根
+            const mutationInfo = []; // 存储变异信息，用于异化灵根判断
             
-            // 处理相生关系
+            // 首先使用原始状态计算所有相生关系（变异）
             Object.keys(relationships.generate).forEach(element => {
                 const targetElement = relationships.generate[element];
-                const elementState = processedRoots[element];
-                const targetState = processedRoots[targetElement];
+                const elementState = roots[element]; // 使用原始状态
+                const targetState = roots[targetElement]; // 使用原始状态
                 
                 // 检查是否为一阴一阳
                 if ((elementState === '阴' && targetState === '阳') || 
                     (elementState === '阳' && targetState === '阴')) {
                     
-                    if (elementState === '阴' && targetState === '阳') {
-                        variations.push(`${element}${elementState}生${targetElement}${targetState}：强化变异`);
-                    } else {
-                        variations.push(`${element}${elementState}生${targetElement}${targetState}：弱化变异`);
-                    }
+                    const variationType = elementState === '阴' && targetState === '阳' ? '强化变异' : '弱化变异';
+                    const variationText = `${element}${elementState}生${targetElement}${targetState}：${variationType}`;
+                    variations.push(variationText);
+                    
+                    // 存储变异信息，用于异化灵根判断
+                    mutationInfo.push({
+                        element,
+                        targetElement,
+                        variationType,
+                        relationship: `${element}生${targetElement}`
+                    });
                 }
             });
             
-            // 处理相克关系
+            // 收集所有需要变为废的灵根
             Object.keys(relationships.overcome).forEach(element => {
                 const targetElement = relationships.overcome[element];
-                const elementState = processedRoots[element];
-                const targetState = processedRoots[targetElement];
+                const elementState = roots[element]; // 使用原始状态
+                const targetState = roots[targetElement]; // 使用原始状态
                 
                 // 检查是否同质（双阴或双阳，但不包括双无）
                 if ((elementState === '阴' && targetState === '阴') || 
                     (elementState === '阳' && targetState === '阳')) {
                     
-                    processedRoots[targetElement] = '废';
-                    weaknesses.push(`${element}${elementState}克${targetElement}${targetState}：${targetElement}变为废`);
+                    elementsToDisable.push({
+                        element,
+                        targetElement,
+                        elementState,
+                        targetState
+                    });
                 }
             });
+            
+            // 一次性将所有需要变为废的灵根设置为废
+            elementsToDisable.forEach(item => {
+                processedRoots[item.targetElement] = '废';
+                weaknesses.push(`${item.element}${item.elementState}克${item.targetElement}${item.targetState}：${item.targetElement}变为废`);
+            });
+            
+            // 处理异化灵根（1/10的几率）
+            const mutatedRoots = [];
+            if (mutationInfo.length > 0) {
+                mutationInfo.forEach(info => {
+                    if (Math.random() < 0.1) { // 1/10的几率
+                        const alienRoot = mutationMap[info.relationship][info.variationType];
+                        mutatedRoots.push(`异化灵根：${alienRoot}（由${info.element}${info.variationType}产生）`);
+                    }
+                });
+            }
+            
+            // 判断道体（1/100的几率）
+            let daoBody = null;
+            const hasAllYang = Object.values(roots).every(state => state === '阳');
+            const hasAllYin = Object.values(roots).every(state => state === '阴');
+            const hasAllNone = Object.values(roots).every(state => state === '无');
+            
+            if ((hasAllYang || hasAllYin || hasAllNone) && Math.random() < 0.01) { // 1/100的几率
+                if (hasAllYang) daoBody = '太初道体';
+                else if (hasAllYin) daoBody = '混沌道体';
+                else if (hasAllNone) daoBody = '阴阳道体';
+            }
             
             return {
                 roots: processedRoots,
                 variations,
-                weaknesses
+                weaknesses,
+                mutatedRoots,
+                daoBody,
+                initialRoots: roots // 保存原始灵根状态
             };
+        }
+        
+        // 判断灵根种类
+        function determineRootType(finalRoots, variations, initialRoots) {
+            // 检查是否有废灵根
+            const hasDisabledRoots = Object.values(finalRoots).includes('废');
+            
+            // 检查是否没有阳灵根
+            const hasNoYangRoots = Object.values(initialRoots).every(state => state !== '阳');
+            
+            // 计算有效灵根数量（非废、非无）
+            const activeRoots = Object.entries(finalRoots).filter(([_, state]) => state !== '废' && state !== '无').length;
+            
+            // 检查是否有强化变异和弱化变异
+            const hasStrongMutation = variations.some(v => v.includes('强化变异'));
+            const hasWeakMutation = variations.some(v => v.includes('弱化变异'));
+            
+            // 根据规则判断灵根类型
+            if (hasDisabledRoots || hasNoYangRoots) {
+                // 出现废的都是废灵根，五行没有出现阳灵根的也是废灵根
+                return '废灵根';
+            }
+            
+            switch (activeRoots) {
+                case 1:
+                    // 单灵根阳是天灵根
+                    return '天灵根';
+                    
+                case 2:
+                    // 双灵根强化变异是天灵根，无变异是地灵根、弱化变异是普通灵根
+                    if (hasStrongMutation) return '天灵根';
+                    if (hasWeakMutation) return '普通灵根';
+                    return '地灵根';
+                    
+                case 3:
+                    // 三灵根强化变异的是地灵根，无变异是普通灵根，弱化变异的是杂灵根
+                    if (hasStrongMutation) return '地灵根';
+                    if (hasWeakMutation) return '杂灵根';
+                    return '普通灵根';
+                    
+                case 4:
+                    // 四灵根强化变异是普通灵根，没有变异的杂灵根，没有强化变异有弱化变异的是废灵根
+                    if (hasStrongMutation) return '普通灵根';
+                    if (hasWeakMutation && !hasStrongMutation) return '废灵根';
+                    return '杂灵根';
+                    
+                default:
+                    // 五灵根默认
+                    return '普通灵根';
+            }
         }
 
         // 生成完整的灵根
@@ -344,11 +566,17 @@
             const initialRoots = generateInitialRoots();
             const result = processRelationships(initialRoots);
             
+            // 判断灵根种类
+            const rootType = determineRootType(result.roots, result.variations, initialRoots);
+            
             return {
                 initialRoots,
                 finalRoots: result.roots,
                 variations: result.variations,
-                weaknesses: result.weaknesses
+                weaknesses: result.weaknesses,
+                rootType,
+                mutatedRoots: result.mutatedRoots,
+                daoBody: result.daoBody
             };
         }
 
@@ -376,9 +604,44 @@
         }
 
         // 显示分析结果
-        function displayAnalysis(variations, weaknesses, containerId) {
+        function displayAnalysis(variations, weaknesses, rootType, mutatedRoots, daoBody, containerId) {
             const container = document.getElementById(containerId);
             container.innerHTML = '';
+            
+            // 显示灵根种类（使用特殊样式突出显示）
+            const rootTypeItem = document.createElement('div');
+            rootTypeItem.className = 'analysis-item';
+            rootTypeItem.style.backgroundColor = '#fff3cd';
+            rootTypeItem.style.fontWeight = 'bold';
+            rootTypeItem.style.textAlign = 'center';
+            rootTypeItem.style.marginBottom = '15px';
+            rootTypeItem.style.padding = '15px';
+            rootTypeItem.style.borderRadius = '8px';
+            rootTypeItem.textContent = `灵根种类：${rootType}`;
+            container.appendChild(rootTypeItem);
+            
+            // 显示道体（如果有）
+            if (daoBody) {
+                const daoBodyItem = document.createElement('div');
+                daoBodyItem.className = 'analysis-item';
+                daoBodyItem.style.backgroundColor = '#d4edda';
+                daoBodyItem.style.color = '#155724';
+                daoBodyItem.style.fontWeight = 'bold';
+                daoBodyItem.style.textAlign = 'center';
+                daoBodyItem.textContent = `特殊体质：${daoBody}`;
+                container.appendChild(daoBodyItem);
+            }
+            
+            // 显示异化灵根
+            if (mutatedRoots && mutatedRoots.length > 0) {
+                mutatedRoots.forEach(mutated => {
+                    const item = document.createElement('div');
+                    item.className = 'analysis-item variation';
+                    item.style.backgroundColor = '#e8f5e9';
+                    item.textContent = mutated;
+                    container.appendChild(item);
+                });
+            }
             
             // 添加变异分析
             if (variations.length > 0) {
@@ -401,7 +664,7 @@
             }
             
             // 如果没有变异和弱点
-            if (variations.length === 0 && weaknesses.length === 0) {
+            if (variations.length === 0 && weaknesses.length === 0 && (!mutatedRoots || mutatedRoots.length === 0)) {
                 const item = document.createElement('div');
                 item.className = 'analysis-item';
                 item.textContent = '没有发生变异或废灵根';
@@ -409,11 +672,32 @@
             }
         }
 
+        // 为概率输入框添加验证
+        document.getElementById('probNone').addEventListener('input', validateProbabilities);
+        document.getElementById('probYang').addEventListener('input', validateProbabilities);
+        document.getElementById('probYin').addEventListener('input', validateProbabilities);
+        
+        // 初始化时验证概率
+        validateProbabilities();
+        
         // 单次生成按钮点击事件
         document.getElementById('generateSingleBtn').addEventListener('click', () => {
+            // 首先验证概率设置
+            if (!validateProbabilities()) {
+                alert('请确保概率总和为100%');
+                return;
+            }
+            
             const result = generateSpiritualRoots();
             displayRoots(result.finalRoots, 'singleRootDisplay');
-            displayAnalysis(result.variations, result.weaknesses, 'singleAnalysis');
+            displayAnalysis(
+                result.variations, 
+                result.weaknesses, 
+                result.rootType, 
+                result.mutatedRoots, 
+                result.daoBody, 
+                'singleAnalysis'
+            );
         });
 
         // 重置按钮点击事件
@@ -425,6 +709,7 @@
         // 批量模拟函数
         function simulateMultiple(count) {
             const results = {};
+            const typeCounts = {}; // 统计各种灵根类型的出现次数
             const totalCombinations = Math.pow(3, 5); // 每个灵根有3种初始状态，共5个灵根
             
             console.log(`开始模拟 ${count} 次...`);
@@ -437,14 +722,31 @@
                     results[rootKey] = {
                         count: 0,
                         roots: result.finalRoots,
-                        initialRoots: result.initialRoots
+                        initialRoots: result.initialRoots,
+                        rootType: result.rootType,
+                        hasMutatedRoots: result.mutatedRoots && result.mutatedRoots.length > 0,
+                        hasDaoBody: !!result.daoBody
                     };
                 }
                 
                 results[rootKey].count++;
+                
+                // 统计灵根类型
+                typeCounts[result.rootType] = (typeCounts[result.rootType] || 0) + 1;
+                
+                // 统计特殊情况
+                if (result.mutatedRoots && result.mutatedRoots.length > 0) {
+                    typeCounts['异化灵根'] = (typeCounts['异化灵根'] || 0) + 1;
+                }
+                if (result.daoBody) {
+                    typeCounts[result.daoBody] = (typeCounts[result.daoBody] || 0) + 1;
+                }
             }
             
-            return results;
+            return {
+                rootResults: results,
+                typeCounts
+            };
         }
 
         // 格式化灵根状态显示
@@ -460,7 +762,7 @@
             tableBody.innerHTML = '';
             
             // 转换为数组并按出现次数排序
-            const sortedResults = Object.entries(results)
+            const sortedResults = Object.entries(results.rootResults)
                 .map(([key, data]) => ({
                     ...data,
                     probability: (data.count / totalCount * 100).toFixed(4)
@@ -480,9 +782,28 @@
                 const probabilityCell = row.insertCell(2);
                 probabilityCell.textContent = `${item.probability}%`;
                 
-                const detailsCell = row.insertCell(3);
+                const typeCell = row.insertCell(3);
+                typeCell.textContent = item.rootType;
+                
+                const specialCell = row.insertCell(4);
+                const specials = [];
+                if (item.hasMutatedRoots) specials.push('异化灵根');
+                if (item.hasDaoBody) specials.push('道体');
+                specialCell.textContent = specials.join(', ') || '-';
+                
+                const detailsCell = row.insertCell(5);
                 detailsCell.textContent = JSON.stringify(item.roots);
             });
+            
+            // 生成灵根类型统计HTML
+            let typeStatsHtml = '<h4>灵根类型统计：</h4><ul>';
+            Object.entries(results.typeCounts)
+                .sort(([,a], [,b]) => b - a)
+                .forEach(([type, count]) => {
+                    const probability = (count / totalCount * 100).toFixed(4);
+                    typeStatsHtml += `<li>${type}: ${count}次 (${probability}%)</li>`;
+                });
+            typeStatsHtml += '</ul>';
             
             // 更新摘要
             const summary = document.getElementById('simulationSummary');
@@ -490,6 +811,7 @@
                 <p>模拟次数：${totalCount}</p>
                 <p>出现的不同组合数：${sortedResults.length}</p>
                 <p>理论可能的组合数：${Math.pow(4, 5)} (每个灵根有4种可能状态)</p>
+                ${typeStatsHtml}
             `;
         }
 
@@ -515,7 +837,7 @@
         // 导出结果
         document.getElementById('exportResultsBtn').addEventListener('click', () => {
             const table = document.getElementById('probabilityTable');
-            let csvContent = '灵根组合,出现次数,概率,详细状态\n';
+            let csvContent = '灵根组合,出现次数,概率,灵根类型,特殊属性,详细状态\n';
             
             // 收集表格数据
             const rows = table.getElementsByTagName('tr');
