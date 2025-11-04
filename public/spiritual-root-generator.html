@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>修仙游戏灵根生成器</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background-color: #f0f5f9;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+        .generator-panel {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .panel {
+            flex: 1;
+            min-width: 300px;
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        .panel h2 {
+            color: #495057;
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 20px;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+        .root-display {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+        }
+        .root-item {
+            text-align: center;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: white;
+            width: 80px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+        }
+        .root-item:hover {
+            transform: translateY(-3px);
+        }
+        .root-name {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        .root-state {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .root-state.无 { color: #95a5a6; }
+        .root-state.阳 { color: #f39c12; }
+        .root-state.阴 { color: #3498db; }
+        .root-state.废 { color: #e74c3c; }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:active {
+            transform: translateY(1px);
+        }
+        .analysis-panel {
+            margin-top: 20px;
+        }
+        .analysis-item {
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: white;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+        }
+        .variation {
+            border-left-color: #28a745;
+        }
+        .weakness {
+            border-left-color: #dc3545;
+        }
+        .summary {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e3f2fd;
+            border-radius: 5px;
+        }
+        .probability-section {
+            margin-top: 30px;
+        }
+        .probability-controls {
+            margin-bottom: 20px;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="number"] {
+            padding: 8px;
+            width: 200px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+        }
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            display: block;
+        }
+        .results-table th,
+        .results-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        .results-table th {
+            background-color: #007bff;
+            color: white;
+            position: sticky;
+            top: 0;
+        }
+        .results-table tr:hover {
+            background-color: #f5f5f5;
+        }
+        .export-section {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .highlight {
+            background-color: #fff3cd;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+        .algorithm-info {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid #6c757d;
+        }
+        .algorithm-info h3 {
+            margin-top: 0;
+            color: #495057;
+        }
+        .algorithm-info ul {
+            margin-bottom: 0;
+        }
+        .algorithm-info li {
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>修仙游戏灵根生成器</h1>
+        
+        <div class="algorithm-info">
+            <h3>灵根生成算法说明</h3>
+            <ul>
+                <li>金木水火土五个维度，每个维度初始有三种可能状态：<span class="highlight">无</span>、<span class="highlight">阳</span>、<span class="highlight">阴</span></li>
+                <li>相生关系：如果相生位置是一阴一阳，则会发生变异（金生水，金阴水阳=强化变异，金阳水阴=弱化变异）</li>
+                <li>相克关系：如果相克位置同质（双阴或双阳，但不包括双无），则变为<span class="highlight">废</span>的状态</li>
+            </ul>
+        </div>
+
+        <div class="generator-panel">
+            <div class="panel">
+                <h2>单次灵根生成</h2>
+                <div class="root-display" id="singleRootDisplay">
+                    <!-- 灵根显示区域 -->
+                </div>
+                <div class="button-group">
+                    <button id="generateSingleBtn">生成灵根</button>
+                    <button id="resetSingleBtn">重置</button>
+                </div>
+                <div class="analysis-panel" id="singleAnalysis">
+                    <!-- 分析结果显示区域 -->
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2>批量概率计算</h2>
+                <div class="probability-controls">
+                    <div class="input-group">
+                        <label for="simulationCount">模拟次数：</label>
+                        <input type="number" id="simulationCount" value="10000" min="1" max="1000000">
+                    </div>
+                    <button id="startSimulationBtn">开始模拟</button>
+                </div>
+                <div class="summary" id="simulationSummary">
+                    <!-- 模拟结果摘要 -->
+                </div>
+            </div>
+        </div>
+
+        <div class="probability-section">
+            <h2>概率分布结果</h2>
+            <div class="results-table-container">
+                <table class="results-table" id="probabilityTable">
+                    <thead>
+                        <tr>
+                            <th>灵根组合</th>
+                            <th>出现次数</th>
+                            <th>概率</th>
+                            <th>详细状态</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- 概率结果将在这里显示 -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="export-section">
+                <button id="exportResultsBtn">导出结果</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 定义生克关系
+        const relationships = {
+            generate: {
+                '金': '水',
+                '水': '木',
+                '木': '火',
+                '火': '土',
+                '土': '金'
+            },
+            overcome: {
+                '金': '木',
+                '木': '土',
+                '土': '水',
+                '水': '火',
+                '火': '金'
+            }
+        };
+
+        // 生成初始灵根状态
+        function generateInitialRoots() {
+            const elements = ['金', '木', '水', '火', '土'];
+            const states = ['无', '阳', '阴'];
+            const roots = {};
+            
+            elements.forEach(element => {
+                // 随机选择三种状态之一
+                const randomIndex = Math.floor(Math.random() * 3);
+                roots[element] = states[randomIndex];
+            });
+            
+            return roots;
+        }
+
+        // 处理生克关系，生成最终灵根状态
+        function processRelationships(roots) {
+            const processedRoots = { ...roots };
+            const variations = [];
+            const weaknesses = [];
+            
+            // 处理相生关系
+            Object.keys(relationships.generate).forEach(element => {
+                const targetElement = relationships.generate[element];
+                const elementState = processedRoots[element];
+                const targetState = processedRoots[targetElement];
+                
+                // 检查是否为一阴一阳
+                if ((elementState === '阴' && targetState === '阳') || 
+                    (elementState === '阳' && targetState === '阴')) {
+                    
+                    if (elementState === '阴' && targetState === '阳') {
+                        variations.push(`${element}${elementState}生${targetElement}${targetState}：强化变异`);
+                    } else {
+                        variations.push(`${element}${elementState}生${targetElement}${targetState}：弱化变异`);
+                    }
+                }
+            });
+            
+            // 处理相克关系
+            Object.keys(relationships.overcome).forEach(element => {
+                const targetElement = relationships.overcome[element];
+                const elementState = processedRoots[element];
+                const targetState = processedRoots[targetElement];
+                
+                // 检查是否同质（双阴或双阳，但不包括双无）
+                if ((elementState === '阴' && targetState === '阴') || 
+                    (elementState === '阳' && targetState === '阳')) {
+                    
+                    processedRoots[targetElement] = '废';
+                    weaknesses.push(`${element}${elementState}克${targetElement}${targetState}：${targetElement}变为废`);
+                }
+            });
+            
+            return {
+                roots: processedRoots,
+                variations,
+                weaknesses
+            };
+        }
+
+        // 生成完整的灵根
+        function generateSpiritualRoots() {
+            const initialRoots = generateInitialRoots();
+            const result = processRelationships(initialRoots);
+            
+            return {
+                initialRoots,
+                finalRoots: result.roots,
+                variations: result.variations,
+                weaknesses: result.weaknesses
+            };
+        }
+
+        // 显示灵根
+        function displayRoots(roots, containerId) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            
+            Object.entries(roots).forEach(([element, state]) => {
+                const rootItem = document.createElement('div');
+                rootItem.className = 'root-item';
+                
+                const rootName = document.createElement('div');
+                rootName.className = 'root-name';
+                rootName.textContent = element;
+                
+                const rootState = document.createElement('div');
+                rootState.className = `root-state ${state}`;
+                rootState.textContent = state;
+                
+                rootItem.appendChild(rootName);
+                rootItem.appendChild(rootState);
+                container.appendChild(rootItem);
+            });
+        }
+
+        // 显示分析结果
+        function displayAnalysis(variations, weaknesses, containerId) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            
+            // 添加变异分析
+            if (variations.length > 0) {
+                variations.forEach(variation => {
+                    const item = document.createElement('div');
+                    item.className = 'analysis-item variation';
+                    item.textContent = variation;
+                    container.appendChild(item);
+                });
+            }
+            
+            // 添加弱点分析
+            if (weaknesses.length > 0) {
+                weaknesses.forEach(weakness => {
+                    const item = document.createElement('div');
+                    item.className = 'analysis-item weakness';
+                    item.textContent = weakness;
+                    container.appendChild(item);
+                });
+            }
+            
+            // 如果没有变异和弱点
+            if (variations.length === 0 && weaknesses.length === 0) {
+                const item = document.createElement('div');
+                item.className = 'analysis-item';
+                item.textContent = '没有发生变异或废灵根';
+                container.appendChild(item);
+            }
+        }
+
+        // 单次生成按钮点击事件
+        document.getElementById('generateSingleBtn').addEventListener('click', () => {
+            const result = generateSpiritualRoots();
+            displayRoots(result.finalRoots, 'singleRootDisplay');
+            displayAnalysis(result.variations, result.weaknesses, 'singleAnalysis');
+        });
+
+        // 重置按钮点击事件
+        document.getElementById('resetSingleBtn').addEventListener('click', () => {
+            document.getElementById('singleRootDisplay').innerHTML = '';
+            document.getElementById('singleAnalysis').innerHTML = '';
+        });
+
+        // 批量模拟函数
+        function simulateMultiple(count) {
+            const results = {};
+            const totalCombinations = Math.pow(3, 5); // 每个灵根有3种初始状态，共5个灵根
+            
+            console.log(`开始模拟 ${count} 次...`);
+            
+            for (let i = 0; i < count; i++) {
+                const result = generateSpiritualRoots();
+                const rootKey = JSON.stringify(result.finalRoots);
+                
+                if (!results[rootKey]) {
+                    results[rootKey] = {
+                        count: 0,
+                        roots: result.finalRoots,
+                        initialRoots: result.initialRoots
+                    };
+                }
+                
+                results[rootKey].count++;
+            }
+            
+            return results;
+        }
+
+        // 格式化灵根状态显示
+        function formatRootsDisplay(roots) {
+            return Object.entries(roots)
+                .map(([element, state]) => `${element}${state}`)
+                .join('');
+        }
+
+        // 显示概率结果
+        function displayProbabilityResults(results, totalCount) {
+            const tableBody = document.getElementById('probabilityTable').getElementsByTagName('tbody')[0];
+            tableBody.innerHTML = '';
+            
+            // 转换为数组并按出现次数排序
+            const sortedResults = Object.entries(results)
+                .map(([key, data]) => ({
+                    ...data,
+                    probability: (data.count / totalCount * 100).toFixed(4)
+                }))
+                .sort((a, b) => b.count - a.count);
+            
+            // 更新表格
+            sortedResults.forEach(item => {
+                const row = tableBody.insertRow();
+                
+                const combinationCell = row.insertCell(0);
+                combinationCell.textContent = formatRootsDisplay(item.roots);
+                
+                const countCell = row.insertCell(1);
+                countCell.textContent = item.count;
+                
+                const probabilityCell = row.insertCell(2);
+                probabilityCell.textContent = `${item.probability}%`;
+                
+                const detailsCell = row.insertCell(3);
+                detailsCell.textContent = JSON.stringify(item.roots);
+            });
+            
+            // 更新摘要
+            const summary = document.getElementById('simulationSummary');
+            summary.innerHTML = `
+                <p>模拟次数：${totalCount}</p>
+                <p>出现的不同组合数：${sortedResults.length}</p>
+                <p>理论可能的组合数：${Math.pow(4, 5)} (每个灵根有4种可能状态)</p>
+            `;
+        }
+
+        // 开始模拟按钮点击事件
+        document.getElementById('startSimulationBtn').addEventListener('click', () => {
+            const count = parseInt(document.getElementById('simulationCount').value);
+            if (isNaN(count) || count < 1) {
+                alert('请输入有效的模拟次数');
+                return;
+            }
+            
+            // 显示加载状态
+            const summary = document.getElementById('simulationSummary');
+            summary.innerHTML = '<p>模拟进行中，请稍候...</p>';
+            
+            // 使用setTimeout允许UI更新
+            setTimeout(() => {
+                const results = simulateMultiple(count);
+                displayProbabilityResults(results, count);
+            }, 100);
+        });
+
+        // 导出结果
+        document.getElementById('exportResultsBtn').addEventListener('click', () => {
+            const table = document.getElementById('probabilityTable');
+            let csvContent = '灵根组合,出现次数,概率,详细状态\n';
+            
+            // 收集表格数据
+            const rows = table.getElementsByTagName('tr');
+            for (let i = 1; i < rows.length; i++) { // 跳过表头
+                const cells = rows[i].getElementsByTagName('td');
+                if (cells.length > 0) {
+                    const values = Array.from(cells).map(cell => 
+                        `"${cell.textContent.replace(/"/g, '""')}"`
+                    );
+                    csvContent += values.join(',') + '\n';
+                }
+            }
+            
+            // 创建下载链接
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `灵根概率结果_${new Date().toISOString().slice(0, 10)}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+    </script>
+</body>
+</html>

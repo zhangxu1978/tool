@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>修仙灵根生成器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .spirit-root-display {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .element-card {
+            background: linear-gradient(145deg, #f0f0f0, #e0e0e0);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .element-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .element-name {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .element-state {
+            font-size: 1.5em;
+            font-weight: bold;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+        .state-yang { background-color: #ff6b6b; color: white; }
+        .state-yin { background-color: #4ecdc4; color: white; }
+        .state-none { background-color: #95a5a6; color: white; }
+        .state-waste { background-color: #e74c3c; color: white; text-decoration: line-through; }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 1.1em;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+
+        .btn-primary {
+            background: linear-gradient(145deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(145deg, #56ab2f, #a8e6cf);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(145deg, #ff416c, #ff4b2b);
+            color: white;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .batch-test {
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .batch-test input {
+            padding: 10px;
+            font-size: 1em;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            width: 150px;
+            margin-right: 10px;
+        }
+
+        .statistics {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .statistics h3 {
+            color: #333;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .stat-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .combination-list {
+            max-height: 400px;
+            overflow-y: auto;
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+
+        .combination-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .combination-item:last-child {
+            border-bottom: none;
+        }
+
+        .combination-pattern {
+            font-family: monospace;
+            font-weight: bold;
+        }
+
+        .combination-count {
+            background: #667eea;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.9em;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.3s ease;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌟 修仙灵根生成器 🌟</h1>
+        
+        <div class="spirit-root-display" id="spiritRootDisplay">
+            <!-- 灵根显示区域 -->
+        </div>
+
+        <div class="controls">
+            <button class="btn-primary" onclick="generateSpiritRoot()">🎲 生成灵根</button>
+            <button class="btn-secondary" onclick="generateBatch()">⚡ 批量生成</button>
+            <button class="btn-danger" onclick="clearStatistics()">🗑️ 清空统计</button>
+            <button class="btn-primary" onclick="exportResults()">📊 导出结果</button>
+        </div>
+
+        <div class="batch-test">
+            <label>批量测试次数：</label>
+            <input type="number" id="batchCount" value="1000" min="1" max="100000">
+            <button class="btn-secondary" onclick="startBatchTest()">开始批量测试</button>
+        </div>
+
+        <div class="progress-bar" id="progressBar" style="display: none;">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+
+        <div class="statistics">
+            <h3>📈 统计信息</h3>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-label">总生成次数</div>
+                    <div class="stat-value" id="totalCount">0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">变异次数</div>
+                    <div class="stat-value" id="mutationCount">0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">废灵根次数</div>
+                    <div class="stat-value" id="wasteCount">0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">变异率</div>
+                    <div class="stat-value" id="mutationRate">0%</div>
+                </div>
+            </div>
+
+            <div class="combination-list" id="combinationList">
+                <h4>组合统计 (前20种最常见)</h4>
+                <div id="combinationStats">
+                    <!-- 组合统计显示 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * 灵根生成器类
+         * 负责生成五行灵根并处理相生相克关系
+         */
+        class SpiritRootGenerator {
+            constructor() {
+                this.elements = ['金', '木', '水', '火', '土'];
+                this.states = ['阳', '阴', '无'];
+                this.wasteState = '废';
+                
+                // 五行相生关系：金->水->木->火->土->金
+                this.generatingCycle = {
+                    '金': '水',
+                    '水': '木', 
+                    '木': '火',
+                    '火': '土',
+                    '土': '金'
+                };
+                
+                // 五行相克关系：金->木->土->水->火->金
+                this.controllingCycle = {
+                    '金': '木',
+                    '木': '土',
+                    '土': '水',
+                    '水': '火',
+                    '火': '金'
+                };
+                
+                this.statistics = new Map();
+                this.totalGenerations = 0;
+                this.mutationCount = 0;
+                this.wasteCount = 0;
+            }
+
+            /**
+             * 生成单个灵根
+             * @returns {Object} 包含五行状态和统计信息的灵根对象
+             */
+            generate() {
+                // 第一步：随机生成五个维度的状态（阴阳无）
+                let spiritRoot = {};
+                this.elements.forEach(element => {
+                    spiritRoot[element] = this.states[Math.floor(Math.random() * this.states.length)];
+                });
+
+                // 创建副本用于后续处理
+                let finalRoot = { ...spiritRoot };
+                let mutations = [];
+                let wasteElements = [];
+
+                // 第二步：处理相生关系
+                Object.entries(this.generatingCycle).forEach(([element, generatedElement]) => {
+                    const elementState = spiritRoot[element];
+                    const generatedState = spiritRoot[generatedElement];
+                    
+                    if (elementState !== '无' && generatedState !== '无') {
+                        if (elementState !== generatedState) {
+                            // 一阴一阳，发生变异
+                            const isEnhancement = (elementState === '阴' && generatedState === '阳');
+                            finalRoot[generatedElement] = isEnhancement ? '阳+' : '阴-';
+                            mutations.push({
+                                type: isEnhancement ? '强化' : '弱化',
+                                from: element,
+                                to: generatedElement,
+                                reason: `${elementState}${element} → ${generatedState}${generatedElement}`
+                            });
+                        }
+                    }
+                });
+
+                // 第三步：处理相克关系
+                Object.entries(this.controllingCycle).forEach(([element, controlledElement]) => {
+                    const elementState = spiritRoot[element];
+                    const controlledState = spiritRoot[controlledElement];
+                    
+                    if (elementState !== '无' && controlledState !== '无') {
+                        if (elementState === controlledState) {
+                            // 同质相克，被克元素变为废状态
+                            finalRoot[controlledElement] = this.wasteState;
+                            wasteElements.push(controlledElement);
+                        }
+                    }
+                });
+
+                // 统计
+                this.updateStatistics(finalRoot, mutations.length, wasteElements.length);
+
+                return {
+                    root: finalRoot,
+                    original: spiritRoot,
+                    mutations: mutations,
+                    wasteElements: wasteElements,
+                    hasMutation: mutations.length > 0,
+                    hasWaste: wasteElements.length > 0
+                };
+            }
+
+            /**
+             * 更新统计信息
+             */
+            updateStatistics(finalRoot, mutationCount, wasteCount) {
+                this.totalGenerations++;
+                this.mutationCount += mutationCount > 0 ? 1 : 0;
+                this.wasteCount += wasteCount > 0 ? 1 : 0;
+
+                // 生成组合模式字符串
+                const pattern = this.elements.map(el => finalRoot[el]).join('-');
+                this.statistics.set(pattern, (this.statistics.get(pattern) || 0) + 1);
+            }
+
+            /**
+             * 获取统计信息
+             */
+            getStatistics() {
+                return {
+                    total: this.totalGenerations,
+                    mutations: this.mutationCount,
+                    waste: this.wasteCount,
+                    mutationRate: this.totalGenerations > 0 ? 
+                        ((this.mutationCount / this.totalGenerations) * 100).toFixed(2) : 0,
+                    wasteRate: this.totalGenerations > 0 ? 
+                        ((this.wasteCount / this.totalGenerations) * 100).toFixed(2) : 0,
+                    combinations: Array.from(this.statistics.entries())
+                        .sort((a, b) => b[1] - a[1])
+                        .slice(0, 20)
+                };
+            }
+
+            /**
+             * 清空统计
+             */
+            clearStatistics() {
+                this.statistics.clear();
+                this.totalGenerations = 0;
+                this.mutationCount = 0;
+                this.wasteCount = 0;
+            }
+
+            /**
+             * 批量生成
+             */
+            async generateBatch(count, progressCallback) {
+                const results = [];
+                const batchSize = 100;
+                
+                for (let i = 0; i < count; i += batchSize) {
+                    const currentBatch = Math.min(batchSize, count - i);
+                    
+                    for (let j = 0; j < currentBatch; j++) {
+                        results.push(this.generate());
+                    }
+                    
+                    if (progressCallback) {
+                        progressCallback(Math.min(i + currentBatch, count), count);
+                    }
+                    
+                    // 让出控制权，避免界面卡顿
+                    await new Promise(resolve => setTimeout(resolve, 0));
+                }
+                
+                return results;
+            }
+        }
+
+        // 全局实例
+        const generator = new SpiritRootGenerator();
+
+        /**
+         * 生成单个灵根并显示
+         */
+        function generateSpiritRoot() {
+            const result = generator.generate();
+            displaySpiritRoot(result);
+            updateStatisticsDisplay();
+        }
+
+        /**
+         * 显示灵根
+         */
+        function displaySpiritRoot(result) {
+            const display = document.getElementById('spiritRootDisplay');
+            display.innerHTML = '';
+
+            generator.elements.forEach(element => {
+                const state = result.root[element];
+                const originalState = result.original[element];
+                const card = document.createElement('div');
+                card.className = 'element-card';
+                
+                let stateClass = '';
+                let displayText = state;
+                
+                if (state.includes('+')) {
+                    stateClass = 'state-yang';
+                    displayText = '阳(强化)';
+                } else if (state.includes('-')) {
+                    stateClass = 'state-yin';
+                    displayText = '阴(弱化)';
+                } else if (state === '阳') {
+                    stateClass = 'state-yang';
+                } else if (state === '阴') {
+                    stateClass = 'state-yin';
+                } else if (state === '废') {
+                    stateClass = 'state-waste';
+                } else {
+                    stateClass = 'state-none';
+                }
+
+                card.innerHTML = `
+                    <div class="element-name">${element}</div>
+                    <div class="element-state ${stateClass}">${displayText}</div>
+                    <div style="font-size: 0.8em; color: #666; margin-top: 5px;">
+                        原状态: ${originalState}
+                    </div>
+                `;
+                
+                display.appendChild(card);
+            });
+
+            // 显示变异信息
+            if (result.hasMutation || result.hasWaste) {
+                const info = document.createElement('div');
+                info.style.cssText = 'grid-column: 1 / -1; background: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 10px;';
+                
+                let infoText = '';
+                if (result.hasMutation) {
+                    infoText += '<strong>变异情况：</strong><br>';
+                    result.mutations.forEach(mutation => {
+                        infoText += `• ${mutation.type}变异：${mutation.reason}<br>`;
+                    });
+                }
+                if (result.hasWaste) {
+                    infoText += '<strong>废灵根：</strong>' + result.wasteElements.join('、') + '<br>';
+                }
+                
+                info.innerHTML = infoText;
+                display.appendChild(info);
+            }
+        }
+
+        /**
+         * 更新统计显示
+         */
+        function updateStatisticsDisplay() {
+            const stats = generator.getStatistics();
+            
+            document.getElementById('totalCount').textContent = stats.total;
+            document.getElementById('mutationCount').textContent = stats.mutations;
+            document.getElementById('wasteCount').textContent = stats.waste;
+            document.getElementById('mutationRate').textContent = stats.mutationRate + '%';
+
+            // 更新组合统计
+            const combinationStats = document.getElementById('combinationStats');
+            combinationStats.innerHTML = '';
+            
+            stats.combinations.forEach(([pattern, count]) => {
+                const percentage = ((count / stats.total) * 100).toFixed(2);
+                const item = document.createElement('div');
+                item.className = 'combination-item';
+                item.innerHTML = `
+                    <span class="combination-pattern">${pattern}</span>
+                    <span class="combination-count">${count} (${percentage}%)</span>
+                `;
+                combinationStats.appendChild(item);
+            });
+        }
+
+        /**
+         * 批量生成（快速模式）
+         */
+        function generateBatch() {
+            for (let i = 0; i < 10; i++) {
+                generator.generate();
+            }
+            updateStatisticsDisplay();
+        }
+
+        /**
+         * 开始批量测试
+         */
+        async function startBatchTest() {
+            const count = parseInt(document.getElementById('batchCount').value);
+            if (count <= 0 || count > 100000) {
+                alert('请输入1-100000之间的数字');
+                return;
+            }
+
+            // 显示进度条
+            const progressBar = document.getElementById('progressBar');
+            const progressFill = document.getElementById('progressFill');
+            progressBar.style.display = 'block';
+
+            // 禁用按钮
+            const buttons = document.querySelectorAll('button');
+            buttons.forEach(btn => btn.disabled = true);
+
+            try {
+                await generator.generateBatch(count, (current, total) => {
+                    const progress = (current / total) * 100;
+                    progressFill.style.width = progress + '%';
+                });
+
+                updateStatisticsDisplay();
+                alert(`批量测试完成！共生成 ${count} 个灵根`);
+            } catch (error) {
+                alert('测试过程中出现错误：' + error.message);
+            } finally {
+                // 隐藏进度条并启用按钮
+                progressBar.style.display = 'none';
+                progressFill.style.width = '0%';
+                buttons.forEach(btn => btn.disabled = false);
+            }
+        }
+
+        /**
+         * 清空统计
+         */
+        function clearStatistics() {
+            if (confirm('确定要清空所有统计数据吗？')) {
+                generator.clearStatistics();
+                updateStatisticsDisplay();
+                document.getElementById('spiritRootDisplay').innerHTML = '';
+            }
+        }
+
+        /**
+         * 导出结果
+         */
+        function exportResults() {
+            const stats = generator.getStatistics();
+            const timestamp = new Date().toLocaleString('zh-CN');
+            
+            let exportData = {
+                exportTime: timestamp,
+                totalGenerations: stats.total,
+                mutationCount: stats.mutations,
+                wasteCount: stats.waste,
+                mutationRate: stats.mutationRate + '%',
+                wasteRate: stats.wasteRate + '%',
+                topCombinations: stats.combinations.map(([pattern, count]) => ({
+                    pattern: pattern,
+                    count: count,
+                    percentage: ((count / stats.total) * 100).toFixed(2) + '%'
+                }))
+            };
+
+            // 创建下载链接
+            const dataStr = JSON.stringify(exportData, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `灵根生成统计_${new Date().getTime()}.json`;
+            link.click();
+            
+            URL.revokeObjectURL(url);
+        }
+
+        // 页面加载时生成一个示例
+        window.onload = function() {
+            generateSpiritRoot();
+        };
+    </script>
+</body>
+</html>
