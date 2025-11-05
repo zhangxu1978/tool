@@ -254,15 +254,27 @@
             <div class="panel">
                 <h2>单次灵根生成</h2>
                 
+                <div class="probability-controls" style="background-color: #fff8e1; border-color: #ffd54f;">
+                    <h4 style="margin-top: 0; margin-bottom: 10px;">通过数据化字符串解码灵根</h4>
+                    <div class="input-group">
+                        <label for="dataStringInput">输入5位数字串（阳=2，阴=1，无=0）：</label>
+                        <input type="text" id="dataStringInput" placeholder="例如：20211" maxlength="5">
+                        <span style="margin-left: 10px; color: #666; font-size: 14px;">金木水火土顺序</span>
+                    </div>
+                    <button id="decodeBtn" style="background-color: #ff9800;">解码灵根</button>
+                    <div id="decodeError" style="color: red; margin-top: 10px; display: none;"></div>
+                </div>
+                
                 <div class="probability-controls">
                     <div class="input-group">
                         <label>灵根状态概率设置（总和必须为100%）：</label>
                     </div>
                     <div class="input-group">
-                        <label for="probNone">无灵根概率：</label>
-                        <input type="number" id="probNone" value="33" min="0" max="100">
-                        <span>%</span>
-                    </div>
+                <label for="probNone">无灵根概率：</label>
+                <input type="number" id="probNone" value="33" min="0" max="100">
+                <span>%</span>
+            </div>
+            <div id="decodeError" style="color: red; margin-top: 10px; display: none;"></div>
                     <div class="input-group">
                         <label for="probYang">阳灵根概率：</label>
                         <input type="number" id="probYang" value="33" min="0" max="100">
@@ -430,6 +442,32 @@
                 '无': '0'
             };
             return order.map(element => stateMap[roots[element]]).join('');
+        }
+        
+        // 将数据化字符串解码为灵根状态（2=阳，1=阴，0=无）
+        function decodeDataString(dataString) {
+            if (!dataString || typeof dataString !== 'string' || dataString.length !== 5) {
+                throw new Error('请输入有效的5位数字字符串（由0、1、2组成）');
+            }
+            
+            const order = ['金', '木', '水', '火', '土'];
+            const stateMap = {
+                '2': '阳',
+                '1': '阴',
+                '0': '无'
+            };
+            
+            const roots = {};
+            
+            for (let i = 0; i < 5; i++) {
+                const digit = dataString[i];
+                if (!stateMap.hasOwnProperty(digit)) {
+                    throw new Error(`输入的第${i+1}位（${digit}）无效，只能是0、1或2`);
+                }
+                roots[order[i]] = stateMap[digit];
+            }
+            
+            return roots;
         }
 
         // 处理生克关系，生成最终灵根状态
@@ -731,6 +769,71 @@
         document.getElementById('resetSingleBtn').addEventListener('click', () => {
             document.getElementById('singleRootDisplay').innerHTML = '';
             document.getElementById('singleAnalysis').innerHTML = '';
+            document.getElementById('dataStringInput').value = '';
+            document.getElementById('decodeError').style.display = 'none';
+        });
+        
+        // 解码按钮点击事件
+        document.getElementById('decodeBtn').addEventListener('click', () => {
+            const input = document.getElementById('dataStringInput').value.trim();
+            const errorElement = document.getElementById('decodeError');
+            
+            try {
+                // 隐藏之前的错误信息
+                errorElement.style.display = 'none';
+                
+                // 验证输入是否全为数字
+                if (!/^[012]{5}$/.test(input)) {
+                    throw new Error('请输入有效的5位数字字符串，只能包含0、1、2');
+                }
+                
+                // 解码数据字符串
+                const initialRoots = decodeDataString(input);
+                
+                // 使用解码后的灵根进行处理
+                const processResult = processRelationships(initialRoots);
+                const rootType = determineRootType(processResult.roots, processResult.variations, initialRoots);
+                
+                // 构建完整结果对象
+                const result = {
+                    initialRoots,
+                    finalRoots: processResult.roots,
+                    variations: processResult.variations,
+                    weaknesses: processResult.weaknesses,
+                    rootType,
+                    mutatedRoots: processResult.mutatedRoots,
+                    daoBody: processResult.daoBody,
+                    dataString: input
+                };
+                
+                // 显示结果
+                displayRoots(result.finalRoots, 'singleRootDisplay');
+                displayAnalysis(
+                    result.variations, 
+                    result.weaknesses, 
+                    result.rootType, 
+                    result.mutatedRoots, 
+                    result.daoBody, 
+                    'singleAnalysis',
+                    result.dataString
+                );
+                
+            } catch (error) {
+                errorElement.textContent = error.message;
+                errorElement.style.display = 'block';
+            }
+        });
+        
+        // 为数据字符串输入框添加键盘事件（按Enter解码）
+        document.getElementById('dataStringInput').addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') {
+                document.getElementById('decodeBtn').click();
+            }
+        });
+        
+        // 限制数据字符串输入框只能输入0、1、2
+        document.getElementById('dataStringInput').addEventListener('input', (event) => {
+            event.target.value = event.target.value.replace(/[^012]/g, '');
         });
 
         // 批量模拟函数
