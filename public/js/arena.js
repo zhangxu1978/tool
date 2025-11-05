@@ -55,17 +55,6 @@ class DigitalArena {
         });
         
         // 移除重复的事件监听器，只保留HTML中的onclick属性调用
-        if (document.getElementById('importRulesFile')) {
-            document.getElementById('importRulesFile').addEventListener('change', (e) => {
-                if (e.target.files.length > 0) {
-                    // 更新文件选择器的标签文本
-                    const label = e.target.nextElementSibling;
-                    if (label) {
-                        label.textContent = e.target.files[0].name;
-                    }
-                }
-            });
-        }
     }
 
     // 添加竞技者
@@ -1284,30 +1273,38 @@ class DigitalArena {
     // 处理规则导入
     handleImportRules() {
         const fileInput = document.getElementById('importRulesFile');
-        if (!fileInput.files || fileInput.files.length === 0) {
-            alert('请先选择要导入的规则文件');
-            return;
-        }
         
-        const file = fileInput.files[0];
-        const reader = new FileReader();
-        
-        reader.onload = (e) => {
-            const fileContent = e.target.result;
-            this.importRules(fileContent);
-            // 重置文件输入框，允许重新选择同一文件
-            fileInput.value = '';
-            const label = fileInput.nextElementSibling;
-            if (label) {
-                label.textContent = '选择规则文件';
+        // 监听文件选择事件
+        const handleFileSelect = (e) => {
+            if (!fileInput.files || fileInput.files.length === 0) {
+                return;
             }
+            
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+            
+            reader.onload = (e) => {
+                const fileContent = e.target.result;
+                this.importRules(fileContent);
+                // 重置文件输入框，允许重新选择同一文件
+                fileInput.value = '';
+            };
+            
+            reader.onerror = () => {
+                alert('读取文件失败');
+            };
+            
+            reader.readAsText(file);
+            
+            // 移除事件监听器，避免重复绑定
+            fileInput.removeEventListener('change', handleFileSelect);
         };
         
-        reader.onerror = () => {
-            alert('读取文件失败');
-        };
+        // 添加一次性事件监听器
+        fileInput.addEventListener('change', handleFileSelect);
         
-        reader.readAsText(file);
+        // 触发文件选择器
+        fileInput.click();
     }
     
     // 确认导入竞技者
