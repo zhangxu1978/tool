@@ -200,7 +200,7 @@
                                 </div>
                                 <div class="col-md-2">
                                     <div class="mb-3">
-                                        <label for="spirit" class="form-label">灵气</label>
+                                        <label for="spirit" class="form-label">精神</label>
                                         <input type="number" class="form-control" id="spirit" value="10" min="1" max="999">
                                     </div>
                                 </div>
@@ -385,22 +385,22 @@
                                 <label class="form-label"><strong>灵力攻击公式</strong></label>
                                 <div class="row">
                                     <div class="col-md-2 mb-2">
-                                         <input type="text" id="spiritAttackRule_gold" class="form-control" placeholder="金: 元素加成.金 * 0.8 + 灵气 * 0.5">
+                                         <input type="text" id="spiritAttackRule_gold" class="form-control" placeholder="金: 元素加成.金 * 0.8 + 精神 * 0.5">
                                      </div>
                                      <div class="col-md-2 mb-2">
-                                         <input type="text" id="spiritAttackRule_wood" class="form-control" placeholder="木: 元素加成.木 * 0.8 + 灵气 * 0.5">
+                                         <input type="text" id="spiritAttackRule_wood" class="form-control" placeholder="木: 元素加成.木 * 0.8 + 精神 * 0.5">
                                      </div>
                                      <div class="col-md-2 mb-2">
-                                         <input type="text" id="spiritAttackRule_water" class="form-control" placeholder="水: 元素加成.水 * 0.8 + 灵气 * 0.5">
+                                         <input type="text" id="spiritAttackRule_water" class="form-control" placeholder="水: 元素加成.水 * 0.8 + 精神 * 0.5">
                                      </div>
                                      <div class="col-md-2 mb-2">
-                                         <input type="text" id="spiritAttackRule_fire" class="form-control" placeholder="火: 元素加成.火 * 0.8 + 灵气 * 0.5">
+                                         <input type="text" id="spiritAttackRule_fire" class="form-control" placeholder="火: 元素加成.火 * 0.8 + 精神 * 0.5">
                                      </div>
                                      <div class="col-md-2 mb-2">
-                                         <input type="text" id="spiritAttackRule_earth" class="form-control" placeholder="土: 元素加成.土 * 0.8 + 灵气 * 0.5">
+                                         <input type="text" id="spiritAttackRule_earth" class="form-control" placeholder="土: 元素加成.土 * 0.8 + 精神 * 0.5">
                                      </div>
                                 </div>
-                                <small class="form-text text-muted">可用变量: 元素加成.金/木/水/火/土, 元素抗性.金/木/水/火/土, 灵气, 等级</small>
+                                <small class="form-text text-muted">可用变量: 元素加成.金/木/水/火/土, 元素抗性.金/木/水/火/土, 精神, 等级</small>
                             </div>
                         </div>
                         
@@ -409,19 +409,19 @@
                                 <label class="form-label"><strong>灵力防御公式</strong></label>
                                 <div class="row">
                                     <div class="col-md-2 mb-2">
-                                         <input type="text" id="spiritDefenseRule_gold" class="form-control" placeholder="金: 元素抗性.金 * 0.8 + 灵气 * 0.3">
+                                         <input type="text" id="spiritDefenseRule_gold" class="form-control" placeholder="金: 元素抗性.金 * 0.8 + 精神 * 0.3">
                                      </div>
                                      <div class="col-md-2 mb-2">
-                                         <input type="text" id="spiritDefenseRule_wood" class="form-control" placeholder="木: 元素抗性.木 * 0.8 + 灵气 * 0.3">
+                                         <input type="text" id="spiritDefenseRule_wood" class="form-control" placeholder="木: 元素抗性.木 * 0.8 + 精神 * 0.3">
                                      </div>
                                      <div class="col-md-2 mb-2">
-                                         <input type="text" id="spiritDefenseRule_water" class="form-control" placeholder="水: 元素抗性.水 * 0.8 + 灵气 * 0.3">
+                                         <input type="text" id="spiritDefenseRule_water" class="form-control" placeholder="水: 元素抗性.水 * 0.8 + 精神 * 0.3">
                                      </div>
                                      <div class="col-md-2 mb-2">
-                                         <input type="text" id="spiritDefenseRule_fire" class="form-control" placeholder="火: 元素抗性.火 * 0.8 + 灵气 * 0.3">
+                                         <input type="text" id="spiritDefenseRule_fire" class="form-control" placeholder="火: 元素抗性.火 * 0.8 + 精神 * 0.3">
                                      </div>
                                      <div class="col-md-2 mb-2">
-                                         <input type="text" id="spiritDefenseRule_earth" class="form-control" placeholder="土: 元素抗性.土 * 0.8 + 灵气 * 0.3">
+                                         <input type="text" id="spiritDefenseRule_earth" class="form-control" placeholder="土: 元素抗性.土 * 0.8 + 精神 * 0.3">
                                      </div>
                                 </div>
                             </div>
@@ -595,21 +595,22 @@
                         <pre>
 {
   "基础属性": {
-    "力量": 9,
-    "敏捷": 7,
-    "体质": 8,
-    "智力": 5,
-    "灵气": 6
+    "力量": 4,
+    "敏捷": 3,
+    "生命": 3,
+    "智力": 2,
+    "精神": 5,
+    "灵根资质": 6
   },
   "元素抗性": {
-    "金": 0,
+    "金": 15,
     "木": 0,
-    "水": 23,
+    "水": 0,
     "火": 0,
-    "土": 0
+    "土": 15
   },
   "元素加成": {
-    "金": 23,
+    "金": 0,
     "木": 0,
     "水": 0,
     "火": 0,

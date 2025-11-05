@@ -23,18 +23,18 @@ class DigitalArena {
             critical: "智力 * 0.4 + 幸运 * 0.6",
             luckBonus: "幸运 * 0.1",
             spiritAttack: {
-                金: "元素加成.金 * 0.8 + 灵气 * 0.5",
-                木: "元素加成.木 * 0.8 + 灵气 * 0.5",
-                水: "元素加成.水 * 0.8 + 灵气 * 0.5",
-                火: "元素加成.火 * 0.8 + 灵气 * 0.5",
-                土: "元素加成.土 * 0.8 + 灵气 * 0.5"
+                金: "元素加成.金 * 0.8 + 精神 * 0.5",
+                木: "元素加成.木 * 0.8 + 精神 * 0.5",
+                水: "元素加成.水 * 0.8 + 精神 * 0.5",
+                火: "元素加成.火 * 0.8 + 精神 * 0.5",
+                土: "元素加成.土 * 0.8 + 精神 * 0.5"
             },
             spiritDefense: {
-                金: "元素抗性.金 * 0.8 + 灵气 * 0.3",
-                木: "元素抗性.木 * 0.8 + 灵气 * 0.3",
-                水: "元素抗性.水 * 0.8 + 灵气 * 0.3",
-                火: "元素抗性.火 * 0.8 + 灵气 * 0.3",
-                土: "元素抗性.土 * 0.8 + 灵气 * 0.3"
+                金: "元素抗性.金 * 0.8 + 精神 * 0.3",
+                木: "元素抗性.木 * 0.8 + 精神 * 0.3",
+                水: "元素抗性.水 * 0.8 + 精神 * 0.3",
+                火: "元素抗性.火 * 0.8 + 精神 * 0.3",
+                土: "元素抗性.土 * 0.8 + 精神 * 0.3"
             }
         };
     }
@@ -66,7 +66,7 @@ class DigitalArena {
         const agility = parseInt(document.getElementById('agility').value) || 10;
         const constitution = parseInt(document.getElementById('constitution').value) || 10;
         const luck = parseInt(document.getElementById('luck').value) || 10;
-        // 获取灵气值，默认为10
+        // 获取精神值，默认为10
         const spirit = parseInt(document.getElementById('spirit')?.value) || 10;
         
         // 获取元素抗性，默认为0
@@ -149,7 +149,7 @@ class DigitalArena {
             const agility = baseAttrs['敏捷'] || 10;
             const constitution = baseAttrs['体质'] || 10;
             const intelligence = baseAttrs['智力'] || 10;
-            const spirit = baseAttrs['灵气'] || 10;
+            const spirit = baseAttrs['精神'] || 10;
             // 幸运保留手工录入，默认为10
             const luck = 10;
             
@@ -215,7 +215,7 @@ class DigitalArena {
         document.getElementById('constitution').value = fighter.attributes.constitution;
         document.getElementById('luck').value = fighter.attributes.luck;
         
-        // 加载灵气值
+        // 加载精神值
         if (document.getElementById('spirit')) {
             document.getElementById('spirit').value = fighter.attributes.spirit || 10;
         }
@@ -270,7 +270,7 @@ class DigitalArena {
                 .replace(/敏捷/g, agility)
                 .replace(/体质/g, constitution)
                 .replace(/幸运/g, luck)
-                .replace(/灵气/g, spirit)
+                .replace(/精神/g, spirit)
                 .replace(/等级/g, level);
             
             // 替换元素抗性和元素加成
@@ -413,7 +413,7 @@ class DigitalArena {
                             <div class="col-2"><small>水</small></div>
                             <div class="col-2"><small>火</small></div>
                             <div class="col-2"><small>土</small></div>
-                            <div class="col-2"><small>灵气</small></div>
+                            <div class="col-2"><small>精神</small></div>
                         </div>
                         <div class="row text-center mb-2">
                             <div class="col-2"><small>R:${fighter.elementResistance?.金 || 0}<br>B:${fighter.elementBonus?.金 || 0}</small></div>
@@ -498,7 +498,7 @@ class DigitalArena {
                         <small>敏捷: ${attrs.agility}</small><br>
                         <small>体质: ${attrs.constitution}</small><br>
                         <small>幸运: ${attrs.luck}</small><br>
-                        <small>灵气: ${attrs.spirit}</small>
+                        <small>精神: ${attrs.spirit}</small>
                     </div>
                     <div class="col-6">
                         <strong>元素抗性：</strong><br>
@@ -513,7 +513,7 @@ class DigitalArena {
                     <strong>战斗属性：</strong><br>
                     <small>攻击: ${Math.round(stats.attack)} | 防御: ${Math.round(stats.defense)} | 生命: ${Math.round(stats.health)}</small><br>
                     <small>闪避: ${Math.round(stats.dodge * 10) / 10}% | 暴击: ${Math.round(stats.critical * 10) / 10}%</small><br>
-                    <small>幸运加成: +${Math.round(stats.luckBonus)} | 灵气值: ${Math.round(stats.spirit || attrs.spirit)}</small><br>
+                    <small>幸运加成: +${Math.round(stats.luckBonus)} | 精神值: ${Math.round(stats.spirit || attrs.spirit)}</small><br>
                     <strong>灵力攻击：</strong><br>
                     <small>金: ${Math.round(stats.spiritAttack?.金 || 0)} | 木: ${Math.round(stats.spiritAttack?.木 || 0)} | 水: ${Math.round(stats.spiritAttack?.水 || 0)}</small><br>
                     <small>火: ${Math.round(stats.spiritAttack?.火 || 0)} | 土: ${Math.round(stats.spiritAttack?.土 || 0)}</small><br>
@@ -536,17 +536,17 @@ class DigitalArena {
         document.getElementById('luckBonusRule').value = this.rules.luckBonus;
         
         // 加载灵力规则
-        document.getElementById('spiritAttackRule_gold').value = this.rules.spiritAttack?.金 || '元素加成.金 * 0.8 + 灵气 * 0.5';
-        document.getElementById('spiritAttackRule_wood').value = this.rules.spiritAttack?.木 || '元素加成.木 * 0.8 + 灵气 * 0.5';
-        document.getElementById('spiritAttackRule_water').value = this.rules.spiritAttack?.水 || '元素加成.水 * 0.8 + 灵气 * 0.5';
-        document.getElementById('spiritAttackRule_fire').value = this.rules.spiritAttack?.火 || '元素加成.火 * 0.8 + 灵气 * 0.5';
-        document.getElementById('spiritAttackRule_earth').value = this.rules.spiritAttack?.土 || '元素加成.土 * 0.8 + 灵气 * 0.5';
+        document.getElementById('spiritAttackRule_gold').value = this.rules.spiritAttack?.金 || '元素加成.金 * 0.8 + 精神 * 0.5';
+        document.getElementById('spiritAttackRule_wood').value = this.rules.spiritAttack?.木 || '元素加成.木 * 0.8 + 精神 * 0.5';
+        document.getElementById('spiritAttackRule_water').value = this.rules.spiritAttack?.水 || '元素加成.水 * 0.8 + 精神 * 0.5';
+        document.getElementById('spiritAttackRule_fire').value = this.rules.spiritAttack?.火 || '元素加成.火 * 0.8 + 精神 * 0.5';
+        document.getElementById('spiritAttackRule_earth').value = this.rules.spiritAttack?.土 || '元素加成.土 * 0.8 + 精神 * 0.5';
         
-        document.getElementById('spiritDefenseRule_gold').value = this.rules.spiritDefense?.金 || '元素抗性.金 * 0.8 + 灵气 * 0.3';
-        document.getElementById('spiritDefenseRule_wood').value = this.rules.spiritDefense?.木 || '元素抗性.木 * 0.8 + 灵气 * 0.3';
-        document.getElementById('spiritDefenseRule_water').value = this.rules.spiritDefense?.水 || '元素抗性.水 * 0.8 + 灵气 * 0.3';
-        document.getElementById('spiritDefenseRule_fire').value = this.rules.spiritDefense?.火 || '元素抗性.火 * 0.8 + 灵气 * 0.3';
-        document.getElementById('spiritDefenseRule_earth').value = this.rules.spiritDefense?.土 || '元素抗性.土 * 0.8 + 灵气 * 0.3';
+        document.getElementById('spiritDefenseRule_gold').value = this.rules.spiritDefense?.金 || '元素抗性.金 * 0.8 + 精神 * 0.3';
+        document.getElementById('spiritDefenseRule_wood').value = this.rules.spiritDefense?.木 || '元素抗性.木 * 0.8 + 精神 * 0.3';
+        document.getElementById('spiritDefenseRule_water').value = this.rules.spiritDefense?.水 || '元素抗性.水 * 0.8 + 精神 * 0.3';
+        document.getElementById('spiritDefenseRule_fire').value = this.rules.spiritDefense?.火 || '元素抗性.火 * 0.8 + 精神 * 0.3';
+        document.getElementById('spiritDefenseRule_earth').value = this.rules.spiritDefense?.土 || '元素抗性.土 * 0.8 + 精神 * 0.3';
     }
     
     // 导出规则
@@ -1172,18 +1172,18 @@ class DigitalArena {
             critical: document.getElementById('criticalRule').value,
             luckBonus: document.getElementById('luckBonusRule').value,
             spiritAttack: {
-                金: document.getElementById('spiritAttackRule_gold').value || '元素加成.金 * 0.8 + 灵气 * 0.5',
-                木: document.getElementById('spiritAttackRule_wood').value || '元素加成.木 * 0.8 + 灵气 * 0.5',
-                水: document.getElementById('spiritAttackRule_water').value || '元素加成.水 * 0.8 + 灵气 * 0.5',
-                火: document.getElementById('spiritAttackRule_fire').value || '元素加成.火 * 0.8 + 灵气 * 0.5',
-                土: document.getElementById('spiritAttackRule_earth').value || '元素加成.土 * 0.8 + 灵气 * 0.5'
+                金: document.getElementById('spiritAttackRule_gold').value || '元素加成.金 * 0.8 + 精神 * 0.5',
+                木: document.getElementById('spiritAttackRule_wood').value || '元素加成.木 * 0.8 + 精神 * 0.5',
+                水: document.getElementById('spiritAttackRule_water').value || '元素加成.水 * 0.8 + 精神 * 0.5',
+                火: document.getElementById('spiritAttackRule_fire').value || '元素加成.火 * 0.8 + 精神 * 0.5',
+                土: document.getElementById('spiritAttackRule_earth').value || '元素加成.土 * 0.8 + 精神 * 0.5'
             },
             spiritDefense: {
-                金: document.getElementById('spiritDefenseRule_gold').value || '元素抗性.金 * 0.8 + 灵气 * 0.3',
-                木: document.getElementById('spiritDefenseRule_wood').value || '元素抗性.木 * 0.8 + 灵气 * 0.3',
-                水: document.getElementById('spiritDefenseRule_water').value || '元素抗性.水 * 0.8 + 灵气 * 0.3',
-                火: document.getElementById('spiritDefenseRule_fire').value || '元素抗性.火 * 0.8 + 灵气 * 0.3',
-                土: document.getElementById('spiritDefenseRule_earth').value || '元素抗性.土 * 0.8 + 灵气 * 0.3'
+                金: document.getElementById('spiritDefenseRule_gold').value || '元素抗性.金 * 0.8 + 精神 * 0.3',
+                木: document.getElementById('spiritDefenseRule_wood').value || '元素抗性.木 * 0.8 + 精神 * 0.3',
+                水: document.getElementById('spiritDefenseRule_water').value || '元素抗性.水 * 0.8 + 精神 * 0.3',
+                火: document.getElementById('spiritDefenseRule_fire').value || '元素抗性.火 * 0.8 + 精神 * 0.3',
+                土: document.getElementById('spiritDefenseRule_earth').value || '元素抗性.土 * 0.8 + 精神 * 0.3'
             }
         };
         
@@ -1334,7 +1334,7 @@ class DigitalArena {
                 constitution: data.体质 || data.constitution || 10,
                 intelligence: data.智力 || data.intelligence || 10,
                 luck: data.幸运 || data.luck || 10,
-                spirit: data.灵气 || data.spirit || 10
+                spirit: data.精神 || data.spirit || 10
             };
             
             // 构建元素抗性
