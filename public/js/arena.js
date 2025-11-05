@@ -119,7 +119,7 @@ class DigitalArena {
     // 从JSON导入竞技者
     importFighterFromJson() {
         const name = document.getElementById('fighterJsonName').value.trim();
-        const level = parseInt(document.getElementById('fighterJsonLevel').value);
+        const level = parseInt(document.getElementById('fighterJsonLevel').value) || 1;
         const jsonData = document.getElementById('fighterJsonData').value.trim();
         
         if (!name) {
@@ -181,12 +181,9 @@ class DigitalArena {
             this.loadFighters();
             this.updateFighterSelects();
             
-            // 关闭模态框
-            const modal = bootstrap.Modal.getInstance(document.getElementById('importJsonModal'));
-            modal.hide();
-            
             // 清空输入框
             document.getElementById('fighterJsonName').value = '';
+            document.getElementById('fighterJsonLevel').value = 1;
             document.getElementById('fighterJsonData').value = '';
             
             alert('竞技者导入成功！');
@@ -215,6 +212,29 @@ class DigitalArena {
         document.getElementById('agility').value = fighter.attributes.agility;
         document.getElementById('constitution').value = fighter.attributes.constitution;
         document.getElementById('luck').value = fighter.attributes.luck;
+        
+        // 加载灵气值
+        if (document.getElementById('spirit')) {
+            document.getElementById('spirit').value = fighter.attributes.spirit || 10;
+        }
+        
+        // 加载元素抗性
+        if (document.getElementById('resistance_gold')) {
+            document.getElementById('resistance_gold').value = fighter.elementResistance?.金 || 0;
+            document.getElementById('resistance_wood').value = fighter.elementResistance?.木 || 0;
+            document.getElementById('resistance_water').value = fighter.elementResistance?.水 || 0;
+            document.getElementById('resistance_fire').value = fighter.elementResistance?.火 || 0;
+            document.getElementById('resistance_earth').value = fighter.elementResistance?.土 || 0;
+        }
+        
+        // 加载元素加成
+        if (document.getElementById('bonus_gold')) {
+            document.getElementById('bonus_gold').value = fighter.elementBonus?.金 || 0;
+            document.getElementById('bonus_wood').value = fighter.elementBonus?.木 || 0;
+            document.getElementById('bonus_water').value = fighter.elementBonus?.水 || 0;
+            document.getElementById('bonus_fire').value = fighter.elementBonus?.火 || 0;
+            document.getElementById('bonus_earth').value = fighter.elementBonus?.土 || 0;
+        }
 
         // 直接删除而不弹出确认对话框
         this.fighters = this.fighters.filter(f => f.id !== id);
@@ -378,6 +398,24 @@ class DigitalArena {
                     </div>
                     
                     <div class="border-top pt-3">
+                        <small class="text-muted">元素属性</small>
+                        <div class="row text-center mb-2">
+                            <div class="col-2"><small>金</small></div>
+                            <div class="col-2"><small>木</small></div>
+                            <div class="col-2"><small>水</small></div>
+                            <div class="col-2"><small>火</small></div>
+                            <div class="col-2"><small>土</small></div>
+                            <div class="col-2"><small>灵气</small></div>
+                        </div>
+                        <div class="row text-center mb-2">
+                            <div class="col-2"><small>R:${fighter.elementResistance?.金 || 0}<br>B:${fighter.elementBonus?.金 || 0}</small></div>
+                            <div class="col-2"><small>R:${fighter.elementResistance?.木 || 0}<br>B:${fighter.elementBonus?.木 || 0}</small></div>
+                            <div class="col-2"><small>R:${fighter.elementResistance?.水 || 0}<br>B:${fighter.elementBonus?.水 || 0}</small></div>
+                            <div class="col-2"><small>R:${fighter.elementResistance?.火 || 0}<br>B:${fighter.elementBonus?.火 || 0}</small></div>
+                            <div class="col-2"><small>R:${fighter.elementResistance?.土 || 0}<br>B:${fighter.elementBonus?.土 || 0}</small></div>
+                            <div class="col-2"><small><strong>${fighter.attributes.spirit || 10}</strong></small></div>
+                        </div>
+                        
                         <small class="text-muted">战斗属性预览</small>
                         <div class="row text-center">
                             <div class="col-4"><small>攻击<br><strong>${Math.round(stats.attack)}</strong></small></div>
@@ -598,21 +636,49 @@ class DigitalArena {
             const agility1 = fighter1.attributes.agility || 1;
             const agility2 = fighter2.attributes.agility || 1;
             
-            // 创建攻击序列，根据敏捷决定出手次数
-            const attackSequence = [];
-            const maxAgility = Math.max(agility1, agility2);
+            // 创建攻击序列，基于时间单位计算出手频率
+            // 敏捷10为基准，相当于1单位时间出手一次
+            // 其他敏捷值N相当于10/N单位时间出手一次
+            const agilityBase = 10; // 基准敏捷值
             
-            for (let i = 0; i < maxAgility; i++) {
-                if (i < agility1 && hp1 > 0) {
-                    attackSequence.push({ fighter: fighter1, stats: finalStats1, hp: hp1, index: 1 });
+            // 计算本回合可能的出手次数（考虑到回合限制）
+            const maxPossibleAttacks = Math.max(3, Math.ceil(agilityBase / Math.min(agility1, agility2)));
+            
+            // 计算每个角色的出手时间点
+            const attackTimings = [];
+            
+            // 为两个角色生成出手时间点
+            for (let i = 1; i <= maxPossibleAttacks; i++) {
+                // 角色1的出手时间
+                const time1 = (i - 1) * (agilityBase / agility1);
+                if (hp1 > 0) {
+                    attackTimings.push({ 
+                        time: time1, 
+                        fighter: fighter1, 
+                        stats: finalStats1, 
+                        hp: hp1, 
+                        index: 1 
+                    });
                 }
-                if (i < agility2 && hp2 > 0) {
-                    attackSequence.push({ fighter: fighter2, stats: finalStats2, hp: hp2, index: 2 });
+                
+                // 角色2的出手时间
+                const time2 = (i - 1) * (agilityBase / agility2);
+                if (hp2 > 0) {
+                    attackTimings.push({ 
+                        time: time2, 
+                        fighter: fighter2, 
+                        stats: finalStats2, 
+                        hp: hp2, 
+                        index: 2 
+                    });
                 }
             }
             
-            // 对攻击序列按敏捷排序，确保高敏捷的先出手
-            attackSequence.sort((a, b) => b.fighter.attributes.agility - a.fighter.attributes.agility);
+            // 按时间排序，确保先到时间点的先出手
+            attackTimings.sort((a, b) => a.time - b.time);
+            
+            // 取前N个出手动作（避免过多重复）
+            let attackSequence = attackTimings.slice(0, Math.max(6, maxPossibleAttacks));
 
             for (const attacker of attackSequence) {
                 if (attacker.hp <= 0) continue;
@@ -720,6 +786,33 @@ class DigitalArena {
         
         const winnerClass = result.winner === 1 ? 'text-success' : 'text-primary';
         
+        let battleDetailsHtml = '';
+        if (result.log && result.log.length > 0) {
+            battleDetailsHtml = `
+                <div class="mt-2">
+                    <small class="text-muted">战斗详情：</small>
+                    <div class="battle-details mt-1 p-2 bg-light rounded">
+                        ${result.log.map((entry, index) => {
+                            let entryClass = 'text-dark';
+                            let actionText = '';
+                            
+                            if (entry.type === 'dodge') {
+                                entryClass = 'text-info';
+                                actionText = `${entry.attacker} 攻击 ${entry.defender}，但 ${entry.defender} 闪避了攻击！`;
+                            } else if (entry.type === 'critical') {
+                                entryClass = 'text-danger';
+                                actionText = `${entry.attacker} 对 ${entry.defender} 造成了 ${entry.damage} 点暴击伤害！剩余生命值: ${entry.defenderHp}`;
+                            } else {
+                                actionText = `${entry.attacker} 对 ${entry.defender} 造成了 ${entry.damage} 点伤害！剩余生命值: ${entry.defenderHp}`;
+                            }
+                            
+                            return `<div class="${entryClass} mb-1"><small>回合${entry.round} [${index + 1}]: ${actionText}</small></div>`;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+        }
+        
         logEntry.innerHTML = `
             <div class="d-flex justify-content-between align-items-center">
                 <span><strong>第${round}轮</strong> - 获胜者: <span class="${winnerClass}">${result.winnerName}</span></span>
@@ -733,6 +826,7 @@ class DigitalArena {
                     <small>${result.winner === 2 ? '?' : '?'} ${result.winner === 2 ? result.winnerName : result.loserName}: ${result.finalHp.fighter2}/${result.maxHp.fighter2} HP</small>
                 </div>
             </div>
+            ${battleDetailsHtml}
         `;
         
         logContainer.appendChild(logEntry);
@@ -1027,7 +1121,7 @@ function importFighterFromJson() {
 }
 
 function confirmImportFighter() {
-    arena.confirmImportFighter();
+    arena.importFighterFromJson();
     // 关闭模态框
     var myModal = bootstrap.Modal.getInstance(document.getElementById('importJsonModal'));
     if (myModal) {
