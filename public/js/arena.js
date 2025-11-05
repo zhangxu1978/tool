@@ -68,6 +68,8 @@ class DigitalArena {
         const luck = parseInt(document.getElementById('luck').value) || 10;
         // 获取精神值，默认为10
         const spirit = parseInt(document.getElementById('spirit')?.value) || 10;
+        // 获取灵根资质，默认为10
+        const rootQualification = parseInt(document.getElementById('rootQualification')?.value) || 10;
         
         // 获取元素抗性，默认为0
         const elementResistance = {
@@ -101,7 +103,7 @@ class DigitalArena {
             id: Date.now(),
             name,
             level,
-            attributes: { strength, intelligence, agility, constitution, luck, spirit },
+            attributes: { strength, intelligence, agility, constitution, luck, spirit, rootQualification },
             elementResistance,
             elementBonus
         };
@@ -113,7 +115,7 @@ class DigitalArena {
         
         // 清空输入框
         document.getElementById('fighterName').value = '';
-        ['fighterLevel', 'strength', 'intelligence', 'agility', 'constitution', 'luck'].forEach(id => {
+        ['fighterLevel', 'strength', 'intelligence', 'agility', 'constitution', 'luck', 'spirit', 'rootQualification'].forEach(id => {
             document.getElementById(id).value = id === 'fighterLevel' ? '1' : '10';
         });
     }
@@ -150,6 +152,8 @@ class DigitalArena {
             const constitution = baseAttrs['体质'] || 10;
             const intelligence = baseAttrs['智力'] || 10;
             const spirit = baseAttrs['精神'] || 10;
+            // 获取灵根资质，默认值为10
+            const rootQualification = baseAttrs['灵根资质'] || 10;
             // 幸运保留手工录入，默认为10
             const luck = 10;
             
@@ -173,7 +177,7 @@ class DigitalArena {
                 id: Date.now(),
                 name,
                 level,
-                attributes: { strength, intelligence, agility, constitution, luck, spirit },
+                attributes: { strength, intelligence, agility, constitution, luck, spirit, rootQualification },
                 elementResistance,
                 elementBonus
             };
@@ -220,6 +224,11 @@ class DigitalArena {
             document.getElementById('spirit').value = fighter.attributes.spirit || 10;
         }
         
+        // 加载灵根资质
+        if (document.getElementById('rootQualification')) {
+            document.getElementById('rootQualification').value = fighter.attributes.rootQualification || 10;
+        }
+        
         // 加载元素抗性
         if (document.getElementById('resistance_gold')) {
             document.getElementById('resistance_gold').value = fighter.elementResistance?.金 || 0;
@@ -261,6 +270,7 @@ class DigitalArena {
         const constitution = attrs.constitution || 10;
         const luck = attrs.luck || 10;
         const spirit = attrs.spirit || 10;
+        const rootQualification = attrs.rootQualification || 10;
         
         const replaceVars = (formula) => {
             // 先替换基础属性
@@ -271,6 +281,7 @@ class DigitalArena {
                 .replace(/体质/g, constitution)
                 .replace(/幸运/g, luck)
                 .replace(/精神/g, spirit)
+                .replace(/灵根资质/g, rootQualification)
                 .replace(/等级/g, level);
             
             // 替换元素抗性和元素加成
@@ -310,7 +321,8 @@ class DigitalArena {
                 spiritAttack,
                 spiritDefense,
                 spirit: attrs.spirit || 10,
-                spiritPower
+                spiritPower,
+                rootQualification
             };
         } catch (error) {
             console.error('公式计算错误:', error);
@@ -334,7 +346,8 @@ class DigitalArena {
                 spiritAttack,
                 spiritDefense,
                 spirit,
-                spiritPower
+                spiritPower,
+                rootQualification
             };
         }
     }
@@ -396,11 +409,20 @@ class DigitalArena {
                         </div>
                     </div>
                     
-                    <div class="mb-3">
+                    <div class="mb-2">
                         <small>幸运</small>
                         <div class="attribute-bar">
                             <div class="attribute-progress luck" style="width: ${Math.min(fighter.attributes.luck / 100 * 100, 100)}%">
                                 ${fighter.attributes.luck}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <small>灵根资质</small>
+                        <div class="attribute-bar">
+                            <div class="attribute-progress" style="width: ${Math.min(fighter.attributes.rootQualification / 100 * 100, 100)}%; background: linear-gradient(90deg, #9c27b0, #673ab7);">
+                                ${fighter.attributes.rootQualification || 10}
                             </div>
                         </div>
                     </div>
