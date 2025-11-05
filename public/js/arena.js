@@ -53,6 +53,19 @@ class DigitalArena {
                 this.saveRules();
             });
         });
+        
+        // 移除重复的事件监听器，只保留HTML中的onclick属性调用
+        if (document.getElementById('importRulesFile')) {
+            document.getElementById('importRulesFile').addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    // 更新文件选择器的标签文本
+                    const label = e.target.nextElementSibling;
+                    if (label) {
+                        label.textContent = e.target.files[0].name;
+                    }
+                }
+            });
+        }
     }
 
     // 添加竞技者
@@ -545,6 +558,65 @@ class DigitalArena {
         document.getElementById('spiritDefenseRule_water').value = this.rules.spiritDefense?.水 || '元素抗性.水 * 0.8 + 灵气 * 0.3';
         document.getElementById('spiritDefenseRule_fire').value = this.rules.spiritDefense?.火 || '元素抗性.火 * 0.8 + 灵气 * 0.3';
         document.getElementById('spiritDefenseRule_earth').value = this.rules.spiritDefense?.土 || '元素抗性.土 * 0.8 + 灵气 * 0.3';
+    }
+    
+    // 导出规则
+    exportRules() {
+        const rulesData = JSON.stringify(this.rules, null, 2);
+        const blob = new Blob([rulesData], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `arena-rules-${new Date().toISOString().slice(0, 10)}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        alert('规则导出成功！');
+    }
+    
+    // 导入规则
+    importRules(rulesJson) {
+        try {
+            const importedRules = JSON.parse(rulesJson);
+            
+            // 验证必要的字段
+            const requiredFields = ['attack', 'defense', 'health', 'dodge', 'critical', 'luckBonus', 'spiritAttack', 'spiritDefense'];
+            const missingFields = requiredFields.filter(field => !(field in importedRules));
+            
+            if (missingFields.length > 0) {
+                alert(`导入失败：缺少必要字段 ${missingFields.join(', ')}`);
+                return false;
+            }
+            
+            // 验证spiritAttack和spiritDefense的结构
+            const elements = ['金', '木', '水', '火', '土'];
+            for (const element of elements) {
+                if (!importedRules.spiritAttack[element] || !importedRules.spiritDefense[element]) {
+                    alert(`导入失败：缺少元素 ${element} 的攻击或防御规则`);
+                    return false;
+                }
+            }
+            
+            // 更新规则
+            this.rules = importedRules;
+            localStorage.setItem('arenaRules', JSON.stringify(this.rules));
+            this.loadRules();
+            
+            // 更新相关界面
+            this.loadFighters();
+            const fighter1Id = document.getElementById('fighter1Select').value;
+            const fighter2Id = document.getElementById('fighter2Select').value;
+            if (fighter1Id) this.showFighterStats('fighter1Stats', fighter1Id);
+            if (fighter2Id) this.showFighterStats('fighter2Stats', fighter2Id);
+            
+            alert('规则导入成功！');
+            return true;
+        } catch (error) {
+            alert('规则导入失败：' + error.message);
+            return false;
+        }
     }
 
     // 开始战斗
@@ -1142,6 +1214,102 @@ class DigitalArena {
         localStorage.setItem('arenaBattleHistory', JSON.stringify(this.battleHistory));
     }
     
+    // 重置规则
+    resetRules() {
+        this.rules = this.getDefaultRules();
+        localStorage.setItem('arenaRules', JSON.stringify(this.rules));
+        this.loadRules();
+        alert('规则已重置为默认值！');
+    }
+    
+    // 导出规则
+    exportRules() {
+        const rulesData = JSON.stringify(this.rules, null, 2);
+        const blob = new Blob([rulesData], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `arena-rules-${new Date().toISOString().slice(0, 10)}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        alert('规则导出成功！');
+    }
+    
+    // 导入规则
+    importRules(rulesJson) {
+        try {
+            const importedRules = JSON.parse(rulesJson);
+            
+            // 验证必要的字段
+            const requiredFields = ['attack', 'defense', 'health', 'dodge', 'critical', 'luckBonus', 'spiritAttack', 'spiritDefense'];
+            const missingFields = requiredFields.filter(field => !(field in importedRules));
+            
+            if (missingFields.length > 0) {
+                alert(`导入失败：缺少必要字段 ${missingFields.join(', ')}`);
+                return false;
+            }
+            
+            // 验证spiritAttack和spiritDefense的结构
+            const elements = ['金', '木', '水', '火', '土'];
+            for (const element of elements) {
+                if (!importedRules.spiritAttack[element] || !importedRules.spiritDefense[element]) {
+                    alert(`导入失败：缺少元素 ${element} 的攻击或防御规则`);
+                    return false;
+                }
+            }
+            
+            // 更新规则
+            this.rules = importedRules;
+            localStorage.setItem('arenaRules', JSON.stringify(this.rules));
+            this.loadRules();
+            
+            // 更新相关界面
+            this.loadFighters();
+            const fighter1Id = document.getElementById('fighter1Select').value;
+            const fighter2Id = document.getElementById('fighter2Select').value;
+            if (fighter1Id) this.showFighterStats('fighter1Stats', fighter1Id);
+            if (fighter2Id) this.showFighterStats('fighter2Stats', fighter2Id);
+            
+            alert('规则导入成功！');
+            return true;
+        } catch (error) {
+            alert('规则导入失败：' + error.message);
+            return false;
+        }
+    }
+    
+    // 处理规则导入
+    handleImportRules() {
+        const fileInput = document.getElementById('importRulesFile');
+        if (!fileInput.files || fileInput.files.length === 0) {
+            alert('请先选择要导入的规则文件');
+            return;
+        }
+        
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+        
+        reader.onload = (e) => {
+            const fileContent = e.target.result;
+            this.importRules(fileContent);
+            // 重置文件输入框，允许重新选择同一文件
+            fileInput.value = '';
+            const label = fileInput.nextElementSibling;
+            if (label) {
+                label.textContent = '选择规则文件';
+            }
+        };
+        
+        reader.onerror = () => {
+            alert('读取文件失败');
+        };
+        
+        reader.readAsText(file);
+    }
+    
     // 确认导入竞技者
     confirmImportFighter() {
         try {
@@ -1230,6 +1398,22 @@ document.addEventListener('DOMContentLoaded', function() {
 // 全局函数
 function addFighter() {
     arena.addFighter();
+}
+
+function exportRules() {
+    arena.exportRules();
+}
+
+function importRules() {
+    arena.handleImportRules();
+}
+
+function saveRules() {
+    arena.saveRules();
+}
+
+function resetRules() {
+    arena.resetRules();
 }
 
 function saveRules() {
