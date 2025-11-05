@@ -421,8 +421,22 @@
             return roots;
         }
 
+        // 将初始灵根状态转换为数据化字符串（阳=2，阴=1，无=0）
+        function convertRootsToDataString(roots) {
+            const order = ['金', '木', '水', '火', '土'];
+            const stateMap = {
+                '阳': '2',
+                '阴': '1',
+                '无': '0'
+            };
+            return order.map(element => stateMap[roots[element]]).join('');
+        }
+
         // 处理生克关系，生成最终灵根状态
         function processRelationships(roots) {
+            // 生成数据化字符串
+            const dataString = convertRootsToDataString(roots);
+            
             const processedRoots = { ...roots };
             const variations = [];
             const weaknesses = [];
@@ -507,7 +521,8 @@
                 weaknesses,
                 mutatedRoots,
                 daoBody,
-                initialRoots: roots // 保存原始灵根状态
+                initialRoots: roots, // 保存原始灵根状态
+                dataString: dataString // 添加数据化字符串
             };
         }
         
@@ -576,7 +591,8 @@
                 weaknesses: result.weaknesses,
                 rootType,
                 mutatedRoots: result.mutatedRoots,
-                daoBody: result.daoBody
+                daoBody: result.daoBody,
+                dataString: result.dataString // 包含数据化字符串
             };
         }
 
@@ -604,9 +620,19 @@
         }
 
         // 显示分析结果
-        function displayAnalysis(variations, weaknesses, rootType, mutatedRoots, daoBody, containerId) {
+        function displayAnalysis(variations, weaknesses, rootType, mutatedRoots, daoBody, containerId, dataString = '') {
             const container = document.getElementById(containerId);
             container.innerHTML = '';
+            
+            // 显示数据化字符串
+            const dataStringItem = document.createElement('div');
+            dataStringItem.className = 'analysis-item';
+            dataStringItem.style.backgroundColor = '#e3f2fd';
+            dataStringItem.style.fontWeight = 'bold';
+            dataStringItem.style.textAlign = 'center';
+            dataStringItem.style.marginBottom = '15px';
+            dataStringItem.textContent = `数据化字符串：${dataString}`;
+            container.appendChild(dataStringItem);
             
             // 显示灵根种类（使用特殊样式突出显示）
             const rootTypeItem = document.createElement('div');
@@ -696,7 +722,8 @@
                 result.rootType, 
                 result.mutatedRoots, 
                 result.daoBody, 
-                'singleAnalysis'
+                'singleAnalysis',
+                result.dataString
             );
         });
 
@@ -720,13 +747,15 @@
                 
                 if (!results[rootKey]) {
                     results[rootKey] = {
-                        count: 0,
-                        roots: result.finalRoots,
-                        initialRoots: result.initialRoots,
-                        rootType: result.rootType,
-                        hasMutatedRoots: result.mutatedRoots && result.mutatedRoots.length > 0,
-                        hasDaoBody: !!result.daoBody
-                    };
+                    count: 0,
+                    roots: result.finalRoots,
+                    initialRoots: result.initialRoots,
+                    rootType: result.rootType,
+                    dataString: result.dataString, // 添加数据化字符串
+                    // 只有非废灵根的异化灵根才标记为hasMutatedRoots
+                    hasMutatedRoots: result.mutatedRoots && result.mutatedRoots.length > 0 && result.rootType !== '废灵根',
+                    hasDaoBody: !!result.daoBody
+                };
                 }
                 
                 results[rootKey].count++;
@@ -734,8 +763,8 @@
                 // 统计灵根类型
                 typeCounts[result.rootType] = (typeCounts[result.rootType] || 0) + 1;
                 
-                // 统计特殊情况
-                if (result.mutatedRoots && result.mutatedRoots.length > 0) {
+                // 统计特殊情况 - 只有非废灵根的异化灵根才计入统计
+                if (result.mutatedRoots && result.mutatedRoots.length > 0 && result.rootType !== '废灵根') {
                     typeCounts['异化灵根'] = (typeCounts['异化灵根'] || 0) + 1;
                 }
                 if (result.daoBody) {
@@ -775,6 +804,7 @@
                 
                 const combinationCell = row.insertCell(0);
                 combinationCell.textContent = formatRootsDisplay(item.roots);
+                combinationCell.title = `数据化字符串: ${item.dataString}`;
                 
                 const countCell = row.insertCell(1);
                 countCell.textContent = item.count;
