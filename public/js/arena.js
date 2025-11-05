@@ -628,6 +628,20 @@ class DigitalArena {
 
         const log = [];
         let round = 0;
+        
+        // 初始化战斗AI数据结构
+        const aiData = {
+            1: {
+                damageHistory: { normal: [], 金: [], 木: [], 水: [], 火: [], 土: [] },
+                testRounds: 5, // 前几轮用于测试
+                attackPreferences: null // 攻击偏好，后期使用
+            },
+            2: {
+                damageHistory: { normal: [], 金: [], 木: [], 水: [], 火: [], 土: [] },
+                testRounds: 5,
+                attackPreferences: null
+            }
+        };
 
         while (hp1 > 0 && hp2 > 0 && round < 1000) {
             round++;
@@ -689,7 +703,14 @@ class DigitalArena {
                 
                 if (defender.hp <= 0) continue;
 
-                const attackResult = this.calculateAttack(attacker, defender);
+                // 使用AI选择攻击类型
+                const attackType = this.selectAttackType(attacker, defender, aiData[attacker.index], round);
+                const attackResult = this.calculateAttack(attacker, defender, attackType);
+                
+                // 记录伤害数据用于AI学习
+                if (attackResult.damage > 0) {
+                    aiData[attacker.index].damageHistory[attackType].push(attackResult.damage);
+                }
                 
                 if (attacker.index === 1) {
                     hp2 = Math.max(0, hp2 - attackResult.damage);
@@ -701,6 +722,7 @@ class DigitalArena {
                     round,
                     attacker: attacker.fighter.name,
                     defender: defender.fighter.name,
+                    attackType: attackResult.attackType,
                     ...attackResult,
                     defenderHp: attacker.index === 1 ? hp2 : hp1
                 });
@@ -724,41 +746,107 @@ class DigitalArena {
     applyLuckBonus(stats) {
         const bonus = stats.luckBonus;
         return {
+            ...stats, // 保留所有原始属性
             attack: stats.attack + Math.random() * bonus,
             defense: stats.defense + Math.random() * bonus,
-            health: stats.health + Math.random() * bonus * 5,
-            dodge: stats.dodge,
-            critical: stats.critical,
-            luckBonus: stats.luckBonus
+            health: stats.health + Math.random() * bonus * 5
         };
     }
 
+    // AI选择攻击类型
+    selectAttackType(attacker, defender, aiData, round) {
+        // 如果还在测试轮次，随机选择攻击类型
+        if (round <= aiData.testRounds) {
+            const attackTypes = ['normal', '金', '木', '水', '火', '土'];
+            return attackTypes[Math.floor(Math.random() * attackTypes.length)];
+        }
+        
+        // 如果还没有计算攻击偏好，先计算
+        if (!aiData.attackPreferences) {
+            aiData.attackPreferences = this.calculateAttackPreferences(aiData.damageHistory);
+        }
+        
+        // 根据偏好选择攻击类型
+        const random = Math.random();
+        let cumulativeProbability = 0;
+        
+        for (const [attackType, probability] of Object.entries(aiData.attackPreferences)) {
+            cumulativeProbability += probability;
+            if (random <= cumulativeProbability) {
+                return attackType;
+            }
+        }
+        
+        // 默认返回普通攻击
+        return 'normal';
+    }
+    
+    // 计算攻击偏好概率
+    calculateAttackPreferences(damageHistory) {
+        const avgDamages = {};
+        let totalAvgDamage = 0;
+        
+        // 计算每种攻击的平均伤害
+        for (const [attackType, damages] of Object.entries(damageHistory)) {
+            if (damages.length > 0) {
+                avgDamages[attackType] = damages.reduce((sum, d) => sum + d, 0) / damages.length;
+            } else {
+                // 如果没有数据，给一个基础值
+                avgDamages[attackType] = 5;
+            }
+            totalAvgDamage += avgDamages[attackType];
+        }
+        
+        // 计算每种攻击的概率（基于平均伤害）
+        const preferences = {};
+        for (const [attackType, avgDamage] of Object.entries(avgDamages)) {
+            preferences[attackType] = avgDamage / totalAvgDamage;
+        }
+        
+        return preferences;
+    }
+    
     // 计算攻击结果
-    calculateAttack(attacker, defender) {
+    calculateAttack(attacker, defender, attackType = 'normal') {
         if (Math.random() * 100 < defender.stats.dodge) {
             return {
                 type: 'dodge',
+                attackType: attackType,
                 damage: 0,
-                description: `${defender.fighter.name}闪避了攻击！`
+                description: `${defender.fighter.name}闪避了${attackType === 'normal' ? '普通攻击' : attackType + '属性攻击'}！`
             };
         }
 
-        let damage = Math.max(1, attacker.stats.attack - defender.stats.defense);
+        let damage;
+        let attackName = '普通攻击';
+        
+        // 根据攻击类型计算伤害
+        if (attackType === 'normal') {
+            damage = Math.max(1, attacker.stats.attack - defender.stats.defense);
+        } else {
+            // 灵力攻击计算
+            attackName = attackType + '属性攻击';
+            const spiritAttack = attacker.stats.spiritAttack?.[attackType] || 10;
+            const spiritDefense = defender.stats.spiritDefense?.[attackType] || 0;
+            damage = Math.max(1, spiritAttack - spiritDefense);
+        }
         
         const isCritical = Math.random() * 100 < attacker.stats.critical;
         if (isCritical) {
             damage *= 2;
             return {
                 type: 'critical',
+                attackType: attackType,
                 damage: Math.round(damage),
-                description: `${attacker.fighter.name}造成了暴击！`
+                description: `${attacker.fighter.name}的${attackName}造成了暴击！`
             };
         }
 
         return {
             type: 'normal',
+            attackType: attackType,
             damage: Math.round(damage),
-            description: `${attacker.fighter.name}对${defender.fighter.name}造成了${Math.round(damage)}点伤害`
+            description: `${attacker.fighter.name}对${defender.fighter.name}造成了${Math.round(damage)}点${attackType === 'normal' ? '物理' : attackType + '属性'}伤害`
         };
     }
 
@@ -798,12 +886,15 @@ class DigitalArena {
                             
                             if (entry.type === 'dodge') {
                                 entryClass = 'text-info';
-                                actionText = `${entry.attacker} 攻击 ${entry.defender}，但 ${entry.defender} 闪避了攻击！`;
+                                const attackTypeName = entry.attackType === 'normal' ? '普通攻击' : entry.attackType + '属性攻击';
+                                actionText = `${entry.attacker} 使用 ${attackTypeName} 攻击 ${entry.defender}，但 ${entry.defender} 闪避了攻击！`;
                             } else if (entry.type === 'critical') {
                                 entryClass = 'text-danger';
-                                actionText = `${entry.attacker} 对 ${entry.defender} 造成了 ${entry.damage} 点暴击伤害！剩余生命值: ${entry.defenderHp}`;
+                                const damageType = entry.attackType === 'normal' ? '物理' : entry.attackType + '属性';
+                                actionText = `${entry.attacker} 对 ${entry.defender} 造成了 ${entry.damage} 点${damageType}暴击伤害！剩余生命值: ${entry.defenderHp}`;
                             } else {
-                                actionText = `${entry.attacker} 对 ${entry.defender} 造成了 ${entry.damage} 点伤害！剩余生命值: ${entry.defenderHp}`;
+                                const damageType = entry.attackType === 'normal' ? '物理' : entry.attackType + '属性';
+                                actionText = `${entry.attacker} 对 ${entry.defender} 造成了 ${entry.damage} 点${damageType}伤害！剩余生命值: ${entry.defenderHp}`;
                             }
                             
                             return `<div class="${entryClass} mb-1"><small>回合${entry.round} [${index + 1}]: ${actionText}</small></div>`;
