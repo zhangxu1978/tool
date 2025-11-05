@@ -296,7 +296,9 @@ class DigitalArena {
                 spiritDefense[element] = eval(replaceVars(this.rules.spiritDefense[element]));
             }
 
-            return { 
+            // 计算灵力值 = 灵力 * 10 + 等级 * 5
+            const spiritPower = (attrs.spirit || 10) * 10 + (attrs.level || 1) * 5;
+            return {
                 attack, 
                 defense, 
                 health, 
@@ -305,7 +307,8 @@ class DigitalArena {
                 luckBonus,
                 spiritAttack,
                 spiritDefense,
-                spirit: attrs.spirit || 10
+                spirit: attrs.spirit || 10,
+                spiritPower
             };
         } catch (error) {
             console.error('公式计算错误:', error);
@@ -317,6 +320,8 @@ class DigitalArena {
                 spiritDefense[element] = elementResistance[element] * 0.8 + spirit * 0.3;
             }
             
+            // 计算灵力值 = 灵力 * 10 + 等级 * 5
+            const spiritPower = spirit * 10 + level * 5;
             return {
                 attack: strength * 1.2 + level * 0.5,
                 defense: constitution * 1.0 + level * 0.3,
@@ -326,7 +331,8 @@ class DigitalArena {
                 luckBonus: luck * 0.1,
                 spiritAttack,
                 spiritDefense,
-                spirit
+                spirit,
+                spiritPower
             };
         }
     }
@@ -418,9 +424,10 @@ class DigitalArena {
                         
                         <small class="text-muted">战斗属性预览</small>
                         <div class="row text-center">
-                            <div class="col-4"><small>攻击<br><strong>${Math.round(stats.attack)}</strong></small></div>
-                            <div class="col-4"><small>防御<br><strong>${Math.round(stats.defense)}</strong></small></div>
-                            <div class="col-4"><small>生命<br><strong>${Math.round(stats.health)}</strong></small></div>
+                            <div class="col-3"><small>攻击<br><strong>${Math.round(stats.attack)}</strong></small></div>
+                            <div class="col-3"><small>防御<br><strong>${Math.round(stats.defense)}</strong></small></div>
+                            <div class="col-3"><small>生命<br><strong>${Math.round(stats.health)}</strong></small></div>
+                            <div class="col-3"><small>灵力值<br><strong>${Math.round(stats.spiritPower)}</strong></small></div>
                         </div>
                         <div class="row text-center mt-2">
                             <div class="col-6"><small>闪避<br><strong>${Math.round(stats.dodge * 10) / 10}%</strong></small></div>
@@ -625,6 +632,10 @@ class DigitalArena {
         let hp2 = finalStats2.health;
         const maxHp1 = hp1;
         const maxHp2 = hp2;
+        
+        // 初始化灵力值
+        let spiritPower1 = finalStats1.spiritPower;
+        let spiritPower2 = finalStats2.spiritPower;
 
         const log = [];
         let round = 0;
@@ -670,7 +681,8 @@ class DigitalArena {
                         time: time1, 
                         fighter: fighter1, 
                         stats: finalStats1, 
-                        hp: hp1, 
+                        hp: hp1,
+                        spiritPower: spiritPower1,
                         index: 1 
                     });
                 }
@@ -682,7 +694,8 @@ class DigitalArena {
                         time: time2, 
                         fighter: fighter2, 
                         stats: finalStats2, 
-                        hp: hp2, 
+                        hp: hp2,
+                        spiritPower: spiritPower2,
                         index: 2 
                     });
                 }
@@ -714,8 +727,16 @@ class DigitalArena {
                 
                 if (attacker.index === 1) {
                     hp2 = Math.max(0, hp2 - attackResult.damage);
+                    // 消耗灵力值
+                    if (attackResult.spiritCost > 0) {
+                        spiritPower1 = Math.max(0, spiritPower1 - attackResult.spiritCost);
+                    }
                 } else {
                     hp1 = Math.max(0, hp1 - attackResult.damage);
+                    // 消耗灵力值
+                    if (attackResult.spiritCost > 0) {
+                        spiritPower2 = Math.max(0, spiritPower2 - attackResult.spiritCost);
+                    }
                 }
 
                 log.push({
@@ -724,7 +745,8 @@ class DigitalArena {
                     defender: defender.fighter.name,
                     attackType: attackResult.attackType,
                     ...attackResult,
-                    defenderHp: attacker.index === 1 ? hp2 : hp1
+                    defenderHp: attacker.index === 1 ? hp2 : hp1,
+                    attackerSpiritPower: attacker.index === 1 ? spiritPower1 : spiritPower2
                 });
 
                 if (hp1 <= 0 || hp2 <= 0) break;
@@ -749,12 +771,22 @@ class DigitalArena {
             ...stats, // 保留所有原始属性
             attack: stats.attack + Math.random() * bonus,
             defense: stats.defense + Math.random() * bonus,
-            health: stats.health + Math.random() * bonus * 5
+            health: stats.health + Math.random() * bonus * 5,
+            spiritPower: stats.spiritPower // 保留灵力值不变
         };
     }
 
     // AI选择攻击类型
     selectAttackType(attacker, defender, aiData, round) {
+        // 检查灵力值，如果不足则只能进行普通攻击
+        const isSpiritAttack = (type) => ['金', '木', '水', '火', '土'].includes(type);
+        const canUseSpiritAttack = attacker.spiritPower > 0;
+        
+        // 如果灵力值不足，强制普通攻击
+        if (!canUseSpiritAttack) {
+            return 'normal';
+        }
+        
         // 如果还在测试轮次，随机选择攻击类型
         if (round <= aiData.testRounds) {
             const attackTypes = ['normal', '金', '木', '水', '火', '土'];
@@ -771,6 +803,11 @@ class DigitalArena {
         let cumulativeProbability = 0;
         
         for (const [attackType, probability] of Object.entries(aiData.attackPreferences)) {
+            // 如果选择灵力攻击但灵力不足，跳过
+            if (isSpiritAttack(attackType) && !canUseSpiritAttack) {
+                continue;
+            }
+            
             cumulativeProbability += probability;
             if (random <= cumulativeProbability) {
                 return attackType;
@@ -813,12 +850,14 @@ class DigitalArena {
                 type: 'dodge',
                 attackType: attackType,
                 damage: 0,
+                spiritCost: 0,
                 description: `${defender.fighter.name}闪避了${attackType === 'normal' ? '普通攻击' : attackType + '属性攻击'}！`
             };
         }
 
         let damage;
         let attackName = '普通攻击';
+        let spiritCost = 0;
         
         // 根据攻击类型计算伤害
         if (attackType === 'normal') {
@@ -829,6 +868,9 @@ class DigitalArena {
             const spiritAttack = attacker.stats.spiritAttack?.[attackType] || 10;
             const spiritDefense = defender.stats.spiritDefense?.[attackType] || 0;
             damage = Math.max(1, spiritAttack - spiritDefense);
+            
+            // 灵力攻击消耗等量灵力值
+            spiritCost = damage;
         }
         
         const isCritical = Math.random() * 100 < attacker.stats.critical;
@@ -838,6 +880,7 @@ class DigitalArena {
                 type: 'critical',
                 attackType: attackType,
                 damage: Math.round(damage),
+                spiritCost: spiritCost,
                 description: `${attacker.fighter.name}的${attackName}造成了暴击！`
             };
         }
@@ -846,6 +889,7 @@ class DigitalArena {
             type: 'normal',
             attackType: attackType,
             damage: Math.round(damage),
+            spiritCost: spiritCost,
             description: `${attacker.fighter.name}对${defender.fighter.name}造成了${Math.round(damage)}点${attackType === 'normal' ? '物理' : attackType + '属性'}伤害`
         };
     }
@@ -887,14 +931,17 @@ class DigitalArena {
                             if (entry.type === 'dodge') {
                                 entryClass = 'text-info';
                                 const attackTypeName = entry.attackType === 'normal' ? '普通攻击' : entry.attackType + '属性攻击';
-                                actionText = `${entry.attacker} 使用 ${attackTypeName} 攻击 ${entry.defender}，但 ${entry.defender} 闪避了攻击！`;
+                                const spiritInfo = entry.spiritCost > 0 ? `，消耗 ${entry.spiritCost} 灵力值，剩余灵力值: ${entry.attackerSpiritPower}` : '';
+                                actionText = `${entry.attacker} 使用 ${attackTypeName} 攻击 ${entry.defender}，但 ${entry.defender} 闪避了攻击！${spiritInfo}`;
                             } else if (entry.type === 'critical') {
                                 entryClass = 'text-danger';
                                 const damageType = entry.attackType === 'normal' ? '物理' : entry.attackType + '属性';
-                                actionText = `${entry.attacker} 对 ${entry.defender} 造成了 ${entry.damage} 点${damageType}暴击伤害！剩余生命值: ${entry.defenderHp}`;
+                                const spiritInfo = entry.spiritCost > 0 ? `，消耗 ${entry.spiritCost} 灵力值，剩余灵力值: ${entry.attackerSpiritPower}` : '';
+                                actionText = `${entry.attacker} 对 ${entry.defender} 造成了 ${entry.damage} 点${damageType}暴击伤害！剩余生命值: ${entry.defenderHp}${spiritInfo}`;
                             } else {
                                 const damageType = entry.attackType === 'normal' ? '物理' : entry.attackType + '属性';
-                                actionText = `${entry.attacker} 对 ${entry.defender} 造成了 ${entry.damage} 点${damageType}伤害！剩余生命值: ${entry.defenderHp}`;
+                                const spiritInfo = entry.spiritCost > 0 ? `，消耗 ${entry.spiritCost} 灵力值，剩余灵力值: ${entry.attackerSpiritPower}` : '';
+                                actionText = `${entry.attacker} 对 ${entry.defender} 造成了 ${entry.damage} 点${damageType}伤害！剩余生命值: ${entry.defenderHp}${spiritInfo}`;
                             }
                             
                             return `<div class="${entryClass} mb-1"><small>回合${entry.round} [${index + 1}]: ${actionText}</small></div>`;
