@@ -200,14 +200,107 @@
                                 </div>
                                 <div class="col-md-2">
                                     <div class="mb-3">
-                                        <label class="form-label">&nbsp;</label>
-                                        <button type="button" class="btn btn-arena w-100" onclick="addFighter()">添加</button>
+                                        <label for="spirit" class="form-label">灵气</label>
+                                        <input type="number" class="form-control" id="spirit" value="10" min="1" max="999">
                                     </div>
                                 </div>
-                                <div class="col-md-2">
+                            </div>
+                            <!-- 元素抗性输入区域 -->
+                            <div class="mt-4">
+                                <h6 class="text-primary">元素抗性</h6>
+                                <div class="row">
+                                    <div class="col-md-2">
+                                        <div class="mb-3">
+                                            <label for="resistance_gold" class="form-label">金</label>
+                                            <input type="number" class="form-control" id="resistance_gold" value="0" min="0" max="999">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="mb-3">
+                                            <label for="resistance_wood" class="form-label">木</label>
+                                            <input type="number" class="form-control" id="resistance_wood" value="0" min="0" max="999">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="mb-3">
+                                            <label for="resistance_water" class="form-label">水</label>
+                                            <input type="number" class="form-control" id="resistance_water" value="0" min="0" max="999">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="mb-3">
+                                            <label for="resistance_fire" class="form-label">火</label>
+                                            <input type="number" class="form-control" id="resistance_fire" value="0" min="0" max="999">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="mb-3">
+                                            <label for="resistance_earth" class="form-label">土</label>
+                                            <input type="number" class="form-control" id="resistance_earth" value="0" min="0" max="999">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="mb-3">
+                                            <label class="form-label">&nbsp;</label>
+                                            <button type="button" class="btn btn-outline-secondary w-100" onclick="setAllResistances(0)">重置</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 元素加成输入区域 -->
+                            <div class="mt-4">
+                                <h6 class="text-primary">元素加成</h6>
+                                <div class="row">
+                                    <div class="col-md-2">
+                                        <div class="mb-3">
+                                            <label for="bonus_gold" class="form-label">金</label>
+                                            <input type="number" class="form-control" id="bonus_gold" value="0" min="0" max="999">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="mb-3">
+                                            <label for="bonus_wood" class="form-label">木</label>
+                                            <input type="number" class="form-control" id="bonus_wood" value="0" min="0" max="999">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="mb-3">
+                                            <label for="bonus_water" class="form-label">水</label>
+                                            <input type="number" class="form-control" id="bonus_water" value="0" min="0" max="999">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="mb-3">
+                                            <label for="bonus_fire" class="form-label">火</label>
+                                            <input type="number" class="form-control" id="bonus_fire" value="0" min="0" max="999">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="mb-3">
+                                            <label for="bonus_earth" class="form-label">土</label>
+                                            <input type="number" class="form-control" id="bonus_earth" value="0" min="0" max="999">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="mb-3">
+                                            <label class="form-label">&nbsp;</label>
+                                            <button type="button" class="btn btn-outline-secondary w-100" onclick="setAllBonuses(0)">重置</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 按钮区域 -->
+                            <div class="row mt-4">
+                                <div class="col-md-6">
                                     <div class="mb-3">
-                                        <label class="form-label">&nbsp;</label>
-                                        <button type="button" class="btn btn-primary w-100" onclick="showImportModal()">从JSON导入</button>
+                                        <button type="button" class="btn btn-arena w-100" onclick="addFighter()">添加竞技者</button>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <button type="button" class="btn btn-primary w-100" onclick="importFighterFromJson()">从JSON导入</button>
                                     </div>
                                 </div>
                             </div>
@@ -269,6 +362,58 @@
                                 <label for="luckBonusRule" class="form-label"><strong>幸运加成计算</strong></label>
                                 <input type="text" class="form-control" id="luckBonusRule" value="幸运 * 0.1" placeholder="例: 幸运 * 0.1">
                                 <small class="form-text text-muted">随机为各属性增加0到此值的加成</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h3 class="mt-5">灵力属性转化规则</h3>
+                    <p class="text-muted">设置灵力属性如何转化为战斗属性</p>
+                    
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="conversion-rule">
+                                <label class="form-label"><strong>灵力攻击公式</strong></label>
+                                <div class="row">
+                                    <div class="col-md-2 mb-2">
+                                         <input type="text" id="spiritAttackRule_gold" class="form-control" placeholder="金: 元素加成.金 * 0.8 + 灵气 * 0.5">
+                                     </div>
+                                     <div class="col-md-2 mb-2">
+                                         <input type="text" id="spiritAttackRule_wood" class="form-control" placeholder="木: 元素加成.木 * 0.8 + 灵气 * 0.5">
+                                     </div>
+                                     <div class="col-md-2 mb-2">
+                                         <input type="text" id="spiritAttackRule_water" class="form-control" placeholder="水: 元素加成.水 * 0.8 + 灵气 * 0.5">
+                                     </div>
+                                     <div class="col-md-2 mb-2">
+                                         <input type="text" id="spiritAttackRule_fire" class="form-control" placeholder="火: 元素加成.火 * 0.8 + 灵气 * 0.5">
+                                     </div>
+                                     <div class="col-md-2 mb-2">
+                                         <input type="text" id="spiritAttackRule_earth" class="form-control" placeholder="土: 元素加成.土 * 0.8 + 灵气 * 0.5">
+                                     </div>
+                                </div>
+                                <small class="form-text text-muted">可用变量: 元素加成.金/木/水/火/土, 元素抗性.金/木/水/火/土, 灵气, 等级</small>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-12">
+                            <div class="conversion-rule">
+                                <label class="form-label"><strong>灵力防御公式</strong></label>
+                                <div class="row">
+                                    <div class="col-md-2 mb-2">
+                                         <input type="text" id="spiritDefenseRule_gold" class="form-control" placeholder="金: 元素抗性.金 * 0.8 + 灵气 * 0.3">
+                                     </div>
+                                     <div class="col-md-2 mb-2">
+                                         <input type="text" id="spiritDefenseRule_wood" class="form-control" placeholder="木: 元素抗性.木 * 0.8 + 灵气 * 0.3">
+                                     </div>
+                                     <div class="col-md-2 mb-2">
+                                         <input type="text" id="spiritDefenseRule_water" class="form-control" placeholder="水: 元素抗性.水 * 0.8 + 灵气 * 0.3">
+                                     </div>
+                                     <div class="col-md-2 mb-2">
+                                         <input type="text" id="spiritDefenseRule_fire" class="form-control" placeholder="火: 元素抗性.火 * 0.8 + 灵气 * 0.3">
+                                     </div>
+                                     <div class="col-md-2 mb-2">
+                                         <input type="text" id="spiritDefenseRule_earth" class="form-control" placeholder="土: 元素抗性.土 * 0.8 + 灵气 * 0.3">
+                                     </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -457,7 +602,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
-                    <button type="button" class="btn btn-arena" onclick="importFighterFromJson()">导入竞技者</button>
+                    <button type="button" class="btn btn-arena" onclick="confirmImportFighter()">导入竞技者</button>
                 </div>
             </div>
         </div>

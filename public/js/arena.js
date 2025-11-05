@@ -21,7 +21,21 @@ class DigitalArena {
             health: "体质 * 10 + 等级 * 5",
             dodge: "敏捷 * 0.5 + 幸运 * 0.3",
             critical: "智力 * 0.4 + 幸运 * 0.6",
-            luckBonus: "幸运 * 0.1"
+            luckBonus: "幸运 * 0.1",
+            spiritAttack: {
+                金: "元素加成.金 * 0.8 + 灵气 * 0.5",
+                木: "元素加成.木 * 0.8 + 灵气 * 0.5",
+                水: "元素加成.水 * 0.8 + 灵气 * 0.5",
+                火: "元素加成.火 * 0.8 + 灵气 * 0.5",
+                土: "元素加成.土 * 0.8 + 灵气 * 0.5"
+            },
+            spiritDefense: {
+                金: "元素抗性.金 * 0.8 + 灵气 * 0.3",
+                木: "元素抗性.木 * 0.8 + 灵气 * 0.3",
+                水: "元素抗性.水 * 0.8 + 灵气 * 0.3",
+                火: "元素抗性.火 * 0.8 + 灵气 * 0.3",
+                土: "元素抗性.土 * 0.8 + 灵气 * 0.3"
+            }
         };
     }
 
@@ -44,12 +58,32 @@ class DigitalArena {
     // 添加竞技者
     addFighter() {
         const name = document.getElementById('fighterName').value.trim();
-        const level = parseInt(document.getElementById('fighterLevel').value);
-        const strength = parseInt(document.getElementById('strength').value);
-        const intelligence = parseInt(document.getElementById('intelligence').value);
-        const agility = parseInt(document.getElementById('agility').value);
-        const constitution = parseInt(document.getElementById('constitution').value);
-        const luck = parseInt(document.getElementById('luck').value);
+        const level = parseInt(document.getElementById('fighterLevel').value) || 1;
+        const strength = parseInt(document.getElementById('strength').value) || 10;
+        const intelligence = parseInt(document.getElementById('intelligence').value) || 10;
+        const agility = parseInt(document.getElementById('agility').value) || 10;
+        const constitution = parseInt(document.getElementById('constitution').value) || 10;
+        const luck = parseInt(document.getElementById('luck').value) || 10;
+        // 获取灵气值，默认为10
+        const spirit = parseInt(document.getElementById('spirit')?.value) || 10;
+        
+        // 获取元素抗性，默认为0
+        const elementResistance = {
+            金: parseInt(document.getElementById('resistance_gold')?.value) || 0,
+            木: parseInt(document.getElementById('resistance_wood')?.value) || 0,
+            水: parseInt(document.getElementById('resistance_water')?.value) || 0,
+            火: parseInt(document.getElementById('resistance_fire')?.value) || 0,
+            土: parseInt(document.getElementById('resistance_earth')?.value) || 0
+        };
+        
+        // 获取元素加成，默认为0
+        const elementBonus = {
+            金: parseInt(document.getElementById('bonus_gold')?.value) || 0,
+            木: parseInt(document.getElementById('bonus_wood')?.value) || 0,
+            水: parseInt(document.getElementById('bonus_water')?.value) || 0,
+            火: parseInt(document.getElementById('bonus_fire')?.value) || 0,
+            土: parseInt(document.getElementById('bonus_earth')?.value) || 0
+        };
 
         if (!name) {
             alert('请输入竞技者姓名！');
@@ -65,7 +99,9 @@ class DigitalArena {
             id: Date.now(),
             name,
             level,
-            attributes: { strength, intelligence, agility, constitution, luck }
+            attributes: { strength, intelligence, agility, constitution, luck, spirit },
+            elementResistance,
+            elementBonus
         };
 
         this.fighters.push(fighter);
@@ -78,6 +114,85 @@ class DigitalArena {
         ['fighterLevel', 'strength', 'intelligence', 'agility', 'constitution', 'luck'].forEach(id => {
             document.getElementById(id).value = id === 'fighterLevel' ? '1' : '10';
         });
+    }
+    
+    // 从JSON导入竞技者
+    importFighterFromJson() {
+        const name = document.getElementById('fighterJsonName').value.trim();
+        const level = parseInt(document.getElementById('fighterJsonLevel').value);
+        const jsonData = document.getElementById('fighterJsonData').value.trim();
+        
+        if (!name) {
+            alert('请输入竞技者姓名！');
+            return;
+        }
+        
+        if (this.fighters.find(f => f.name === name)) {
+            alert('竞技者姓名已存在！');
+            return;
+        }
+        
+        try {
+            const data = JSON.parse(jsonData);
+            
+            // 验证必要的字段
+            if (!data['基础属性'] || !data['元素抗性'] || !data['元素加成']) {
+                alert('JSON数据格式错误，缺少必要的字段！');
+                return;
+            }
+            
+            const baseAttrs = data['基础属性'];
+            // 获取属性值，默认值为10
+            const strength = baseAttrs['力量'] || 10;
+            const agility = baseAttrs['敏捷'] || 10;
+            const constitution = baseAttrs['体质'] || 10;
+            const intelligence = baseAttrs['智力'] || 10;
+            const spirit = baseAttrs['灵气'] || 10;
+            // 幸运保留手工录入，默认为10
+            const luck = 10;
+            
+            const elementResistance = {
+                金: data['元素抗性']['金'] || 0,
+                木: data['元素抗性']['木'] || 0,
+                水: data['元素抗性']['水'] || 0,
+                火: data['元素抗性']['火'] || 0,
+                土: data['元素抗性']['土'] || 0
+            };
+            
+            const elementBonus = {
+                金: data['元素加成']['金'] || 0,
+                木: data['元素加成']['木'] || 0,
+                水: data['元素加成']['水'] || 0,
+                火: data['元素加成']['火'] || 0,
+                土: data['元素加成']['土'] || 0
+            };
+            
+            const fighter = {
+                id: Date.now(),
+                name,
+                level,
+                attributes: { strength, intelligence, agility, constitution, luck, spirit },
+                elementResistance,
+                elementBonus
+            };
+            
+            this.fighters.push(fighter);
+            this.saveFighters();
+            this.loadFighters();
+            this.updateFighterSelects();
+            
+            // 关闭模态框
+            const modal = bootstrap.Modal.getInstance(document.getElementById('importJsonModal'));
+            modal.hide();
+            
+            // 清空输入框
+            document.getElementById('fighterJsonName').value = '';
+            document.getElementById('fighterJsonData').value = '';
+            
+            alert('竞技者导入成功！');
+        } catch (error) {
+            alert('JSON解析错误：' + error.message);
+        }
     }
 
     deleteFighter(id) {
@@ -112,17 +227,37 @@ class DigitalArena {
 
     // 计算战斗属性
     calculateBattleStats(fighter) {
-        const attrs = fighter.attributes;
+        const attrs = fighter.attributes || {};
         const level = fighter.level;
+        const elementResistance = fighter.elementResistance || { 金: 0, 木: 0, 水: 0, 火: 0, 土: 0 };
+        const elementBonus = fighter.elementBonus || { 金: 0, 木: 0, 水: 0, 火: 0, 土: 0 };
+        
+        // 确保属性存在，提供默认值
+        const strength = attrs.strength || 10;
+        const intelligence = attrs.intelligence || 10;
+        const agility = attrs.agility || 10;
+        const constitution = attrs.constitution || 10;
+        const luck = attrs.luck || 10;
+        const spirit = attrs.spirit || 10;
         
         const replaceVars = (formula) => {
-            return formula
-                .replace(/力量/g, attrs.strength)
-                .replace(/智力/g, attrs.intelligence)
-                .replace(/敏捷/g, attrs.agility)
-                .replace(/体质/g, attrs.constitution)
-                .replace(/幸运/g, attrs.luck)
+            // 先替换基础属性
+            let replaced = formula
+                .replace(/力量/g, strength)
+                .replace(/智力/g, intelligence)
+                .replace(/敏捷/g, agility)
+                .replace(/体质/g, constitution)
+                .replace(/幸运/g, luck)
+                .replace(/灵气/g, spirit)
                 .replace(/等级/g, level);
+            
+            // 替换元素抗性和元素加成
+            for (const element of ['金', '木', '水', '火', '土']) {
+                replaced = replaced.replace(new RegExp(`元素抗性\\.${element}`, 'g'), elementResistance[element]);
+                replaced = replaced.replace(new RegExp(`元素加成\\.${element}`, 'g'), elementBonus[element]);
+            }
+            
+            return replaced;
         };
 
         try {
@@ -132,17 +267,46 @@ class DigitalArena {
             const dodge = Math.min(eval(replaceVars(this.rules.dodge)), 95);
             const critical = Math.min(eval(replaceVars(this.rules.critical)), 95);
             const luckBonus = eval(replaceVars(this.rules.luckBonus));
+            
+            // 计算灵力攻击和灵力防御
+            const spiritAttack = {};
+            const spiritDefense = {};
+            for (const element of ['金', '木', '水', '火', '土']) {
+                spiritAttack[element] = eval(replaceVars(this.rules.spiritAttack[element]));
+                spiritDefense[element] = eval(replaceVars(this.rules.spiritDefense[element]));
+            }
 
-            return { attack, defense, health, dodge, critical, luckBonus };
+            return { 
+                attack, 
+                defense, 
+                health, 
+                dodge, 
+                critical, 
+                luckBonus,
+                spiritAttack,
+                spiritDefense,
+                spirit: attrs.spirit || 10
+            };
         } catch (error) {
             console.error('公式计算错误:', error);
+            // 计算灵力攻击和灵力防御
+            const spiritAttack = {};
+            const spiritDefense = {};
+            for (const element of ['金', '木', '水', '火', '土']) {
+                spiritAttack[element] = elementBonus[element] * 0.8 + spirit * 0.5;
+                spiritDefense[element] = elementResistance[element] * 0.8 + spirit * 0.3;
+            }
+            
             return {
-                attack: attrs.strength * 1.2 + level * 0.5,
-                defense: attrs.constitution * 1.0 + level * 0.3,
-                health: attrs.constitution * 10 + level * 5,
-                dodge: Math.min(attrs.agility * 0.5 + attrs.luck * 0.3, 95),
-                critical: Math.min(attrs.intelligence * 0.4 + attrs.luck * 0.6, 95),
-                luckBonus: attrs.luck * 0.1
+                attack: strength * 1.2 + level * 0.5,
+                defense: constitution * 1.0 + level * 0.3,
+                health: constitution * 10 + level * 5,
+                dodge: Math.min(agility * 0.5 + luck * 0.3, 95),
+                critical: Math.min(intelligence * 0.4 + luck * 0.6, 95),
+                luckBonus: luck * 0.1,
+                spiritAttack,
+                spiritDefense,
+                spirit
             };
         }
     }
@@ -272,24 +436,43 @@ class DigitalArena {
 
         const stats = this.calculateBattleStats(fighter);
         
+        // 确保属性存在
+        const attrs = fighter.attributes || { strength: 10, agility: 10, constitution: 10, intelligence: 10, luck: 10, spirit: 10 };
+        const elementResistance = fighter.elementResistance || { 金: 0, 木: 0, 水: 0, 火: 0, 土: 0 };
+        const elementBonus = fighter.elementBonus || { 金: 0, 木: 0, 水: 0, 火: 0, 土: 0 };
+        
         container.innerHTML = `
             <div class="border-top pt-3">
                 <h6>${fighter.name} (Lv.${fighter.level})</h6>
                 <div class="row">
                     <div class="col-6">
-                        <small>力量: ${fighter.attributes.strength}</small><br>
-                        <small>智力: ${fighter.attributes.intelligence}</small><br>
-                        <small>敏捷: ${fighter.attributes.agility}</small>
+                        <small>力量: ${attrs.strength}</small><br>
+                        <small>智力: ${attrs.intelligence}</small><br>
+                        <small>敏捷: ${attrs.agility}</small><br>
+                        <small>体质: ${attrs.constitution}</small><br>
+                        <small>幸运: ${attrs.luck}</small><br>
+                        <small>灵气: ${attrs.spirit}</small>
                     </div>
                     <div class="col-6">
-                        <small>体质: ${fighter.attributes.constitution}</small><br>
-                        <small>幸运: ${fighter.attributes.luck}</small>
+                        <strong>元素抗性：</strong><br>
+                        <small>金: ${elementResistance.金} | 木: ${elementResistance.木} | 水: ${elementResistance.水}</small><br>
+                        <small>火: ${elementResistance.火} | 土: ${elementResistance.土}</small><br>
+                        <strong>元素加成：</strong><br>
+                        <small>金: ${elementBonus.金} | 木: ${elementBonus.木} | 水: ${elementBonus.水}</small><br>
+                        <small>火: ${elementBonus.火} | 土: ${elementBonus.土}</small>
                     </div>
                 </div>
                 <div class="mt-2">
                     <strong>战斗属性：</strong><br>
                     <small>攻击: ${Math.round(stats.attack)} | 防御: ${Math.round(stats.defense)} | 生命: ${Math.round(stats.health)}</small><br>
-                    <small>闪避: ${Math.round(stats.dodge * 10) / 10}% | 暴击: ${Math.round(stats.critical * 10) / 10}%</small>
+                    <small>闪避: ${Math.round(stats.dodge * 10) / 10}% | 暴击: ${Math.round(stats.critical * 10) / 10}%</small><br>
+                    <small>幸运加成: +${Math.round(stats.luckBonus)} | 灵气值: ${Math.round(stats.spirit || attrs.spirit)}</small><br>
+                    <strong>灵力攻击：</strong><br>
+                    <small>金: ${Math.round(stats.spiritAttack?.金 || 0)} | 木: ${Math.round(stats.spiritAttack?.木 || 0)} | 水: ${Math.round(stats.spiritAttack?.水 || 0)}</small><br>
+                    <small>火: ${Math.round(stats.spiritAttack?.火 || 0)} | 土: ${Math.round(stats.spiritAttack?.土 || 0)}</small><br>
+                    <strong>灵力防御：</strong><br>
+                    <small>金: ${Math.round(stats.spiritDefense?.金 || 0)} | 木: ${Math.round(stats.spiritDefense?.木 || 0)} | 水: ${Math.round(stats.spiritDefense?.水 || 0)}</small><br>
+                    <small>火: ${Math.round(stats.spiritDefense?.火 || 0)} | 土: ${Math.round(stats.spiritDefense?.土 || 0)}</small>
                 </div>
             </div>
         `;
@@ -304,6 +487,19 @@ class DigitalArena {
         document.getElementById('dodgeRule').value = this.rules.dodge;
         document.getElementById('criticalRule').value = this.rules.critical;
         document.getElementById('luckBonusRule').value = this.rules.luckBonus;
+        
+        // 加载灵力规则
+        document.getElementById('spiritAttackRule_gold').value = this.rules.spiritAttack?.金 || '元素加成.金 * 0.8 + 灵气 * 0.5';
+        document.getElementById('spiritAttackRule_wood').value = this.rules.spiritAttack?.木 || '元素加成.木 * 0.8 + 灵气 * 0.5';
+        document.getElementById('spiritAttackRule_water').value = this.rules.spiritAttack?.水 || '元素加成.水 * 0.8 + 灵气 * 0.5';
+        document.getElementById('spiritAttackRule_fire').value = this.rules.spiritAttack?.火 || '元素加成.火 * 0.8 + 灵气 * 0.5';
+        document.getElementById('spiritAttackRule_earth').value = this.rules.spiritAttack?.土 || '元素加成.土 * 0.8 + 灵气 * 0.5';
+        
+        document.getElementById('spiritDefenseRule_gold').value = this.rules.spiritDefense?.金 || '元素抗性.金 * 0.8 + 灵气 * 0.3';
+        document.getElementById('spiritDefenseRule_wood').value = this.rules.spiritDefense?.木 || '元素抗性.木 * 0.8 + 灵气 * 0.3';
+        document.getElementById('spiritDefenseRule_water').value = this.rules.spiritDefense?.水 || '元素抗性.水 * 0.8 + 灵气 * 0.3';
+        document.getElementById('spiritDefenseRule_fire').value = this.rules.spiritDefense?.火 || '元素抗性.火 * 0.8 + 灵气 * 0.3';
+        document.getElementById('spiritDefenseRule_earth').value = this.rules.spiritDefense?.土 || '元素抗性.土 * 0.8 + 灵气 * 0.3';
     }
 
     // 开始战斗
@@ -398,27 +594,41 @@ class DigitalArena {
         while (hp1 > 0 && hp2 > 0 && round < 1000) {
             round++;
             
-            const fighters = [
-                { fighter: fighter1, stats: finalStats1, hp: hp1, index: 1 },
-                { fighter: fighter2, stats: finalStats2, hp: hp2, index: 2 }
-            ];
+            // 获取两个竞技者的敏捷值
+            const agility1 = fighter1.attributes.agility || 1;
+            const agility2 = fighter2.attributes.agility || 1;
             
-            fighters.sort((a, b) => (b.stats.dodge + b.fighter.attributes.agility) - (a.stats.dodge + a.fighter.attributes.agility));
+            // 创建攻击序列，根据敏捷决定出手次数
+            const attackSequence = [];
+            const maxAgility = Math.max(agility1, agility2);
+            
+            for (let i = 0; i < maxAgility; i++) {
+                if (i < agility1 && hp1 > 0) {
+                    attackSequence.push({ fighter: fighter1, stats: finalStats1, hp: hp1, index: 1 });
+                }
+                if (i < agility2 && hp2 > 0) {
+                    attackSequence.push({ fighter: fighter2, stats: finalStats2, hp: hp2, index: 2 });
+                }
+            }
+            
+            // 对攻击序列按敏捷排序，确保高敏捷的先出手
+            attackSequence.sort((a, b) => b.fighter.attributes.agility - a.fighter.attributes.agility);
 
-            for (const attacker of fighters) {
+            for (const attacker of attackSequence) {
                 if (attacker.hp <= 0) continue;
                 
-                const defender = fighters.find(f => f !== attacker);
+                const defender = attacker.index === 1 ? 
+                    { fighter: fighter2, stats: finalStats2, hp: hp2, index: 2 } : 
+                    { fighter: fighter1, stats: finalStats1, hp: hp1, index: 1 };
+                
                 if (defender.hp <= 0) continue;
 
                 const attackResult = this.calculateAttack(attacker, defender);
                 
                 if (attacker.index === 1) {
                     hp2 = Math.max(0, hp2 - attackResult.damage);
-                    defender.hp = hp2;
                 } else {
                     hp1 = Math.max(0, hp1 - attackResult.damage);
-                    defender.hp = hp1;
                 }
 
                 log.push({
@@ -426,10 +636,10 @@ class DigitalArena {
                     attacker: attacker.fighter.name,
                     defender: defender.fighter.name,
                     ...attackResult,
-                    defenderHp: defender.hp
+                    defenderHp: attacker.index === 1 ? hp2 : hp1
                 });
 
-                if (defender.hp <= 0) break;
+                if (hp1 <= 0 || hp2 <= 0) break;
             }
         }
 
@@ -667,7 +877,21 @@ class DigitalArena {
             health: document.getElementById('healthRule').value,
             dodge: document.getElementById('dodgeRule').value,
             critical: document.getElementById('criticalRule').value,
-            luckBonus: document.getElementById('luckBonusRule').value
+            luckBonus: document.getElementById('luckBonusRule').value,
+            spiritAttack: {
+                金: document.getElementById('spiritAttackRule_gold').value || '元素加成.金 * 0.8 + 灵气 * 0.5',
+                木: document.getElementById('spiritAttackRule_wood').value || '元素加成.木 * 0.8 + 灵气 * 0.5',
+                水: document.getElementById('spiritAttackRule_water').value || '元素加成.水 * 0.8 + 灵气 * 0.5',
+                火: document.getElementById('spiritAttackRule_fire').value || '元素加成.火 * 0.8 + 灵气 * 0.5',
+                土: document.getElementById('spiritAttackRule_earth').value || '元素加成.土 * 0.8 + 灵气 * 0.5'
+            },
+            spiritDefense: {
+                金: document.getElementById('spiritDefenseRule_gold').value || '元素抗性.金 * 0.8 + 灵气 * 0.3',
+                木: document.getElementById('spiritDefenseRule_wood').value || '元素抗性.木 * 0.8 + 灵气 * 0.3',
+                水: document.getElementById('spiritDefenseRule_water').value || '元素抗性.水 * 0.8 + 灵气 * 0.3',
+                火: document.getElementById('spiritDefenseRule_fire').value || '元素抗性.火 * 0.8 + 灵气 * 0.3',
+                土: document.getElementById('spiritDefenseRule_earth').value || '元素抗性.土 * 0.8 + 灵气 * 0.3'
+            }
         };
         
         localStorage.setItem('arenaRules', JSON.stringify(this.rules));
@@ -681,8 +905,85 @@ class DigitalArena {
         alert('规则保存成功！');
     }
 
+// 保存战斗历史
     saveBattleHistory() {
         localStorage.setItem('arenaBattleHistory', JSON.stringify(this.battleHistory));
+    }
+    
+    // 确认导入竞技者
+    confirmImportFighter() {
+        try {
+            const name = document.getElementById('fighterJsonName').value.trim();
+            const level = parseInt(document.getElementById('fighterJsonLevel').value) || 1;
+            const jsonData = document.getElementById('fighterJsonData').value.trim();
+            
+            if (!name) {
+                alert('请输入竞技者名称！');
+                return;
+            }
+            
+            if (!jsonData) {
+                alert('请输入JSON数据！');
+                return;
+            }
+            
+            // 解析JSON数据
+            const data = JSON.parse(jsonData);
+            
+            // 构建竞技者属性
+            const attributes = {
+                strength: data.力量 || data.strength || 10,
+                agility: data.敏捷 || data.agility || 10,
+                constitution: data.体质 || data.constitution || 10,
+                intelligence: data.智力 || data.intelligence || 10,
+                luck: data.幸运 || data.luck || 10,
+                spirit: data.灵气 || data.spirit || 10
+            };
+            
+            // 构建元素抗性
+            const elementResistance = {
+                金: data.元素抗性?.金 || data.elementResistance?.金 || data.elementResistance?.gold || 0,
+                木: data.元素抗性?.木 || data.elementResistance?.木 || data.elementResistance?.wood || 0,
+                水: data.元素抗性?.水 || data.elementResistance?.水 || data.elementResistance?.water || 0,
+                火: data.元素抗性?.火 || data.elementResistance?.火 || data.elementResistance?.fire || 0,
+                土: data.元素抗性?.土 || data.elementResistance?.土 || data.elementResistance?.earth || 0
+            };
+            
+            // 构建元素加成
+            const elementBonus = {
+                金: data.元素加成?.金 || data.elementBonus?.金 || data.elementBonus?.gold || 0,
+                木: data.元素加成?.木 || data.elementBonus?.木 || data.elementBonus?.wood || 0,
+                水: data.元素加成?.水 || data.elementBonus?.水 || data.elementBonus?.water || 0,
+                火: data.元素加成?.火 || data.elementBonus?.火 || data.elementBonus?.fire || 0,
+                土: data.元素加成?.土 || data.elementBonus?.土 || data.elementBonus?.earth || 0
+            };
+            
+            // 添加竞技者
+            this.fighters.push({
+                id: Date.now(),
+                name: name,
+                level: level,
+                attributes: attributes,
+                elementResistance: elementResistance,
+                elementBonus: elementBonus
+            });
+            
+            // 保存并刷新界面
+            this.saveFighters();
+            this.loadFighters();
+            
+            // 关闭模态框
+            document.getElementById('importJsonModal').style.display = 'none';
+            
+            // 清空输入框
+            document.getElementById('fighterJsonName').value = '';
+            document.getElementById('fighterJsonLevel').value = 1;
+            document.getElementById('fighterJsonData').value = '';
+            
+            alert('竞技者导入成功！');
+        } catch (error) {
+            alert('导入失败：' + error.message);
+        }
     }
 }
 
@@ -717,4 +1018,45 @@ function startBattle() {
 
 function stopBattle() {
     arena.stopBattle();
+}
+
+function importFighterFromJson() {
+    // 使用Bootstrap API显示导入模态框
+    var myModal = new bootstrap.Modal(document.getElementById('importJsonModal'));
+    myModal.show();
+}
+
+function confirmImportFighter() {
+    arena.confirmImportFighter();
+    // 关闭模态框
+    var myModal = bootstrap.Modal.getInstance(document.getElementById('importJsonModal'));
+    if (myModal) {
+        myModal.hide();
+    }
+}
+
+function closeImportModal() {
+    // 使用Bootstrap API关闭导入模态框
+    var myModal = bootstrap.Modal.getInstance(document.getElementById('importJsonModal'));
+    if (myModal) {
+        myModal.hide();
+    }
+}
+
+// 设置所有抗性为指定值
+function setAllResistances(value) {
+    document.getElementById('resistance_gold').value = value;
+    document.getElementById('resistance_wood').value = value;
+    document.getElementById('resistance_water').value = value;
+    document.getElementById('resistance_fire').value = value;
+    document.getElementById('resistance_earth').value = value;
+}
+
+// 设置所有加成为指定值
+function setAllBonuses(value) {
+    document.getElementById('bonus_gold').value = value;
+    document.getElementById('bonus_wood').value = value;
+    document.getElementById('bonus_water').value = value;
+    document.getElementById('bonus_fire').value = value;
+    document.getElementById('bonus_earth').value = value;
 }
