@@ -204,6 +204,12 @@
                                         <button type="button" class="btn btn-arena w-100" onclick="addFighter()">添加</button>
                                     </div>
                                 </div>
+                                <div class="col-md-2">
+                                    <div class="mb-3">
+                                        <label class="form-label">&nbsp;</label>
+                                        <button type="button" class="btn btn-primary w-100" onclick="showImportModal()">从JSON导入</button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -394,6 +400,64 @@
                             <p>暂无战斗记录，请先进行战斗！</p>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JSON导入模态框 -->
+    <div class="modal fade" id="importJsonModal" tabindex="-1" aria-labelledby="importJsonModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="importJsonModalLabel">从JSON导入竞技者</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="fighterJsonName" class="form-label">竞技者姓名</label>
+                        <input type="text" class="form-control" id="fighterJsonName" placeholder="输入竞技者姓名">
+                    </div>
+                    <div class="mb-3">
+                        <label for="fighterJsonLevel" class="form-label">等级</label>
+                        <input type="number" class="form-control" id="fighterJsonLevel" value="1" min="1" max="100">
+                    </div>
+                    <div class="mb-3">
+                        <label for="fighterJsonData" class="form-label">JSON数据</label>
+                        <textarea class="form-control" id="fighterJsonData" rows="15" placeholder="粘贴JSON数据..."></textarea>
+                        <small class="form-text text-muted">请输入包含基础属性、元素抗性和元素加成的JSON数据</small>
+                    </div>
+                    <div class="alert alert-info" role="alert">
+                        <strong>JSON格式示例：</strong>
+                        <pre>
+{
+  "基础属性": {
+    "力量": 9,
+    "敏捷": 7,
+    "体质": 8,
+    "智力": 5,
+    "灵气": 6
+  },
+  "元素抗性": {
+    "金": 0,
+    "木": 0,
+    "水": 23,
+    "火": 0,
+    "土": 0
+  },
+  "元素加成": {
+    "金": 23,
+    "木": 0,
+    "水": 0,
+    "火": 0,
+    "土": 0
+  }
+}</pre>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                    <button type="button" class="btn btn-arena" onclick="importFighterFromJson()">导入竞技者</button>
                 </div>
             </div>
         </div>

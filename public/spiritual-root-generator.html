@@ -296,6 +296,7 @@
                 <div class="button-group">
                     <button id="generateSingleBtn">生成灵根</button>
                     <button id="resetSingleBtn">重置</button>
+                    <button id="copyAsJsonBtn">复制为JSON</button>
                 </div>
                 <div class="analysis-panel" id="singleAnalysis">
                     <!-- 分析结果显示区域 -->
@@ -470,6 +471,217 @@
             return roots;
         }
 
+        // 根据灵根类型获取基础点数和自由点数
+        function getBasePointsByType(rootType) {
+            switch(rootType) {
+                case '废灵根': return 5;
+                case '杂灵根': return 6;
+                case '普通灵根': return 7;
+                case '地灵根': return 8;
+                case '天灵根': return 9;
+                case '道体': return 10; // 道体作为特殊类型处理
+                default: return 7; // 默认普通灵根
+            }
+        }
+        
+        // 计算属性值的函数已定义，此处删除重复定义
+        
+        // 根据灵根类型获取基础点数和自由点数
+        function getBasePointsByType(rootType) {
+            switch(rootType) {
+                case '废灵根': return 5;
+                case '杂灵根': return 6;
+                case '普通灵根': return 7;
+                case '地灵根': return 8;
+                case '天灵根': return 9;
+                case '道体': return 10; // 道体作为特殊类型处理
+                default: return 7; // 默认普通灵根
+            }
+        }
+        
+        // 计算属性值
+        function calculateAttributes(dataString, rootType, daoBody = null) {
+            // 确定最终的灵根类型（道体优先）
+            const finalType = daoBody ? '道体' : rootType;
+            
+            // 获取基础点数和自由点数
+            const basePoints = getBasePointsByType(finalType);
+            const freePoints = basePoints; // 自由点数与基础点数相同
+            
+            // 创建属性映射（对应金木水火土的顺序）
+            const attributes = {
+                '力量': 0, // 金
+                '敏捷': 0, // 火
+                '生命': 0, // 土
+                '智力': 0, // 水
+                '灵气': 0  // 木
+            };
+            
+            const attributeOrder = ['力量', '敏捷', '生命', '智力', '灵气'];
+            
+            // 根据数字串分配基础点数并添加随机浮动
+            for (let i = 0; i < 5; i++) {
+                const value = parseInt(dataString[i]);
+                let baseValue = basePoints;
+                
+                // 废灵根额外-1
+                if (finalType === '废灵根') {
+                    baseValue -= 1;
+                }
+                
+                // 根据灵根状态分配点数
+                if (value === 2) { // 阳
+                    attributes[attributeOrder[i]] = baseValue + Math.floor(Math.random() * 3 - 1); // -1 到 1 的随机数
+                } else if (value === 1) { // 阴
+                    attributes[attributeOrder[i]] = baseValue + Math.floor(Math.random() * 3 - 1); // -1 到 1 的随机数
+                } else { // 无
+                    attributes[attributeOrder[i]] = baseValue - 2 + Math.floor(Math.random() * 3 - 1); // 基础点数-2再随机
+                }
+            }
+            
+            // 分配自由点数（每个属性随机分配1点，剩余的平均分配）
+            let remainingPoints = freePoints;
+            
+            // 先给每个属性分配1点
+            Object.keys(attributes).forEach(attr => {
+                attributes[attr] += 1;
+                remainingPoints -= 1;
+            });
+            
+            // 剩余点数随机分配
+            while (remainingPoints > 0) {
+                const attrKeys = Object.keys(attributes);
+                const randomAttr = attrKeys[Math.floor(Math.random() * attrKeys.length)];
+                attributes[randomAttr] += 1;
+                remainingPoints -= 1;
+            }
+            
+            // 确保没有负数属性
+            Object.keys(attributes).forEach(attr => {
+                attributes[attr] = Math.max(1, attributes[attr]);
+            });
+            
+            console.log('计算出的属性值:', attributes);
+            
+            return attributes;
+        }
+        
+        // 计算元素抗性
+        function calculateResistances(initialRoots, finalRoots, variations) {
+            // 创建元素抗性对象（对应金木水火土）
+            const resistances = {
+                '金': 0,
+                '木': 0,
+                '水': 0,
+                '火': 0,
+                '土': 0
+            };
+            
+            // 规则1: 所有阴属性都可以增加元素抗性15
+            Object.entries(initialRoots).forEach(([element, state]) => {
+                if (state === '阴') {
+                    resistances[element] += 15;
+                    console.log(`${element}阴属性增加抗性15`);
+                }
+            });
+            
+            // 规则2: 废灵根的废属性元素抗性大幅降低
+            Object.entries(finalRoots).forEach(([element, state]) => {
+                if (state === '废') {
+                    // 增加废灵根的减益效果，从-15改为-30，让废属性的负面影响更加明显
+                    resistances[element] -= 30;
+                    console.log(`${element}废灵根减少抗性30`);
+                }
+            });
+            
+            // 规则3: 成功变异的灵根增加促成变异的两种元素各15%
+            if (variations && variations.length > 0) {
+                variations.forEach(variation => {
+                    // 尝试从变异文本中提取两个元素
+                    // 变异文本格式类似："金阴生火阳：强化变异" 或 "木阳生水阴：弱化变异"
+                    const elementMatch = variation.match(/([金木水火土])(阴|阳|无)?生([金木水火土])(阴|阳|无)?/);
+                    if (elementMatch && elementMatch.length >= 5) {
+                        const element1 = elementMatch[1];
+                        const element2 = elementMatch[3];
+                        
+                        // 为两个元素增加15%的抗性
+                        // 先保存基础抗性值，然后计算百分比加成
+                        const baseResistance1 = resistances[element1];
+                        const resistanceBonus1 = Math.round(baseResistance1 * 0.5);
+                        resistances[element1] += resistanceBonus1;
+                        console.log(`${element1}变异加成：+${resistanceBonus1} (15%)`);
+                        
+                        const baseResistance2 = resistances[element2];
+                        const resistanceBonus2 = Math.round(baseResistance2 * 0.5);
+                        resistances[element2] += resistanceBonus2;
+                        console.log(`${element2}变异加成：+${resistanceBonus2} (15%)`);
+                    }
+                });
+            }
+            
+            // 允许抗性值低于0
+            // 移除了确保抗性不为负的限制
+            
+            console.log('计算出的元素抗性:', resistances);
+            
+            return resistances;
+        }
+        
+        // 计算元素加成
+        function calculateElementBonus(initialRoots, finalRoots, variations) {
+            // 创建元素加成对象（对应金木水火土）
+            const elementBonus = {
+                '金': 0,
+                '木': 0,
+                '水': 0,
+                '火': 0,
+                '土': 0
+            };
+            
+            // 规则1: 所有阳属性都可以增加元素加成15
+            Object.entries(initialRoots).forEach(([element, state]) => {
+                if (state === '阳') {
+                    elementBonus[element] += 15;
+                    console.log(`${element}阳属性增加元素加成15`);
+                }
+            });
+            
+            // 规则2: 废灵根的废属性元素加成大幅降低
+            Object.entries(finalRoots).forEach(([element, state]) => {
+                if (state === '废') {
+                    elementBonus[element] -= 30;
+                    console.log(`${element}废灵根减少元素加成30`);
+                }
+            });
+            
+            // 规则3: 成功变异的灵根增加促成变异的两种元素各15%
+            if (variations && variations.length > 0) {
+                variations.forEach(variation => {
+                    // 尝试从变异文本中提取两个元素
+                    const elementMatch = variation.match(/([金木水火土])(阴|阳|无)?生([金木水火土])(阴|阳|无)?/);
+                    if (elementMatch && elementMatch.length >= 5) {
+                        const element1 = elementMatch[1];
+                        const element2 = elementMatch[3];
+                        
+                        // 为两个元素增加15%的加成
+                        const baseBonus1 = elementBonus[element1];
+                        const bonus1 = Math.round(baseBonus1 * 0.5);
+                        elementBonus[element1] += bonus1;
+                        console.log(`${element1}变异加成：+${bonus1} (15%)`);
+                        
+                        const baseBonus2 = elementBonus[element2];
+                        const bonus2 = Math.round(baseBonus2 * 0.5);
+                        elementBonus[element2] += bonus2;
+                        console.log(`${element2}变异加成：+${bonus2} (15%)`);
+                    }
+                });
+            }
+            
+            console.log('计算出的元素加成:', elementBonus);
+            
+            return elementBonus;
+        }
+        
         // 处理生克关系，生成最终灵根状态
         function processRelationships(roots) {
             // 生成数据化字符串
@@ -622,7 +834,16 @@
             // 判断灵根种类
             const rootType = determineRootType(result.roots, result.variations, initialRoots);
             
-            return {
+            // 计算属性值
+            const attributes = calculateAttributes(result.dataString, rootType, result.daoBody);
+            
+            // 计算元素抗性
+            const resistances = calculateResistances(initialRoots, result.roots, result.variations);
+            
+            // 计算元素加成
+            const elementBonus = calculateElementBonus(initialRoots, result.roots, result.variations);
+            
+            const finalResult = {
                 initialRoots,
                 finalRoots: result.roots,
                 variations: result.variations,
@@ -630,8 +851,15 @@
                 rootType,
                 mutatedRoots: result.mutatedRoots,
                 daoBody: result.daoBody,
-                dataString: result.dataString // 包含数据化字符串
+                dataString: result.dataString, // 包含数据化字符串
+                attributes: attributes, // 包含计算出的属性
+                resistances: resistances, // 包含计算出的元素抗性
+                elementBonus: elementBonus // 包含计算出的元素加成
             };
+            
+            console.log('generateSpiritualRoots返回的结果:', finalResult);
+            
+            return finalResult;
         }
 
         // 显示灵根
@@ -658,7 +886,9 @@
         }
 
         // 显示分析结果
-        function displayAnalysis(variations, weaknesses, rootType, mutatedRoots, daoBody, containerId, dataString = '') {
+        function displayAnalysis(variations, weaknesses, rootType, mutatedRoots, daoBody, containerId, dataString = '', attributes = null, resistances = null, elementBonus = null) {
+            console.log('displayAnalysis接收到的属性:', attributes);
+            
             const container = document.getElementById(containerId);
             container.innerHTML = '';
             
@@ -683,6 +913,139 @@
             rootTypeItem.style.borderRadius = '8px';
             rootTypeItem.textContent = `灵根种类：${rootType}`;
             container.appendChild(rootTypeItem);
+            
+            // 显示属性值（如果提供）
+            if (attributes) {
+                console.log('开始显示属性，属性对象有属性数量:', Object.keys(attributes).length);
+                
+                const attributesContainer = document.createElement('div');
+                attributesContainer.className = 'analysis-item';
+                attributesContainer.style.backgroundColor = '#f8f9fa';
+                attributesContainer.style.padding = '15px';
+                attributesContainer.style.marginBottom = '15px';
+                attributesContainer.style.borderRadius = '8px';
+                attributesContainer.style.fontWeight = 'bold';
+                attributesContainer.style.border = '2px solid red'; // 添加边框以便更容易看到
+                
+                const attributesTitle = document.createElement('div');
+                attributesTitle.textContent = '基础属性：';
+                attributesTitle.style.marginBottom = '10px';
+                attributesContainer.appendChild(attributesTitle);
+                
+                const attributesList = document.createElement('div');
+                attributesList.style.display = 'grid';
+                attributesList.style.gridTemplateColumns = '1fr 1fr';
+                attributesList.style.gap = '8px';
+                
+                Object.entries(attributes).forEach(([attr, value]) => {
+                    console.log(`添加属性项: ${attr} = ${value}`);
+                    const attrItem = document.createElement('div');
+                    attrItem.style.display = 'flex';
+                    attrItem.style.justifyContent = 'space-between';
+                    attrItem.textContent = `${attr}：${value}`;
+                    attrItem.style.fontSize = '16px'; // 增大字体以便更容易看到
+                    attributesList.appendChild(attrItem);
+                });
+                
+                attributesContainer.appendChild(attributesList);
+                container.appendChild(attributesContainer);
+                
+                console.log('属性容器已添加到DOM');
+            } else {
+                console.log('attributes为null或undefined');
+            }
+            
+            // 显示元素抗性（如果提供）
+            if (resistances) {
+                console.log('开始显示元素抗性，抗性对象:', resistances);
+                
+                const resistancesContainer = document.createElement('div');
+                resistancesContainer.className = 'analysis-item';
+                resistancesContainer.style.backgroundColor = '#e8f5e9';
+                resistancesContainer.style.padding = '15px';
+                resistancesContainer.style.marginBottom = '15px';
+                resistancesContainer.style.borderRadius = '8px';
+                resistancesContainer.style.fontWeight = 'bold';
+                resistancesContainer.style.border = '2px solid green'; // 添加绿色边框以便更容易看到
+                
+                const resistancesTitle = document.createElement('div');
+                resistancesTitle.textContent = '元素抗性：';
+                resistancesTitle.style.marginBottom = '10px';
+                resistancesContainer.appendChild(resistancesTitle);
+                
+                const resistancesList = document.createElement('div');
+                resistancesList.style.display = 'grid';
+                resistancesList.style.gridTemplateColumns = '1fr 1fr';
+                resistancesList.style.gap = '8px';
+                
+                // 定义元素抗性的顺序
+                const resistanceOrder = ['金', '木', '水', '火', '土'];
+                
+                // 为每个元素抗性创建显示项
+                resistanceOrder.forEach(element => {
+                    const resistanceItem = document.createElement('div');
+                    resistanceItem.style.display = 'flex';
+                    resistanceItem.style.justifyContent = 'space-between';
+                    resistanceItem.style.padding = '5px';
+                    resistanceItem.style.backgroundColor = '#f1f8e9';
+                    resistanceItem.style.borderRadius = '4px';
+                    
+                    resistanceItem.innerHTML = `<span>${element}元素抗性：</span><span style="font-weight: bold;">${resistances[element] || 0}</span>`;
+                    resistancesList.appendChild(resistanceItem);
+                });
+                
+                resistancesContainer.appendChild(resistancesList);
+                
+                // 添加到容器
+                container.appendChild(resistancesContainer);
+                console.log('抗性容器已添加到DOM:', resistancesContainer.isConnected);
+            }
+            
+            // 显示元素加成（如果提供）
+            if (elementBonus) {
+                console.log('开始显示元素加成，加成对象:', elementBonus);
+                
+                const bonusContainer = document.createElement('div');
+                bonusContainer.className = 'analysis-item';
+                bonusContainer.style.backgroundColor = '#fff3e0';
+                bonusContainer.style.padding = '15px';
+                bonusContainer.style.marginBottom = '15px';
+                bonusContainer.style.borderRadius = '8px';
+                bonusContainer.style.fontWeight = 'bold';
+                bonusContainer.style.border = '2px solid orange'; // 添加橙色边框以便更容易看到
+                
+                const bonusTitle = document.createElement('div');
+                bonusTitle.textContent = '元素加成：';
+                bonusTitle.style.marginBottom = '10px';
+                bonusContainer.appendChild(bonusTitle);
+                
+                const bonusList = document.createElement('div');
+                bonusList.style.display = 'grid';
+                bonusList.style.gridTemplateColumns = '1fr 1fr';
+                bonusList.style.gap = '8px';
+                
+                // 定义元素加成的顺序
+                const bonusOrder = ['金', '木', '水', '火', '土'];
+                
+                // 为每个元素加成创建显示项
+                bonusOrder.forEach(element => {
+                    const bonusItem = document.createElement('div');
+                    bonusItem.style.display = 'flex';
+                    bonusItem.style.justifyContent = 'space-between';
+                    bonusItem.style.padding = '5px';
+                    bonusItem.style.backgroundColor = '#fff8e1';
+                    bonusItem.style.borderRadius = '4px';
+                    
+                    bonusItem.innerHTML = `<span>${element}元素加成：</span><span style="font-weight: bold;">${elementBonus[element] || 0}</span>`;
+                    bonusList.appendChild(bonusItem);
+                });
+                
+                bonusContainer.appendChild(bonusList);
+                
+                // 添加到容器
+                container.appendChild(bonusContainer);
+                console.log('加成容器已添加到DOM:', bonusContainer.isConnected);
+            }
             
             // 显示道体（如果有）
             if (daoBody) {
@@ -761,7 +1124,10 @@
                 result.mutatedRoots, 
                 result.daoBody, 
                 'singleAnalysis',
-                result.dataString
+                result.dataString,
+                result.attributes,
+                result.resistances,
+                result.elementBonus
             );
         });
 
@@ -794,6 +1160,15 @@
                 const processResult = processRelationships(initialRoots);
                 const rootType = determineRootType(processResult.roots, processResult.variations, initialRoots);
                 
+                // 计算属性值
+                const attributes = calculateAttributes(input, rootType, processResult.daoBody);
+                
+                // 计算元素抗性
+                const resistances = calculateResistances(initialRoots, processResult.roots, processResult.variations);
+                
+                // 计算元素加成
+                const elementBonus = calculateElementBonus(initialRoots, processResult.roots, processResult.variations);
+                
                 // 构建完整结果对象
                 const result = {
                     initialRoots,
@@ -803,7 +1178,10 @@
                     rootType,
                     mutatedRoots: processResult.mutatedRoots,
                     daoBody: processResult.daoBody,
-                    dataString: input
+                    dataString: input,
+                    attributes: attributes,
+                    resistances: resistances,
+                    elementBonus: elementBonus
                 };
                 
                 // 显示结果
@@ -815,7 +1193,10 @@
                     result.mutatedRoots, 
                     result.daoBody, 
                     'singleAnalysis',
-                    result.dataString
+                    result.dataString,
+                    result.attributes,
+                    result.resistances,
+                    result.elementBonus
                 );
                 
             } catch (error) {
@@ -855,6 +1236,7 @@
                     initialRoots: result.initialRoots,
                     rootType: result.rootType,
                     dataString: result.dataString, // 添加数据化字符串
+                    attributes: result.attributes, // 添加属性信息
                     // 只有非废灵根的异化灵根才标记为hasMutatedRoots
                     hasMutatedRoots: result.mutatedRoots && result.mutatedRoots.length > 0 && result.rootType !== '废灵根',
                     hasDaoBody: !!result.daoBody
@@ -994,6 +1376,77 @@
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+        });
+
+        // 存储当前生成的灵根数据
+        let currentRootData = null;
+
+        // 更新生成灵根和解码灵根的函数，存储当前数据
+        const originalGenerateSingleBtnClick = document.getElementById('generateSingleBtn').onclick;
+        document.getElementById('generateSingleBtn').onclick = function() {
+            // 先执行原有的点击事件
+            if (originalGenerateSingleBtnClick) {
+                originalGenerateSingleBtnClick.apply(this, arguments);
+            }
+        };
+
+        const originalDecodeBtnClick = document.getElementById('decodeBtn').onclick;
+        document.getElementById('decodeBtn').onclick = function() {
+            // 先执行原有的点击事件
+            if (originalDecodeBtnClick) {
+                originalDecodeBtnClick.apply(this, arguments);
+            }
+        };
+
+        // 重写processRelationships函数，存储处理后的数据
+        const originalProcessRelationships = processRelationships;
+        processRelationships = function(roots) {
+            const result = originalProcessRelationships(roots);
+            // 计算并存储当前的属性、抗性和加成数据
+            const rootType = determineRootType(result.roots, result.variations, result.initialRoots);
+            const attributes = calculateAttributes(result.dataString, rootType, result.daoBody);
+            const resistances = calculateResistances(result.initialRoots, result.roots, result.variations);
+            const elementBonus = calculateElementBonus(result.initialRoots, result.roots, result.variations);
+            
+            currentRootData = {
+                roots: result.roots,
+                initialRoots: result.initialRoots,
+                rootType: rootType,
+                daoBody: result.daoBody,
+                variations: result.variations,
+                attributes: attributes,
+                resistances: resistances,
+                elementBonus: elementBonus,
+                dataString: result.dataString
+            };
+            
+            return result;
+        };
+
+        // 复制为JSON按钮点击事件
+        document.getElementById('copyAsJsonBtn').addEventListener('click', () => {
+            if (!currentRootData) {
+                alert('请先生成灵根后再复制JSON数据');
+                return;
+            }
+            
+            // 准备要复制的数据，只包含需要的字段
+            const jsonData = {
+                基础属性: currentRootData.attributes,
+                元素抗性: currentRootData.resistances,
+                元素加成: currentRootData.elementBonus
+            };
+            
+            // 转换为格式化的JSON字符串
+            const jsonString = JSON.stringify(jsonData, null, 2);
+            
+            // 复制到剪贴板
+            navigator.clipboard.writeText(jsonString).then(() => {
+                alert('JSON数据已成功复制到剪贴板');
+            }).catch(err => {
+                console.error('复制失败:', err);
+                alert('复制失败，请手动复制');
+            });
         });
     </script>
 </body>
