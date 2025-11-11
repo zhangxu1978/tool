@@ -727,13 +727,15 @@ class DigitalArena {
         const aiData = {
             1: {
                 damageHistory: { normal: [], 金: [], 木: [], 水: [], 火: [], 土: [] },
-                testRounds: 5, // 前几轮用于测试
-                attackPreferences: null // 攻击偏好，后期使用
+                testRounds: 1, // 只在第一轮测试
+                attackPreferences: null, // 攻击偏好，后期使用
+                attackSequenceIndex: 0 // 记录当前应该使用的攻击类型索引
             },
             2: {
                 damageHistory: { normal: [], 金: [], 木: [], 水: [], 火: [], 土: [] },
-                testRounds: 5,
-                attackPreferences: null
+                testRounds: 1,
+                attackPreferences: null,
+                attackSequenceIndex: 0
             }
         };
 
@@ -864,41 +866,143 @@ class DigitalArena {
         // 检查灵力值，如果不足则只能进行普通攻击
         const isSpiritAttack = (type) => ['金', '木', '水', '火', '土'].includes(type);
         const canUseSpiritAttack = attacker.spiritPower > 0;
+        const elements = ['金', '木', '水', '火', '土'];
         
         // 如果灵力值不足，强制普通攻击
         if (!canUseSpiritAttack) {
             return 'normal';
         }
         
-        // 如果还在测试轮次，随机选择攻击类型
-        if (round <= aiData.testRounds) {
-            const attackTypes = ['normal', '金', '木', '水', '火', '土'];
-            return attackTypes[Math.floor(Math.random() * attackTypes.length)];
+        // 确保 damageHistory 对象存在
+        if (!aiData.damageHistory) {
+            aiData.damageHistory = {
+                normal: [],
+                金: [],
+                木: [],
+                水: [],
+                火: [],
+                土: []
+            };
         }
         
-        // 如果还没有计算攻击偏好，先计算
-        if (!aiData.attackPreferences) {
-            aiData.attackPreferences = this.calculateAttackPreferences(aiData.damageHistory);
+        // 确保 attackSequenceIndex 存在
+        if (aiData.attackSequenceIndex === undefined) {
+            aiData.attackSequenceIndex = 0;
         }
         
-        // 根据偏好选择攻击类型
-        const random = Math.random();
-        let cumulativeProbability = 0;
+        // 检查是否所有测试都已完成
+        const allTestsCompleted = 
+            aiData.damageHistory.normal.length > 0 &&
+            aiData.highBonusElement && aiData.damageHistory[aiData.highBonusElement].length > 0 &&
+            aiData.lowResistanceElement && aiData.damageHistory[aiData.lowResistanceElement].length > 0;
         
-        for (const [attackType, probability] of Object.entries(aiData.attackPreferences)) {
-            // 如果选择灵力攻击但灵力不足，跳过
-            if (isSpiritAttack(attackType) && !canUseSpiritAttack) {
-                continue;
+        // 如果测试已完成，进入正常攻击模式
+        if (allTestsCompleted) {
+            // 标记测试完成，避免重复测试
+            aiData.testCompleted = true;
+            
+            // 如果还没有计算攻击偏好，先计算
+            if (!aiData.attackPreferences) {
+                aiData.attackPreferences = this.calculateAttackPreferences(aiData.damageHistory);
             }
             
-            cumulativeProbability += probability;
-            if (random <= cumulativeProbability) {
-                return attackType;
+            // 根据偏好选择攻击类型
+            const random = Math.random();
+            let cumulativeProbability = 0;
+            
+            for (const [attackType, probability] of Object.entries(aiData.attackPreferences)) {
+                // 如果选择灵力攻击但灵力不足，跳过
+                if (isSpiritAttack(attackType) && !canUseSpiritAttack) {
+                    continue;
+                }
+                
+                cumulativeProbability += probability;
+                if (random <= cumulativeProbability) {
+                    return attackType;
+                }
             }
+            
+            // 默认返回普通攻击
+            return 'normal';
+        } else {
+            // 测试阶段：按顺序测试不同的攻击类型
+            // 基于attackSequenceIndex而不是round，确保在同一轮的不同出手中测试
+            
+            // 第一次攻击：使用普通攻击
+            if (aiData.damageHistory.normal.length === 0) {
+                return 'normal';
+            }
+            
+            // 第二次攻击：使用元素加成最高的攻击
+            if (!aiData.highBonusElement) {
+                // 找出元素加成最高的元素
+                let maxBonus = -1;
+                let bestElement = null;
+                
+                for (const element of elements) {
+                    const bonus = attacker.fighter.elementBonus[element] || 0;
+                    if (bonus > maxBonus) {
+                        maxBonus = bonus;
+                        bestElement = element;
+                    }
+                }
+                
+                if (bestElement) {
+                    aiData.highBonusElement = bestElement;
+                    return bestElement;
+                }
+            }
+            
+            // 如果元素加成攻击还没测试
+            if (aiData.highBonusElement && aiData.damageHistory[aiData.highBonusElement].length === 0) {
+                return aiData.highBonusElement;
+            }
+            
+            // 第三次攻击：使用对方元素抗性最低的攻击
+            if (!aiData.lowResistanceElement) {
+                // 找出对方元素抗性最低的元素
+                let minResistance = Infinity;
+                let bestElement = null;
+                
+                for (const element of elements) {
+                    const resistance = defender.fighter.elementResistance[element] || 0;
+                    if (resistance < minResistance) {
+                        minResistance = resistance;
+                        bestElement = element;
+                    }
+                }
+                
+                // 如果找到了合适的元素，记录下来并使用（且不是已经测试过的加成最高的元素）
+                if (bestElement && bestElement !== aiData.highBonusElement) {
+                    aiData.lowResistanceElement = bestElement;
+                    return bestElement;
+                } else {
+                    // 如果和加成最高的元素相同，找下一个抗性最低的
+                    minResistance = Infinity;
+                    bestElement = null;
+                    for (const element of elements) {
+                        const resistance = defender.fighter.elementResistance[element] || 0;
+                        if (resistance < minResistance && element !== aiData.highBonusElement) {
+                            minResistance = resistance;
+                            bestElement = element;
+                        }
+                    }
+                    
+                    if (bestElement) {
+                        aiData.lowResistanceElement = bestElement;
+                        return bestElement;
+                    }
+                }
+            }
+            
+            // 如果抗性最低元素攻击还没测试
+            if (aiData.lowResistanceElement && aiData.damageHistory[aiData.lowResistanceElement].length === 0) {
+                return aiData.lowResistanceElement;
+            }
+            
+            // 如果以上条件都不满足，默认返回普通攻击
+            return 'normal';
         }
-        
-        // 默认返回普通攻击
-        return 'normal';
     }
     
     // 计算攻击偏好概率
