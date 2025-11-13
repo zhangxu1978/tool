@@ -30,6 +30,7 @@ class DigitalArena {
             dodge: "敏捷 * 0.5 + 幸运 * 0.3",
             critical: "智力 * 0.4 + 幸运 * 0.6",
             luckBonus: "幸运 * 0.1",
+            spiritPower: "灵力 * 10 + 等级 * 5",
             spiritAttack: {
                 金: "元素加成.金 * 0.8 + 精神 * 0.5",
                 木: "元素加成.木 * 0.8 + 精神 * 0.5",
@@ -71,7 +72,7 @@ class DigitalArena {
             }
         });
 
-        ['attackRule', 'defenseRule', 'healthRule', 'dodgeRule', 'criticalRule', 'luckBonusRule'].forEach(ruleId => {
+        ['attackRule', 'defenseRule', 'healthRule', 'dodgeRule', 'criticalRule', 'luckBonusRule', 'spiritPowerRule', 'spiritAttackRule_gold', 'spiritAttackRule_wood', 'spiritAttackRule_water', 'spiritAttackRule_fire', 'spiritAttackRule_earth', 'spiritDefenseRule_gold', 'spiritDefenseRule_wood', 'spiritDefenseRule_water', 'spiritDefenseRule_fire', 'spiritDefenseRule_earth'].forEach(ruleId => {
             document.getElementById(ruleId).addEventListener('change', () => {
                 this.saveRules();
             });
@@ -419,43 +420,49 @@ class DigitalArena {
                     target.spiritDefense.土 += equipment.spiritDefense.土;
                 } else {
                     // 应用到fighter对象
-                    // 确保fighter有stats属性
-                    if (!target.stats) {
-                        target.stats = {};
+                    // 确保fighter有attributes属性
+                    if (!target.attributes) {
+                        target.attributes = {};
                     }
                     // 应用基本属性加成
-                    target.stats.attack += equipment.stats.attack;
-                    target.stats.defense += equipment.stats.defense;
-                    target.stats.dodge += equipment.stats.dodge;
-                    target.stats.critical += equipment.stats.critical;
-                    target.stats.luck += equipment.stats.luckBonus;
+                    if (!target.attributes.strength) target.attributes.strength = 10;
+                    if (!target.attributes.intelligence) target.attributes.intelligence = 10;
+                    if (!target.attributes.agility) target.attributes.agility = 10;
+                    if (!target.attributes.constitution) target.attributes.constitution = 10;
+                    if (!target.attributes.luck) target.attributes.luck = 10;
+                    if (!target.attributes.spirit) target.attributes.spirit = 10;
+                    target.attributes.strength += equipment.stats.attack;
+                    target.attributes.constitution += equipment.stats.defense;
+                    target.attributes.agility += equipment.stats.dodge;
+                    target.attributes.intelligence += equipment.stats.critical;
+                    target.attributes.luck += equipment.stats.luckBonus;
                     
                     // 应用生命值和灵力值加成
-                    if (!target.stats.health) target.stats.health = 0;
-                    target.stats.health += equipment.stats.health;
-                    
-                    if (!target.stats.spiritPower) target.stats.spiritPower = 0;
-                    target.stats.spiritPower += equipment.stats.spiritPower;
+                    if (!target.equipmentBonuses) {
+                        target.equipmentBonuses = { health: 0, spiritPower: 0 };
+                    }
+                    target.equipmentBonuses.health += equipment.stats.health;
+                    target.equipmentBonuses.spiritPower += equipment.stats.spiritPower;
                     
                     // 应用灵力攻击加成
-                    if (!target.stats.spiritAttack) {
-                        target.stats.spiritAttack = { 金: 0, 木: 0, 水: 0, 火: 0, 土: 0 };
+                    if (!target.elementBonus) {
+                        target.elementBonus = { 金: 0, 木: 0, 水: 0, 火: 0, 土: 0 };
                     }
-                    target.stats.spiritAttack.金 += equipment.spiritAttack.金;
-                    target.stats.spiritAttack.木 += equipment.spiritAttack.木;
-                    target.stats.spiritAttack.水 += equipment.spiritAttack.水;
-                    target.stats.spiritAttack.火 += equipment.spiritAttack.火;
-                    target.stats.spiritAttack.土 += equipment.spiritAttack.土;
+                    target.elementBonus.金 += equipment.spiritAttack.金;
+                    target.elementBonus.木 += equipment.spiritAttack.木;
+                    target.elementBonus.水 += equipment.spiritAttack.水;
+                    target.elementBonus.火 += equipment.spiritAttack.火;
+                    target.elementBonus.土 += equipment.spiritAttack.土;
                     
                     // 应用灵力防御加成
-                    if (!target.stats.spiritDefense) {
-                        target.stats.spiritDefense = { 金: 0, 木: 0, 水: 0, 火: 0, 土: 0 };
+                    if (!target.elementResistance) {
+                        target.elementResistance = { 金: 0, 木: 0, 水: 0, 火: 0, 土: 0 };
                     }
-                    target.stats.spiritDefense.金 += equipment.spiritDefense.金;
-                    target.stats.spiritDefense.木 += equipment.spiritDefense.木;
-                    target.stats.spiritDefense.水 += equipment.spiritDefense.水;
-                    target.stats.spiritDefense.火 += equipment.spiritDefense.火;
-                    target.stats.spiritDefense.土 += equipment.spiritDefense.土;
+                    target.elementResistance.金 += equipment.spiritDefense.金;
+                    target.elementResistance.木 += equipment.spiritDefense.木;
+                    target.elementResistance.水 += equipment.spiritDefense.水;
+                    target.elementResistance.火 += equipment.spiritDefense.火;
+                    target.elementResistance.土 += equipment.spiritDefense.土;
                 }
             }
         });
@@ -716,30 +723,10 @@ class DigitalArena {
             // 计算灵力值 = 灵力 * 10 + 等级 * 5
             let spiritPower = (attrs.spirit || 10) * 10 + (attrs.level || 1) * 5;
             
-            // 应用装备加成
-            if (fighter.equipment && fighter.equipment.length > 0) {
-                fighter.equipment.forEach(equipmentId => {
-                    const equipment = this.equipment.find(e => e.id === equipmentId);
-                    if (equipment) {
-                        attack += equipment.stats.attack || 0;
-                        defense += equipment.stats.defense || 0;
-                        health += equipment.stats.health || 0;
-                        dodge += equipment.stats.dodge || 0;
-                        critical += equipment.stats.critical || 0;
-                        luckBonus += equipment.stats.luckBonus || 0;
-                        spiritPower += equipment.stats.spiritPower || 0;
-                        
-                        // 应用灵力攻击加成
-                        for (const element of ['金', '木', '水', '火', '土']) {
-                            spiritAttack[element] += equipment.spiritAttack[element] || 0;
-                        }
-                        
-                        // 应用灵力防御加成
-                        for (const element of ['金', '木', '水', '火', '土']) {
-                            spiritDefense[element] += equipment.spiritDefense[element] || 0;
-                        }
-                    }
-                });
+            // 应用装备加成的生命值和灵力值
+            if (fighter.equipmentBonuses) {
+                health += fighter.equipmentBonuses.health;
+                spiritPower += fighter.equipmentBonuses.spiritPower;
             }
             
             return {
@@ -1001,6 +988,7 @@ class DigitalArena {
         document.getElementById('dodgeRule').value = this.rules.dodge;
         document.getElementById('criticalRule').value = this.rules.critical;
         document.getElementById('luckBonusRule').value = this.rules.luckBonus;
+        document.getElementById('spiritPowerRule').value = this.rules.spiritPower || '灵力 * 10 + 等级 * 5';
         
         // 加载灵力规则
         document.getElementById('spiritAttackRule_gold').value = this.rules.spiritAttack?.金 || '元素加成.金 * 0.8 + 精神 * 0.5';
@@ -1159,11 +1147,19 @@ class DigitalArena {
 
     // 模拟单次战斗
     simulateSingleBattle(fighter1, fighter2) {
-        const stats1 = this.calculateBattleStats(fighter1);
-        const stats2 = this.calculateBattleStats(fighter2);
+        const finalStats1 = this.calculateBattleStats(fighter1);
+        //打印stats1
+        console.log(finalStats1);
+        const finalStats2 = this.calculateBattleStats(fighter2);
+        //打印finalStats2
+        console.log(finalStats2);
 
-        const finalStats1 = this.applyLuckBonus(stats1);
-        const finalStats2 = this.applyLuckBonus(stats2);
+        // const finalStats1 = this.applyLuckBonus(stats1);
+        // //打印finalStats1
+        // console.log(finalStats1);
+        // const finalStats2 = this.applyLuckBonus(stats2);
+        // //打印finalStats2
+        // console.log(finalStats2);   
 
         let hp1 = finalStats1.health;
         let hp2 = finalStats2.health;
@@ -1304,15 +1300,15 @@ class DigitalArena {
     }
 
     // 应用幸运加成
-    applyLuckBonus(stats) {
-        const bonus = stats.luckBonus;
-        return {
-            ...stats, // 保留所有原始属性
-            attack: stats.attack + Math.random() * bonus, // 只增加攻击，不增加防御
-            health: stats.health + Math.random() * bonus * 5,
-            spiritPower: stats.spiritPower // 保留灵力值不变
-        };
-    }
+    // applyLuckBonus(stats) {
+    //     const bonus = stats.luckBonus;
+    //     return {
+    //         ...stats, // 保留所有原始属性
+    //         attack: stats.attack + Math.random() * bonus, // 只增加攻击，不增加防御
+    //         health: stats.health + Math.random() * bonus * 5,
+    //         spiritPower: stats.spiritPower // 保留灵力值不变
+    //     };
+    // }
 
     // AI选择攻击类型
     selectAttackType(attacker, defender, aiData, round) {
@@ -1750,6 +1746,7 @@ class DigitalArena {
             dodge: document.getElementById('dodgeRule').value,
             critical: document.getElementById('criticalRule').value,
             luckBonus: document.getElementById('luckBonusRule').value,
+            spiritPower: document.getElementById('spiritPowerRule').value || '灵力 * 10 + 等级 * 5',
             spiritAttack: {
                 金: document.getElementById('spiritAttackRule_gold').value || '元素加成.金 * 0.8 + 精神 * 0.5',
                 木: document.getElementById('spiritAttackRule_wood').value || '元素加成.木 * 0.8 + 精神 * 0.5',
