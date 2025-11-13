@@ -211,7 +211,162 @@ class DigitalArena {
     }
     // 随机生成一件装备
     generateEquipment() {
-
+        // 读取装备级别
+        const equipmentLevel = parseInt(document.getElementById('equipmentLevel').value) || 1;
+        
+        // 读取DictList.json数据
+        let dictList = [];
+        fetch('../data/DictList.json')
+            .then(response => response.json())
+            .then(data => {
+                dictList = data[0];
+                
+                // 确定装备等级名称
+                let levelName = '';
+                let levelIndex = 0;
+                for (let i = 0; i < dictList.Level.length; i++) {
+                    if (equipmentLevel < dictList.Level[i]) {
+                        levelName = dictList.LevelName[i];
+                        levelIndex = i;
+                        break;
+                    }
+                }
+                if (!levelName) {
+                    levelName = dictList.LevelName[dictList.LevelName.length - 1];
+                    levelIndex = dictList.LevelName.length - 1;
+                }
+                
+                // 确定比率类属性的上限
+                let ratioMax = 20;
+                if (levelName === '炼气') ratioMax = 4;
+                else if (levelName === '筑基') ratioMax = 8;
+                else if (levelName === '金丹') ratioMax = 12;
+                else if (levelName === '元婴') ratioMax = 16;
+                
+                // 随机生成装备品质
+                const randomQualityIndex = Math.floor(Math.random() * dictList.Quality.length);
+                const quality = dictList.Quality[randomQualityIndex];
+                
+                // 随机选择装备部位 (使用英文)
+                const equipmentPositions = ['Head', 'Body', 'Leg', 'Hand', 'Foot', 'arms'];
+                const randomPositionIndex = Math.floor(Math.random() * equipmentPositions.length);
+                const positionCategory = equipmentPositions[randomPositionIndex];
+                const positionList = dictList[positionCategory];
+                const randomPartIndex = Math.floor(Math.random() * positionList.length);
+                const partName = positionList[randomPartIndex];
+                
+                // 根据品质确定加成属性数量
+                let attributeCount = 1;
+                if (quality === '稀有') attributeCount = 2;
+                else if (quality === '罕见') attributeCount = 3;
+                else if (quality === '绝品') attributeCount = 4;
+                
+                // 生成装备属性
+                const stats = { attack: 0, defense: 0, health: 0, dodge: 0, critical: 0, luckBonus: 0, spiritPower: 0 };
+                const spiritAttack = { 金: 0, 木: 0, 水: 0, 火: 0, 土: 0 };
+                const spiritDefense = { 金: 0, 木: 0, 水: 0, 火: 0, 土: 0 };
+                
+                // 随机选择要加成的属性
+                const allAttributes = ['attack', 'defense', 'health', 'dodge', 'critical', 'luckBonus', 'spiritPower', '金', '木', '水', '火', '土', '金抗', '木抗', '水抗', '火抗', '土抗'];
+                const selectedAttributes = [];
+                
+                while (selectedAttributes.length < attributeCount) {
+                    const randomAttributeIndex = Math.floor(Math.random() * allAttributes.length);
+                    const attribute = allAttributes[randomAttributeIndex];
+                    if (!selectedAttributes.includes(attribute)) {
+                        selectedAttributes.push(attribute);
+                    }
+                }
+                
+                // 为每个选中的属性生成数值
+                selectedAttributes.forEach(attribute => {
+                    if (attribute === 'attack' || attribute === 'defense' || attribute === 'health' || attribute === 'spiritPower') {
+                        // 数值类属性，最大值为装备级别
+                        stats[attribute] = Math.floor(Math.random() * equipmentLevel) + 1;
+                    } else if (attribute === '金' || attribute === '木' || attribute === '水' || attribute === '火' || attribute === '土') {
+                        // 灵力攻击属性
+                        spiritAttack[attribute] = Math.floor(Math.random() * equipmentLevel) + 1;
+                    } else if (attribute === 'dodge' || attribute === 'critical') {
+                        // 比率类属性，最大值为ratioMax，但不能超过装备级别
+                        const maxValue = Math.min(ratioMax, equipmentLevel);
+                        stats[attribute] = Math.floor(Math.random() * maxValue) + 1;
+                    } else if (attribute === 'luckBonus') {
+                        // 幸运加成，最大值为装备级别
+                        stats[attribute] = Math.floor(Math.random() * equipmentLevel) + 1;
+                    } else if (attribute.startsWith('金抗') || attribute.startsWith('木抗') || attribute.startsWith('水抗') || attribute.startsWith('火抗') || attribute.startsWith('土抗')) {
+                        // 灵力防御属性
+                        const element = attribute.replace('抗', '');
+                        spiritDefense[element] = Math.floor(Math.random() * equipmentLevel) + 1;
+                    }
+                });
+                
+                // 生成装备前缀
+                const prefixTypes = Object.keys(dictList.Prefixes);
+                const randomPrefixTypeIndex = Math.floor(Math.random() * prefixTypes.length);
+                const prefixType = prefixTypes[randomPrefixTypeIndex];
+                const prefixList = dictList.Prefixes[prefixType];
+                const randomPrefixIndex = Math.floor(Math.random() * prefixList.length);
+                const prefix = prefixList[randomPrefixIndex];
+                
+                // 生成装备名称
+                let equipmentName = prefix + partName;
+                
+                // 生成装备说明
+                let description = `${quality}${levelName}期${equipmentLevel}级${equipmentName}，`;
+                
+                // 添加属性说明
+                const attributeDescriptions = [];
+                
+                if (stats.attack > 0) attributeDescriptions.push(`攻击+${stats.attack}`);
+                if (stats.defense > 0) attributeDescriptions.push(`防御+${stats.defense}`);
+                if (stats.health > 0) attributeDescriptions.push(`生命+${stats.health}`);
+                if (stats.dodge > 0) attributeDescriptions.push(`闪避+${stats.dodge}%`);
+                if (stats.critical > 0) attributeDescriptions.push(`暴击+${stats.critical}%`);
+                if (stats.luckBonus > 0) attributeDescriptions.push(`幸运+${stats.luckBonus}`);
+                if (stats.spiritPower > 0) attributeDescriptions.push(`灵力+${stats.spiritPower}`);
+                
+                if (spiritAttack.金 > 0) attributeDescriptions.push(`金攻击+${spiritAttack.金}`);
+                if (spiritAttack.木 > 0) attributeDescriptions.push(`木攻击+${spiritAttack.木}`);
+                if (spiritAttack.水 > 0) attributeDescriptions.push(`水攻击+${spiritAttack.水}`);
+                if (spiritAttack.火 > 0) attributeDescriptions.push(`火攻击+${spiritAttack.火}`);
+                if (spiritAttack.土 > 0) attributeDescriptions.push(`土攻击+${spiritAttack.土}`);
+                
+                if (spiritDefense.金 > 0) attributeDescriptions.push(`金防御+${spiritDefense.金}`);
+                if (spiritDefense.木 > 0) attributeDescriptions.push(`木防御+${spiritDefense.木}`);
+                if (spiritDefense.水 > 0) attributeDescriptions.push(`水防御+${spiritDefense.水}`);
+                if (spiritDefense.火 > 0) attributeDescriptions.push(`火防御+${spiritDefense.火}`);
+                if (spiritDefense.土 > 0) attributeDescriptions.push(`土防御+${spiritDefense.土}`);
+                
+                description += attributeDescriptions.join('，');
+                
+                // 创建装备对象
+                const equipment = {
+                    id: Date.now(),
+                    name: equipmentName,
+                    description,
+                    equipmentLevel,
+                    position: positionCategory,
+                    stats,
+                    spiritAttack,
+                    spiritDefense,
+                    quality
+                };
+                
+                // 添加到装备列表
+                this.equipment.push(equipment);
+                this.saveEquipment();
+                this.loadEquipment();
+                this.updateEquipmentSelects();
+                
+                // 清空输入框
+                document.getElementById('equipmentLevel').value = '';
+                
+                alert('装备生成成功！');
+            })
+            .catch(error => {
+                console.error('生成装备失败:', error);
+                alert('生成装备失败，请检查网络或文件配置！');
+            });
     }
     // 清空装备列表
     clearEquipment() {
@@ -377,6 +532,8 @@ class DigitalArena {
         document.getElementById('equipmentLuckBonus').value = equipment.stats.luckBonus;
         document.getElementById('equipmentHealth').value = equipment.stats.health;
         document.getElementById('equipmentSpiritPower').value = equipment.stats.spiritPower;
+        document.getElementById('equipmentLevel').value = equipment.equipmentLevel;
+        document.getElementById('equipmentPosition').value = equipment.position;
         
         // 加载灵力攻击
         document.getElementById('spiritAttack_gold').value = equipment.spiritAttack.金;
