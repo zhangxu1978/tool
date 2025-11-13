@@ -171,7 +171,58 @@ class DigitalArena {
     saveEquipment() {
         localStorage.setItem('arenaEquipment', JSON.stringify(this.equipment));
     }
-    
+    // 导出装备列表
+    exportEquipment() {
+        const equipmentJson = JSON.stringify(this.equipment, null, 2);
+        const blob = new Blob([equipmentJson], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'arena_equipment.json';
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+    // 导入装备列表
+    importEquipment() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        input.click();
+        input.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) {
+                return;
+            }
+            const reader = new FileReader();
+            reader.readAsText(file, 'utf-8');
+            reader.onload = () => {
+                try {
+                    const importedEquipment = JSON.parse(reader.result);
+                    this.equipment = [...this.equipment, ...importedEquipment];
+                    this.saveEquipment();
+                    this.loadEquipment();
+                    this.updateEquipmentSelects();
+                } catch (error) {
+                    console.error('导入装备列表失败:', error);
+                    alert('导入装备列表失败，请检查文件格式是否正确！');
+                }
+            };
+        });
+    }
+    // 随机生成一件装备
+    generateEquipment() {
+
+    }
+    // 清空装备列表
+    clearEquipment() {
+        if (!confirm('确定要清空装备列表吗？')) {
+            return;
+        }
+        this.equipment = [];
+        this.saveEquipment();
+        this.loadEquipment();
+        this.updateEquipmentSelects();
+    }
     // 加载装备
     loadEquipment() {
         const container = document.getElementById('equipmentList');
@@ -2043,7 +2094,22 @@ function closeImportModal() {
 function addEquipment() {
     arena.addEquipment();
 }
-
+//导出装备列表
+function exportEquipment() {
+    arena.exportEquipment();
+}
+// 导入装备列表
+function importEquipment() {
+    arena.importEquipment();
+}
+// 随机生成一件装备
+function generateEquipment() {
+    arena.generateEquipment();
+}
+// 清空装备列表
+function clearEquipment() {
+     arena.clearEquipment();
+}
 // 设置所有抗性为指定值
 function setAllResistances(value) {
     document.getElementById('resistance_gold').value = value;

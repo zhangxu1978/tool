@@ -366,6 +366,11 @@
                                         <input type="text" class="form-control" id="equipmentPosition" placeholder="输入装备部位">
                                     </div>
                                 </div>
+                                <div class="col-md-2">
+                                  <div class="mb-3">
+                                        <button type="button" class="btn btn-arena w-100" onclick="arena.generateEquipment()">随机生成一件装备</button>
+                                    </div>
+                                </div>
                             </div>
                             <div class="row">
                                 <div class="col-md-2">
@@ -487,9 +492,25 @@
                             
                             <!-- 按钮区域 -->
                             <div class="row mt-4">
-                                <div class="col-md-6">
-                                    <div class="mb-3">
+                                <div class="col-md-3">
+                                    <div class="mb-2">
                                         <button type="button" class="btn btn-arena w-100" onclick="arena.addEquipment()">添加装备</button>
+                                    </div>
+
+                                </div>
+                                <div class="col-md-3">
+                                  <div class="mb-2">
+                                        <button type="button" class="btn btn-arena w-100" onclick="arena.exportEquipment()">导出装备列表</button>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                  <div class="mb-2">
+                                        <button type="button" class="btn btn-arena w-100" onclick="arena.importEquipment()">导入装备列表</button>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                  <div class="mb-2">
+                                        <button type="button" class="btn btn-arena w-100" onclick="arena.clearEquipment()">清空装备列表</button>
                                     </div>
                                 </div>
                             </div>
