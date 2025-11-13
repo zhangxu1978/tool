@@ -5,13 +5,21 @@ class DigitalArena {
         this.fighters = JSON.parse(localStorage.getItem('arenaFighters')) || [];
         this.rules = JSON.parse(localStorage.getItem('arenaRules')) || this.getDefaultRules();
         this.battleHistory = JSON.parse(localStorage.getItem('arenaBattleHistory')) || [];
+        this.equipment = JSON.parse(localStorage.getItem('arenaEquipment')) || [];
         this.isBattling = false;
         this.battleInterval = null;
         
         this.initEventListeners();
         this.loadFighters();
+        this.loadEquipment();
+        this.updateEquipmentSelects();
         this.loadRules();
         this.updateFighterSelects();
+        
+        // 初始化Bootstrap Select插件
+        if (typeof $('.selectpicker').selectpicker === 'function') {
+            $('.selectpicker').selectpicker();
+        }
     }
 
     getDefaultRules() {
@@ -48,6 +56,21 @@ class DigitalArena {
             this.showFighterStats('fighter2Stats', e.target.value);
         });
 
+        // 装备选择事件 (使用 Bootstrap Select 插件的 changed.bs.select 事件)
+        $('#fighter1Equipment').on('changed.bs.select', () => {
+            const fighter1Select = document.getElementById('fighter1Select');
+            if (fighter1Select.value) {
+                this.showFighterStats('fighter1Stats', fighter1Select.value, true); // true表示需要考虑装备
+            }
+        });
+        
+        $('#fighter2Equipment').on('changed.bs.select', () => {
+            const fighter2Select = document.getElementById('fighter2Select');
+            if (fighter2Select.value) {
+                this.showFighterStats('fighter2Stats', fighter2Select.value, true); // true表示需要考虑装备
+            }
+        });
+
         ['attackRule', 'defenseRule', 'healthRule', 'dodgeRule', 'criticalRule', 'luckBonusRule'].forEach(ruleId => {
             document.getElementById(ruleId).addEventListener('change', () => {
                 this.saveRules();
@@ -57,6 +80,387 @@ class DigitalArena {
         // 移除重复的事件监听器，只保留HTML中的onclick属性调用
     }
 
+    // 添加装备
+    addEquipment() {
+        const name = document.getElementById('equipmentName').value.trim();
+        const description = document.getElementById('equipmentDescription').value.trim();
+        const attack = parseInt(document.getElementById('equipmentAttack').value) || 0;
+        const defense = parseInt(document.getElementById('equipmentDefense').value) || 0;
+        const dodge = parseInt(document.getElementById('equipmentDodge').value) || 0;
+        const critical = parseInt(document.getElementById('equipmentCritical').value) || 0;
+        const luckBonus = parseInt(document.getElementById('equipmentLuckBonus').value) || 0;
+        const health = parseInt(document.getElementById('equipmentHealth').value) || 0;
+        const spiritPower = parseInt(document.getElementById('equipmentSpiritPower').value) || 0;
+        
+        // 获取灵力攻击
+        const spiritAttack = {
+            金: parseInt(document.getElementById('spiritAttack_gold').value) || 0,
+            木: parseInt(document.getElementById('spiritAttack_wood').value) || 0,
+            水: parseInt(document.getElementById('spiritAttack_water').value) || 0,
+            火: parseInt(document.getElementById('spiritAttack_fire').value) || 0,
+            土: parseInt(document.getElementById('spiritAttack_earth').value) || 0
+        };
+        
+        // 获取灵力防御
+        const spiritDefense = {
+            金: parseInt(document.getElementById('spiritDefense_gold').value) || 0,
+            木: parseInt(document.getElementById('spiritDefense_wood').value) || 0,
+            水: parseInt(document.getElementById('spiritDefense_water').value) || 0,
+            火: parseInt(document.getElementById('spiritDefense_fire').value) || 0,
+            土: parseInt(document.getElementById('spiritDefense_earth').value) || 0
+        };
+
+        if (!name) {
+            alert('请输入装备名称！');
+            return;
+        }
+
+        if (this.equipment.find(e => e.name === name)) {
+            alert('装备名称已存在！');
+            return;
+        }
+
+        const equipment = {
+            id: Date.now(),
+            name,
+            description,
+            stats: {
+                attack,
+                defense,
+                dodge,
+                critical,
+                luckBonus,
+                health,
+                spiritPower
+            },
+            spiritAttack,
+            spiritDefense
+        };
+
+        this.equipment.push(equipment);
+        this.saveEquipment();
+        this.loadEquipment();
+        this.updateEquipmentSelects();
+        
+        // 清空输入框
+        document.getElementById('equipmentName').value = '';
+        document.getElementById('equipmentDescription').value = '';
+        ['equipmentAttack', 'equipmentDefense', 'equipmentDodge', 'equipmentCritical', 'equipmentLuckBonus', 'equipmentHealth', 'equipmentSpiritPower'].forEach(id => {
+            document.getElementById(id).value = 0;
+        });
+        
+        // 清空灵力攻击输入框
+        ['spiritAttack_gold', 'spiritAttack_wood', 'spiritAttack_water', 'spiritAttack_fire', 'spiritAttack_earth'].forEach(id => {
+            document.getElementById(id).value = 0;
+        });
+        
+        // 清空灵力防御输入框
+        ['spiritDefense_gold', 'spiritDefense_wood', 'spiritDefense_water', 'spiritDefense_fire', 'spiritDefense_earth'].forEach(id => {
+            document.getElementById(id).value = 0;
+        });
+    }
+    
+    // 保存装备
+    saveEquipment() {
+        localStorage.setItem('arenaEquipment', JSON.stringify(this.equipment));
+    }
+    
+    // 加载装备
+    loadEquipment() {
+        const container = document.getElementById('equipmentList');
+        container.innerHTML = '';
+
+        if (this.equipment.length === 0) {
+            container.innerHTML = '<div class="col-12 text-center text-muted"><p>暂无装备，请先添加装备！</p></div>';
+            return;
+        }
+
+        this.equipment.forEach(equipment => {
+            const card = document.createElement('div');
+            card.className = 'col-md-6 col-lg-4';
+            card.innerHTML = `
+                <div class="fighter-card">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0">${equipment.name}</h5>
+                        <span class="badge bg-primary">装备</span>
+                    </div>
+                    <p class="text-muted small mb-2">${equipment.description || '无描述'}</p>
+                    
+                    <div class="mb-2">
+                        <small>攻击力</small>
+                        <div class="attribute-bar">
+                            <div class="attribute-progress strength" style="width: ${Math.min(equipment.stats.attack / 100 * 100, 100)}%">
+                                ${equipment.stats.attack}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-2">
+                        <small>防御力</small>
+                        <div class="attribute-bar">
+                            <div class="attribute-progress intelligence" style="width: ${Math.min(equipment.stats.defense / 100 * 100, 100)}%">
+                                ${equipment.stats.defense}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-2">
+                        <small>闪避率(%)</small>
+                        <div class="attribute-bar">
+                            <div class="attribute-progress agility" style="width: ${Math.min(equipment.stats.dodge / 100 * 100, 100)}%">
+                                ${equipment.stats.dodge}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-2">
+                        <small>暴击率(%)</small>
+                        <div class="attribute-bar">
+                            <div class="attribute-progress constitution" style="width: ${Math.min(equipment.stats.critical / 100 * 100, 100)}%">
+                                ${equipment.stats.critical}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-2">
+                        <small>幸运加成</small>
+                        <div class="attribute-bar">
+                            <div class="attribute-progress luck" style="width: ${Math.min(equipment.stats.luckBonus / 100 * 100, 100)}%">
+                                ${equipment.stats.luckBonus}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-2">
+                        <small>生命值</small>
+                        <div class="attribute-bar">
+                            <div class="attribute-progress" style="width: ${Math.min(equipment.stats.health / 100 * 100, 100)}%; background: linear-gradient(90deg, #4ecdc4, #44a08d);">
+                                ${equipment.stats.health}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-2">
+                        <small>灵力值</small>
+                        <div class="attribute-bar">
+                            <div class="attribute-progress" style="width: ${Math.min(equipment.stats.spiritPower / 100 * 100, 100)}%; background: linear-gradient(90deg, #9c27b0, #673ab7);">
+                                ${equipment.stats.spiritPower}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="border-top pt-3">
+                        <small class="text-muted">灵力攻击</small>
+                        <div class="row text-center mb-2">
+                            <div class="col-2"><small>金</small></div>
+                            <div class="col-2"><small>木</small></div>
+                            <div class="col-2"><small>水</small></div>
+                            <div class="col-2"><small>火</small></div>
+                            <div class="col-2"><small>土</small></div>
+                        </div>
+                        <div class="row text-center mb-2">
+                            <div class="col-2">${equipment.spiritAttack.金}</div>
+                            <div class="col-2">${equipment.spiritAttack.木}</div>
+                            <div class="col-2">${equipment.spiritAttack.水}</div>
+                            <div class="col-2">${equipment.spiritAttack.火}</div>
+                            <div class="col-2">${equipment.spiritAttack.土}</div>
+                        </div>
+                        
+                        <small class="text-muted">灵力防御</small>
+                        <div class="row text-center">
+                            <div class="col-2"><small>金</small></div>
+                            <div class="col-2"><small>木</small></div>
+                            <div class="col-2"><small>水</small></div>
+                            <div class="col-2"><small>火</small></div>
+                            <div class="col-2"><small>土</small></div>
+                        </div>
+                        <div class="row text-center">
+                            <div class="col-2">${equipment.spiritDefense.金}</div>
+                            <div class="col-2">${equipment.spiritDefense.木}</div>
+                            <div class="col-2">${equipment.spiritDefense.水}</div>
+                            <div class="col-2">${equipment.spiritDefense.火}</div>
+                            <div class="col-2">${equipment.spiritDefense.土}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mt-3">
+                        <button class="btn btn-sm btn-primary" onclick="arena.editEquipment(${equipment.id})">编辑</button>
+                        <button class="btn btn-sm btn-danger" onclick="arena.deleteEquipment(${equipment.id})">删除</button>
+                    </div>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    }
+    
+    // 删除装备
+    deleteEquipment(id) {
+        if (confirm('确定要删除这个装备吗？')) {
+            this.equipment = this.equipment.filter(e => e.id !== id);
+            this.saveEquipment();
+            this.loadEquipment();
+            this.updateEquipmentSelects();
+        }
+    }
+    
+    // 编辑装备
+    editEquipment(id) {
+        const equipment = this.equipment.find(e => e.id === id);
+        if (!equipment) return;
+
+        document.getElementById('equipmentName').value = equipment.name;
+        document.getElementById('equipmentDescription').value = equipment.description;
+        document.getElementById('equipmentAttack').value = equipment.stats.attack;
+        document.getElementById('equipmentDefense').value = equipment.stats.defense;
+        document.getElementById('equipmentDodge').value = equipment.stats.dodge;
+        document.getElementById('equipmentCritical').value = equipment.stats.critical;
+        document.getElementById('equipmentLuckBonus').value = equipment.stats.luckBonus;
+        document.getElementById('equipmentHealth').value = equipment.stats.health;
+        document.getElementById('equipmentSpiritPower').value = equipment.stats.spiritPower;
+        
+        // 加载灵力攻击
+        document.getElementById('spiritAttack_gold').value = equipment.spiritAttack.金;
+        document.getElementById('spiritAttack_wood').value = equipment.spiritAttack.木;
+        document.getElementById('spiritAttack_water').value = equipment.spiritAttack.水;
+        document.getElementById('spiritAttack_fire').value = equipment.spiritAttack.火;
+        document.getElementById('spiritAttack_earth').value = equipment.spiritAttack.土;
+        
+        // 加载灵力防御
+        document.getElementById('spiritDefense_gold').value = equipment.spiritDefense.金;
+        document.getElementById('spiritDefense_wood').value = equipment.spiritDefense.木;
+        document.getElementById('spiritDefense_water').value = equipment.spiritDefense.水;
+        document.getElementById('spiritDefense_fire').value = equipment.spiritDefense.火;
+        document.getElementById('spiritDefense_earth').value = equipment.spiritDefense.土;
+
+        // 直接删除而不弹出确认对话框
+        this.equipment = this.equipment.filter(e => e.id !== id);
+        this.saveEquipment();
+        this.loadEquipment();
+        this.updateEquipmentSelects();
+        
+        document.getElementById('equipment-tab').click();
+    }
+    
+    // 更新装备选择框
+    updateEquipmentSelects() {
+        const fighter1EquipmentSelect = document.getElementById('fighter1Equipment');
+        const fighter2EquipmentSelect = document.getElementById('fighter2Equipment');
+
+        // 清空选择框
+        fighter1EquipmentSelect.innerHTML = '';
+        fighter2EquipmentSelect.innerHTML = '';
+
+        if (this.equipment.length === 0) {
+            // 如果没有装备，添加提示选项
+            const noEquipmentOption = document.createElement('option');
+            noEquipmentOption.value = '';
+            noEquipmentOption.textContent = '暂无装备';
+            noEquipmentOption.disabled = true;
+            fighter1EquipmentSelect.appendChild(noEquipmentOption);
+            fighter2EquipmentSelect.appendChild(noEquipmentOption.cloneNode(true));
+        } else {
+            // 添加装备选项
+            this.equipment.forEach(equipment => {
+                const option = document.createElement('option');
+                option.value = equipment.id;
+                option.textContent = `${equipment.name} (攻击+${equipment.stats.attack}, 防御+${equipment.stats.defense})`;
+                fighter1EquipmentSelect.appendChild(option);
+                fighter2EquipmentSelect.appendChild(option.cloneNode(true));
+            });
+        }
+
+        // 刷新 Bootstrap Select 插件
+        if (typeof $('.selectpicker').selectpicker === 'function') {
+            $('.selectpicker').selectpicker('refresh');
+        }
+    }
+    
+    // 应用装备属性加成
+    applyEquipmentBonuses(target, equipmentIds) {
+        // 为每个选中的装备应用属性加成
+        equipmentIds.forEach(equipmentId => {
+            const equipment = this.equipment.find(e => e.id === equipmentId);
+            if (equipment) {
+                // 确定目标是stats对象还是fighter对象
+                const isStats = target.attack !== undefined && target.defense !== undefined;
+                
+                if (isStats) {
+                    // 应用到stats对象
+                    target.attack += equipment.stats.attack;
+                    target.defense += equipment.stats.defense;
+                    target.dodge += equipment.stats.dodge;
+                    target.critical += equipment.stats.critical;
+                    target.luck += equipment.stats.luckBonus;
+                    target.health += equipment.stats.health;
+                    
+                    // 应用灵力值加成，如果存在的话
+                    if (target.spiritPower !== undefined) {
+                        target.spiritPower += equipment.stats.spiritPower;
+                    }
+                    
+                    // 应用灵力攻击加成
+                    if (!target.spiritAttack) {
+                        target.spiritAttack = { 金: 0, 木: 0, 水: 0, 火: 0, 土: 0 };
+                    }
+                    target.spiritAttack.金 += equipment.spiritAttack.金;
+                    target.spiritAttack.木 += equipment.spiritAttack.木;
+                    target.spiritAttack.水 += equipment.spiritAttack.水;
+                    target.spiritAttack.火 += equipment.spiritAttack.火;
+                    target.spiritAttack.土 += equipment.spiritAttack.土;
+                    
+                    // 应用灵力防御加成
+                    if (!target.spiritDefense) {
+                        target.spiritDefense = { 金: 0, 木: 0, 水: 0, 火: 0, 土: 0 };
+                    }
+                    target.spiritDefense.金 += equipment.spiritDefense.金;
+                    target.spiritDefense.木 += equipment.spiritDefense.木;
+                    target.spiritDefense.水 += equipment.spiritDefense.水;
+                    target.spiritDefense.火 += equipment.spiritDefense.火;
+                    target.spiritDefense.土 += equipment.spiritDefense.土;
+                } else {
+                    // 应用到fighter对象
+                    // 确保fighter有stats属性
+                    if (!target.stats) {
+                        target.stats = {};
+                    }
+                    // 应用基本属性加成
+                    target.stats.attack += equipment.stats.attack;
+                    target.stats.defense += equipment.stats.defense;
+                    target.stats.dodge += equipment.stats.dodge;
+                    target.stats.critical += equipment.stats.critical;
+                    target.stats.luck += equipment.stats.luckBonus;
+                    
+                    // 应用生命值和灵力值加成
+                    if (!target.stats.health) target.stats.health = 0;
+                    target.stats.health += equipment.stats.health;
+                    
+                    if (!target.stats.spiritPower) target.stats.spiritPower = 0;
+                    target.stats.spiritPower += equipment.stats.spiritPower;
+                    
+                    // 应用灵力攻击加成
+                    if (!target.stats.spiritAttack) {
+                        target.stats.spiritAttack = { 金: 0, 木: 0, 水: 0, 火: 0, 土: 0 };
+                    }
+                    target.stats.spiritAttack.金 += equipment.spiritAttack.金;
+                    target.stats.spiritAttack.木 += equipment.spiritAttack.木;
+                    target.stats.spiritAttack.水 += equipment.spiritAttack.水;
+                    target.stats.spiritAttack.火 += equipment.spiritAttack.火;
+                    target.stats.spiritAttack.土 += equipment.spiritAttack.土;
+                    
+                    // 应用灵力防御加成
+                    if (!target.stats.spiritDefense) {
+                        target.stats.spiritDefense = { 金: 0, 木: 0, 水: 0, 火: 0, 土: 0 };
+                    }
+                    target.stats.spiritDefense.金 += equipment.spiritDefense.金;
+                    target.stats.spiritDefense.木 += equipment.spiritDefense.木;
+                    target.stats.spiritDefense.水 += equipment.spiritDefense.水;
+                    target.stats.spiritDefense.火 += equipment.spiritDefense.火;
+                    target.stats.spiritDefense.土 += equipment.spiritDefense.土;
+                }
+            }
+        });
+    }
+    
     // 添加竞技者
     addFighter() {
         const name = document.getElementById('fighterName').value.trim();
@@ -294,12 +698,12 @@ class DigitalArena {
         };
 
         try {
-            const attack = eval(replaceVars(this.rules.attack));
-            const defense = eval(replaceVars(this.rules.defense));
-            const health = eval(replaceVars(this.rules.health));
-            const dodge = Math.min(eval(replaceVars(this.rules.dodge)), 95);
-            const critical = Math.min(eval(replaceVars(this.rules.critical)), 95);
-            const luckBonus = eval(replaceVars(this.rules.luckBonus));
+            let attack = eval(replaceVars(this.rules.attack));
+            let defense = eval(replaceVars(this.rules.defense));
+            let health = eval(replaceVars(this.rules.health));
+            let dodge = Math.min(eval(replaceVars(this.rules.dodge)), 95);
+            let critical = Math.min(eval(replaceVars(this.rules.critical)), 95);
+            let luckBonus = eval(replaceVars(this.rules.luckBonus));
             
             // 计算灵力攻击和灵力防御
             const spiritAttack = {};
@@ -310,7 +714,34 @@ class DigitalArena {
             }
 
             // 计算灵力值 = 灵力 * 10 + 等级 * 5
-            const spiritPower = (attrs.spirit || 10) * 10 + (attrs.level || 1) * 5;
+            let spiritPower = (attrs.spirit || 10) * 10 + (attrs.level || 1) * 5;
+            
+            // 应用装备加成
+            if (fighter.equipment && fighter.equipment.length > 0) {
+                fighter.equipment.forEach(equipmentId => {
+                    const equipment = this.equipment.find(e => e.id === equipmentId);
+                    if (equipment) {
+                        attack += equipment.stats.attack || 0;
+                        defense += equipment.stats.defense || 0;
+                        health += equipment.stats.health || 0;
+                        dodge += equipment.stats.dodge || 0;
+                        critical += equipment.stats.critical || 0;
+                        luckBonus += equipment.stats.luckBonus || 0;
+                        spiritPower += equipment.stats.spiritPower || 0;
+                        
+                        // 应用灵力攻击加成
+                        for (const element of ['金', '木', '水', '火', '土']) {
+                            spiritAttack[element] += equipment.spiritAttack[element] || 0;
+                        }
+                        
+                        // 应用灵力防御加成
+                        for (const element of ['金', '木', '水', '火', '土']) {
+                            spiritDefense[element] += equipment.spiritDefense[element] || 0;
+                        }
+                    }
+                });
+            }
+            
             return {
                 attack, 
                 defense, 
@@ -492,7 +923,7 @@ class DigitalArena {
     }
 
     // 显示竞技者详细属性
-    showFighterStats(containerId, fighterId) {
+    showFighterStats(containerId, fighterId, considerEquipment = false) {
         const container = document.getElementById(containerId);
         
         if (!fighterId) {
@@ -503,7 +934,21 @@ class DigitalArena {
         const fighter = this.fighters.find(f => f.id == fighterId);
         if (!fighter) return;
 
-        const stats = this.calculateBattleStats(fighter);
+        let displayFighter = fighter;
+        let stats = this.calculateBattleStats(fighter);
+
+        // 如果需要考虑装备，应用装备加成
+        if (considerEquipment) {
+            // 获取选中的装备
+            const equipmentSelectId = containerId === 'fighter1Stats' ? 'fighter1Equipment' : 'fighter2Equipment';
+            const equipmentIds = Array.from(document.getElementById(equipmentSelectId).selectedOptions)
+                .map(opt => parseInt(opt.value));
+
+            if (equipmentIds.length > 0 && !isNaN(equipmentIds[0])) {
+                // 应用装备加成到战斗属性
+                this.applyEquipmentBonuses(stats, equipmentIds);
+            }
+        }
         
         // 确保属性存在
         const attrs = fighter.attributes || { strength: 10, agility: 10, constitution: 10, intelligence: 10, luck: 10, spirit: 10 };
@@ -648,8 +1093,17 @@ class DigitalArena {
             return;
         }
 
-        const fighter1 = this.fighters.find(f => f.id == fighter1Id);
-        const fighter2 = this.fighters.find(f => f.id == fighter2Id);
+        // 获取选择的装备
+        const fighter1EquipmentIds = Array.from(document.getElementById('fighter1Equipment').selectedOptions).map(opt => parseInt(opt.value));
+        const fighter2EquipmentIds = Array.from(document.getElementById('fighter2Equipment').selectedOptions).map(opt => parseInt(opt.value));
+
+        // 克隆基础竞技者数据
+        const fighter1 = JSON.parse(JSON.stringify(this.fighters.find(f => f.id == fighter1Id)));
+        const fighter2 = JSON.parse(JSON.stringify(this.fighters.find(f => f.id == fighter2Id)));
+
+        // 应用装备属性加成
+        this.applyEquipmentBonuses(fighter1, fighter1EquipmentIds);
+        this.applyEquipmentBonuses(fighter2, fighter2EquipmentIds);
 
         this.isBattling = true;
         document.getElementById('startBattleBtn').style.display = 'none';
@@ -854,8 +1308,7 @@ class DigitalArena {
         const bonus = stats.luckBonus;
         return {
             ...stats, // 保留所有原始属性
-            attack: stats.attack + Math.random() * bonus,
-            defense: stats.defense + Math.random() * bonus,
+            attack: stats.attack + Math.random() * bonus, // 只增加攻击，不增加防御
             health: stats.health + Math.random() * bonus * 5,
             spiritPower: stats.spiritPower // 保留灵力值不变
         };
@@ -1580,6 +2033,10 @@ function closeImportModal() {
     if (myModal) {
         myModal.hide();
     }
+}
+
+function addEquipment() {
+    arena.addEquipment();
 }
 
 // 设置所有抗性为指定值
