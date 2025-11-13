@@ -85,6 +85,8 @@ class DigitalArena {
     addEquipment() {
         const name = document.getElementById('equipmentName').value.trim();
         const description = document.getElementById('equipmentDescription').value.trim();
+        const equipmentLevel = document.getElementById('equipmentLevel').value.trim();
+        const position = document.getElementById('equipmentPosition').value.trim();
         const attack = parseInt(document.getElementById('equipmentAttack').value) || 0;
         const defense = parseInt(document.getElementById('equipmentDefense').value) || 0;
         const dodge = parseInt(document.getElementById('equipmentDodge').value) || 0;
@@ -125,6 +127,8 @@ class DigitalArena {
             id: Date.now(),
             name,
             description,
+            equipmentLevel,
+            position,
             stats: {
                 attack,
                 defense,
@@ -146,6 +150,8 @@ class DigitalArena {
         // 清空输入框
         document.getElementById('equipmentName').value = '';
         document.getElementById('equipmentDescription').value = '';
+        document.getElementById('equipmentLevel').value = '';
+        document.getElementById('equipmentPosition').value = '';
         ['equipmentAttack', 'equipmentDefense', 'equipmentDodge', 'equipmentCritical', 'equipmentLuckBonus', 'equipmentHealth', 'equipmentSpiritPower'].forEach(id => {
             document.getElementById(id).value = 0;
         });
@@ -186,6 +192,8 @@ class DigitalArena {
                         <span class="badge bg-primary">装备</span>
                     </div>
                     <p class="text-muted small mb-2">${equipment.description || '无描述'}</p>
+                    <p class="text-muted small mb-2">装备等级：${equipment.equipmentLevel || '无等级'}</p>
+                    <p class="text-muted small mb-2">装备部位：${equipment.position || '无部位'}</p>
                     
                     <div class="mb-2">
                         <small>攻击力</small>
