@@ -51,10 +51,14 @@ class DigitalArena {
     initEventListeners() {
         document.getElementById('fighter1Select').addEventListener('change', (e) => {
             this.showFighterStats('fighter1Stats', e.target.value);
+            // 更新装备选择列表，因为参赛者级别变化会影响可选择的装备
+            this.updateEquipmentSelects();
         });
         
         document.getElementById('fighter2Select').addEventListener('change', (e) => {
             this.showFighterStats('fighter2Stats', e.target.value);
+            // 更新装备选择列表，因为参赛者级别变化会影响可选择的装备
+            this.updateEquipmentSelects();
         });
 
         // 装备选择事件 (使用 Bootstrap Select 插件的 changed.bs.select 事件)
@@ -63,6 +67,8 @@ class DigitalArena {
             if (fighter1Select.value) {
                 this.showFighterStats('fighter1Stats', fighter1Select.value, true); // true表示需要考虑装备
             }
+            // 更新装备选择列表，确保部位重复检查生效
+            this.updateEquipmentSelects();
         });
         
         $('#fighter2Equipment').on('changed.bs.select', () => {
@@ -70,6 +76,8 @@ class DigitalArena {
             if (fighter2Select.value) {
                 this.showFighterStats('fighter2Stats', fighter2Select.value, true); // true表示需要考虑装备
             }
+            // 更新装备选择列表，确保部位重复检查生效
+            this.updateEquipmentSelects();
         });
 
         ['attackRule', 'defenseRule', 'healthRule', 'dodgeRule', 'criticalRule', 'luckBonusRule', 'spiritPowerRule', 'spiritAttackRule_gold', 'spiritAttackRule_wood', 'spiritAttackRule_water', 'spiritAttackRule_fire', 'spiritAttackRule_earth', 'spiritDefenseRule_gold', 'spiritDefenseRule_wood', 'spiritDefenseRule_water', 'spiritDefenseRule_fire', 'spiritDefenseRule_earth'].forEach(ruleId => {
@@ -280,10 +288,14 @@ class DigitalArena {
                 
                 // 为每个选中的属性生成数值
                 selectedAttributes.forEach(attribute => {
-                    if (attribute === 'attack' || attribute === 'defense' || attribute === 'health' || attribute === 'spiritPower') {
+                    if (attribute === 'attack' || attribute === 'defense' ) {
                         // 数值类属性，最大值为装备级别
                         stats[attribute] = Math.floor(Math.random() * equipmentLevel) + 1;
-                    } else if (attribute === '金' || attribute === '木' || attribute === '水' || attribute === '火' || attribute === '土') {
+                    }else if(attribute === 'health' || attribute === 'spiritPower'){
+                        // 数值类属性，最大值为装备级别*10
+                        stats[attribute] = Math.floor(Math.random() * equipmentLevel*10) + 1;
+                    }
+                     else if (attribute === '金' || attribute === '木' || attribute === '水' || attribute === '火' || attribute === '土') {
                         // 灵力攻击属性
                         spiritAttack[attribute] = Math.floor(Math.random() * equipmentLevel) + 1;
                     } else if (attribute === 'dodge' || attribute === 'critical') {
@@ -563,6 +575,31 @@ class DigitalArena {
         const fighter1EquipmentSelect = document.getElementById('fighter1Equipment');
         const fighter2EquipmentSelect = document.getElementById('fighter2Equipment');
 
+        // 获取当前选中的参赛者
+        const fighter1Id = document.getElementById('fighter1Select').value;
+        const fighter2Id = document.getElementById('fighter2Select').value;
+        
+        // 获取参赛者级别
+        const fighter1 = this.fighters.find(f => f.id == fighter1Id);
+        const fighter2 = this.fighters.find(f => f.id == fighter2Id);
+        const fighter1Level = fighter1 ? fighter1.level : 0;
+        const fighter2Level = fighter2 ? fighter2.level : 0;
+
+        // 获取当前已选择的装备（用于部位重复检查）
+        const fighter1SelectedEquipment = Array.from(fighter1EquipmentSelect.selectedOptions).map(option => option.value);
+        const fighter2SelectedEquipment = Array.from(fighter2EquipmentSelect.selectedOptions).map(option => option.value);
+        
+        // 获取已选择装备的部位信息
+        const fighter1SelectedPositions = fighter1SelectedEquipment.map(id => {
+            const equipment = this.equipment.find(e => e.id == id);
+            return equipment ? equipment.position : null;
+        }).filter(pos => pos !== null);
+        
+        const fighter2SelectedPositions = fighter2SelectedEquipment.map(id => {
+            const equipment = this.equipment.find(e => e.id == id);
+            return equipment ? equipment.position : null;
+        }).filter(pos => pos !== null);
+
         // 清空选择框
         fighter1EquipmentSelect.innerHTML = '';
         fighter2EquipmentSelect.innerHTML = '';
@@ -576,13 +613,58 @@ class DigitalArena {
             fighter1EquipmentSelect.appendChild(noEquipmentOption);
             fighter2EquipmentSelect.appendChild(noEquipmentOption.cloneNode(true));
         } else {
-            // 添加装备选项
+            // 为参赛者1添加装备选项
             this.equipment.forEach(equipment => {
+                const equipmentLevel = parseInt(equipment.equipmentLevel) || 0;
+                const isLevelValid = fighter1Level === 0 || equipmentLevel <= fighter1Level;
+                const isCurrentlySelected = fighter1SelectedEquipment.includes(equipment.id.toString());
+                const isPositionAvailable = isCurrentlySelected || !fighter1SelectedPositions.includes(equipment.position);
+                
                 const option = document.createElement('option');
                 option.value = equipment.id;
-                option.textContent = `${equipment.name} (攻击+${equipment.stats.attack}, 防御+${equipment.stats.defense})`;
+                option.textContent = `${equipment.name} (等级:${equipmentLevel}, 部位:${equipment.position})`;
+                
+                if (!isLevelValid) {
+                    option.disabled = true;
+                    option.textContent += ' [级别过高]';
+                } else if (!isPositionAvailable) {
+                    option.disabled = true;
+                    option.textContent += ' [部位重复]';
+                }
+                
+                // 如果之前已选择此装备，保持选中状态
+                if (isCurrentlySelected) {
+                    option.selected = true;
+                }
+                
                 fighter1EquipmentSelect.appendChild(option);
-                fighter2EquipmentSelect.appendChild(option.cloneNode(true));
+            });
+            
+            // 为参赛者2添加装备选项
+            this.equipment.forEach(equipment => {
+                const equipmentLevel = parseInt(equipment.equipmentLevel) || 0;
+                const isLevelValid = fighter2Level === 0 || equipmentLevel <= fighter2Level;
+                const isCurrentlySelected = fighter2SelectedEquipment.includes(equipment.id.toString());
+                const isPositionAvailable = isCurrentlySelected || !fighter2SelectedPositions.includes(equipment.position);
+                
+                const option = document.createElement('option');
+                option.value = equipment.id;
+                option.textContent = `${equipment.name} (等级:${equipmentLevel}, 部位:${equipment.position})`;
+                
+                if (!isLevelValid) {
+                    option.disabled = true;
+                    option.textContent += ' [级别过高]';
+                } else if (!isPositionAvailable) {
+                    option.disabled = true;
+                    option.textContent += ' [部位重复]';
+                }
+                
+                // 如果之前已选择此装备，保持选中状态
+                if (isCurrentlySelected) {
+                    option.selected = true;
+                }
+                
+                fighter2EquipmentSelect.appendChild(option);
             });
         }
 
