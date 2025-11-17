@@ -18,6 +18,7 @@ let fanyiData = {
 let showData = [];
 let maxId = 0;
 let sortInt = 0;
+let currentItem = null;
 const selectElement = document.getElementById('shaixuan');
 selectElement.addEventListener('change', handleSelectChange);
 
@@ -1401,6 +1402,7 @@ function confirmAdd() {
 
 function openEditModal(item) {
     if (item) {
+        currentItem = item;
         closeModal();
         // 控制选择图片按钮的显示
         const imageSelectBtn = document.getElementById('imageSelectBtn');
@@ -1418,7 +1420,9 @@ function openEditModal(item) {
             extractFromPlayerBtn.style.display = 'none';
         }
         let rowDiv = document.createElement('div');
-        Object.keys(item).forEach((key, index) => {
+        // 根据翻译数据确定需要显示的字段
+        const displayKeys = Object.keys(fanyiData[currentSection]).length > 0 ? Object.keys(fanyiData[currentSection]) : Object.keys(item);
+        displayKeys.forEach((key, index) => {
             let fy = fanyiData[currentSection][key] ? fanyiData[currentSection][key] : key;
             
             if (key === "Story") {
@@ -1709,14 +1713,14 @@ rowDiv.appendChild(input);
                 
                 rowDiv.appendChild(button);
                 rowDiv.appendChild(input);
-            }else {
+            } else {
                 const input = document.createElement('input');
                 input.type = 'text';
-                input.value = item[key];
+                input.value = item[key] || '';
                 input.title = fy;
                 input.name = key;
                 input.placeholder = fy;
-                if (key == 'Id')
+                if (key === 'Id')
                     input.readOnly = true;
                 rowDiv.appendChild(input);
             }
@@ -1724,7 +1728,7 @@ rowDiv.appendChild(input);
             if ((index + 1) % 3 === 0) {
                 document.getElementById('modal').appendChild(rowDiv);
                 rowDiv = document.createElement('div');
-            } else if (index === Object.keys(item).length - 1) {
+            } else if (index === displayKeys.length - 1) {
                 document.getElementById('modal').appendChild(rowDiv);
             }
         });
