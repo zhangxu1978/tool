@@ -256,7 +256,7 @@ class DigitalArena {
                 const quality = dictList.Quality[randomQualityIndex];
                 
                 // 随机选择装备部位 (使用英文)
-                const equipmentPositions = ['Head', 'Body', 'Leg', 'Hand', 'Foot', 'arms'];
+                const equipmentPositions = ['Head', 'Body', 'Leg', 'Hand', 'Foot', 'Arms'];
                 const randomPositionIndex = Math.floor(Math.random() * equipmentPositions.length);
                 const positionCategory = equipmentPositions[randomPositionIndex];
                 const positionList = dictList[positionCategory];
@@ -275,7 +275,7 @@ class DigitalArena {
                 const spiritDefense = { 金: 0, 木: 0, 水: 0, 火: 0, 土: 0 };
                 
                 // 随机选择要加成的属性
-                const allAttributes = ['attack', 'defense', 'health', 'dodge', 'critical', 'luckBonus', 'spiritPower', '金', '木', '水', '火', '土', '金抗', '木抗', '水抗', '火抗', '土抗'];
+                const allAttributes = ['attack', 'defense', 'health', 'dodge', 'critical', 'spiritPower', '金', '木', '水', '火', '土', '金抗', '木抗', '水抗', '火抗', '土抗'];
                 const selectedAttributes = [];
                 
                 while (selectedAttributes.length < attributeCount) {
@@ -302,9 +302,6 @@ class DigitalArena {
                         // 比率类属性，最大值为ratioMax，但不能超过装备级别
                         const maxValue = Math.min(ratioMax, equipmentLevel);
                         stats[attribute] = Math.floor(Math.random() * maxValue) + 1;
-                    } else if (attribute === 'luckBonus') {
-                        // 幸运加成，最大值为装备级别
-                        stats[attribute] = Math.floor(Math.random() * equipmentLevel) + 1;
                     } else if (attribute.startsWith('金抗') || attribute.startsWith('木抗') || attribute.startsWith('水抗') || attribute.startsWith('火抗') || attribute.startsWith('土抗')) {
                         // 灵力防御属性
                         const element = attribute.replace('抗', '');
@@ -313,10 +310,7 @@ class DigitalArena {
                 });
                 
                 // 生成装备前缀
-                const prefixTypes = Object.keys(dictList.Prefixes);
-                const randomPrefixTypeIndex = Math.floor(Math.random() * prefixTypes.length);
-                const prefixType = prefixTypes[randomPrefixTypeIndex];
-                const prefixList = dictList.Prefixes[prefixType];
+                const prefixList = dictList.Prefixes[quality];
                 const randomPrefixIndex = Math.floor(Math.random() * prefixList.length);
                 const prefix = prefixList[randomPrefixIndex];
                 

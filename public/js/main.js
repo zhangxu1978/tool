@@ -869,7 +869,7 @@ function createImageFileItem(file) {
     jsonButton.textContent = '关联数据';
     jsonButton.addEventListener('click', function() {
         // 检查是否已有关联数据
-        fetch(`/api/images/json/${file.name}`)
+        fetch(`/api/img/json/${file.name}`)
             .then(response => response.json())
             .then(data => {
                 const imageJsonModal = document.getElementById('imageJsonModal');
