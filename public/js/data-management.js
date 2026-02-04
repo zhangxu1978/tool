@@ -1106,7 +1106,7 @@ function openAddModal() {
                     selectDialogBtn.onclick = async () => {
                         try {
                             // 从DialogueList.json加载对话数据
-                            const response = await fetch('../../data/DialogueList.json');
+                            const response = await fetch('/data/DialogueList.json');
                             if (!response.ok) {
                                 throw new Error('加载对话数据失败');
                             }
@@ -1484,7 +1484,7 @@ button.onclick = () => {
     selectDialogBtn.onclick = async () => {
         try {
             // 从DialogueList.json加载对话数据
-            const response = await fetch('../../data/DialogueList.json');
+            const response = await fetch('/data/DialogueList.json');
             if (!response.ok) {
                 throw new Error('加载对话数据失败');
             }

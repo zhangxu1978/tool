@@ -3,22 +3,8 @@
  * 实现音频和图片文件的管理功能
  */
 
-// 在NW.js环境中加载初始化脚本
-if (typeof nw !== 'undefined') {
-    // 在NW.js环境中动态加载nw-init.js
-    const script = document.createElement('script');
-    script.src = '/js/nw-init.js';
-    document.head.appendChild(script);
-}
-
 document.addEventListener('DOMContentLoaded', function() {
-    // 确保window.getApiUrl存在
-    if (!window.getApiUrl) {
-        window.getApiUrl = function(endpoint) {
-            return endpoint; // 默认使用相对路径
-        };
-    }
-    // 初始化加载文件列表
+    // 初始化加载文件列�?
     loadAudioFiles();
     
     // 音频搜索按钮事件
@@ -65,7 +51,7 @@ document.addEventListener('DOMContentLoaded', function() {
         updateDialogueBySelection(selectedId);
     });
     
-    // 对话搜索输入框变化事件
+    // 对话搜索输入框变化事�?
     document.getElementById('dialogueSearchInput').addEventListener('input', function() {
         const inputValue = this.value;
         const hiddenInput = document.getElementById('dialogueSelectHidden');
@@ -80,7 +66,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // 查找匹配的选项
-        fetch(window.getApiUrl('/data/DialogueList.json'))
+        fetch('/data/DialogueList.json')
             .then(response => response.json())
             .then(data => {
                 if (data) {
@@ -127,7 +113,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     console.error('加载对话内容失败:', error);
                 });
         } else {
-            // 选择新增时清空文本框和隐藏字段
+            // 选择新增时清空文本框和隐藏字�?
             hiddenInput.value = '';
             searchInput.value = '';
             document.getElementById('dialogueText').value = '';
@@ -152,8 +138,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const dialogueText = document.getElementById('dialogueText');
         const textarea = dialogueText;
         
-        // 显示一个简单的提示让用户输入位置
-        const position = prompt('请输入角色位置(left/center/right):');
+        // 显示一个简单的提示让用户输入位�?
+        const position = prompt('请输入角色位�?left/center/right):');
         if (position && ['left', 'center', 'right'].includes(position.toLowerCase())) {
             insertTextIntoDialogue(`\n[隐藏角色]${position.toLowerCase()}`);
         } else if (position) {
@@ -318,7 +304,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('branchTargets').innerHTML = '';
     });
     
-    // 监听分支选项文本框变化，动态生成目标对话选择器
+    // 监听分支选项文本框变化，动态生成目标对话选择�?
     document.getElementById('branchOptions').addEventListener('input', function() {
         const options = this.value.trim().split('\n').filter(option => option.trim());
         const branchTargetsDiv = document.getElementById('branchTargets');
@@ -329,7 +315,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 if (!data || data.length === 0) {
-                    branchTargetsDiv.innerHTML = '<p class="text-muted">没有可用的对话</p>';
+                    branchTargetsDiv.innerHTML = '<p class="text-muted">没有可用的对�?/p>';
                     return;
                 }
                 
@@ -530,7 +516,7 @@ function loadAudioFiles() {
     audioList.innerHTML = '';
     loading.style.display = 'block';
     
-    fetch(window.getApiUrl('/api/sound'))
+    fetch('/api/sound')
         .then(response => response.json())
         .then(files => {
             loading.style.display = 'none';
@@ -555,7 +541,7 @@ function loadAudioFiles() {
 /**
  * 按名称和类型搜索音频文件
  * @param {string} name - 搜索的名称关键词
- * @param {string} type - 搜索的类型
+ * @param {string} type - 搜索的类�?
  */
 function searchAudioFiles(name, type) {
     const audioList = document.getElementById('audioList');
@@ -565,22 +551,22 @@ function searchAudioFiles(name, type) {
     loading.style.display = 'block';
     
     // 构建搜索URL
-    let url = window.getApiUrl('/api/sound/search?');
+    let url = /api/sound/search?;
     if (name) url += `name=${encodeURIComponent(name)}&`;
     if (type) url += `type=${encodeURIComponent(type)}`;
     
-    // 移除末尾的 & 或 ?
+    // 移除末尾�?& �??
     if (url.endsWith('&') || url.endsWith('?')) {
         url = url.slice(0, -1);
     }
     
-    fetch(url)
+    fetch('url')
         .then(response => response.json())
         .then(result => {
             loading.style.display = 'none';
             
             if (!result.success || result.count === 0) {
-                audioList.innerHTML = '<div class="text-center p-4">没有找到匹配的音频文件</div>';
+                audioList.innerHTML = '<div class="text-center p-4">没有找到匹配的音频文�?/div>';
                 return;
             }
             
@@ -606,7 +592,7 @@ function loadImageFiles() {
     imageList.innerHTML = '';
     loading.style.display = 'block';
     
-    fetch(window.getApiUrl('/api/img'))
+    fetch('/api/img')
         .then(response => response.json())
         .then(files => {
             loading.style.display = 'none';
@@ -631,7 +617,7 @@ function loadImageFiles() {
 /**
  * 按名称和类型搜索图片文件
  * @param {string} name - 搜索的名称关键词
- * @param {string} type - 搜索的类型
+ * @param {string} type - 搜索的类�?
  */
 function searchImageFiles(name, type) {
     const imageList = document.getElementById('imageList');
@@ -641,22 +627,22 @@ function searchImageFiles(name, type) {
     loading.style.display = 'block';
     
     // 构建搜索URL
-    let url = window.getApiUrl('/api/img/search?');
+    let url = /api/img/search?;
     if (name) url += `name=${encodeURIComponent(name)}&`;
     if (type) url += `type=${encodeURIComponent(type)}`;
     
-    // 移除末尾的 & 或 ?
+    // 移除末尾�?& �??
     if (url.endsWith('&') || url.endsWith('?')) {
         url = url.slice(0, -1);
     }
     
-    fetch(url)
+    fetch('url')
         .then(response => response.json())
         .then(result => {
             loading.style.display = 'none';
             
             if (!result.success || result.count === 0) {
-                imageList.innerHTML = '<div class="text-center p-4">没有找到匹配的图片文件</div>';
+                imageList.innerHTML = '<div class="text-center p-4">没有找到匹配的图片文�?/div>';
                 return;
             }
             
@@ -673,9 +659,9 @@ function searchImageFiles(name, type) {
 }
 
 /**
- * 创建音频文件列表项
+ * 创建音频文件列表�?
  * @param {Object} file - 音频文件信息
- * @returns {HTMLElement} - 列表项元素
+ * @returns {HTMLElement} - 列表项元�?
  */
 function createAudioFileItem(file) {
     const fileItem = document.createElement('div');
@@ -691,11 +677,11 @@ function createAudioFileItem(file) {
     const fileName = document.createElement('h5');
     
     // 检查是否有关联的JSON数据
-    fetch(`/api/sound/json/${file.name}`)
+    fetch(`window.getApiUrl(`/api/sound/json/${file.name}``))
         .then(response => response.json())
         .then(data => {
             if (data.success && data.data) {
-                // 如果有关联数据，显示自定义名称
+                // 如果有关联数据，显示自定义名�?
                 fileName.textContent = data.data.name || file.name;
                 
                 // 添加类型信息到详情中
@@ -744,8 +730,8 @@ function createAudioFileItem(file) {
     jsonButton.className = 'btn btn-sm btn-info';
     jsonButton.textContent = '关联数据';
     jsonButton.addEventListener('click', function() {
-        // 检查是否已有关联数据
-        fetch(`/api/sound/json/${file.name}`)
+        // 检查是否已有关联数�?
+        fetch(`window.getApiUrl(`/api/sound/json/${file.name}``))
             .then(response => response.json())
             .then(data => {
                 const audioJsonModal = document.getElementById('audioJsonModal');
@@ -796,9 +782,9 @@ function createAudioFileItem(file) {
 }
 
 /**
- * 创建图片文件列表项
+ * 创建图片文件列表�?
  * @param {Object} file - 图片文件信息
- * @returns {HTMLElement} - 列表项元素
+ * @returns {HTMLElement} - 列表项元�?
  */
 function createImageFileItem(file) {
     const fileItem = document.createElement('div');
@@ -815,11 +801,11 @@ function createImageFileItem(file) {
     const fileName = document.createElement('h5');
     
     // 检查是否有关联的JSON数据
-    fetch(`/api/img/json/${file.name}`)
+    fetch(`window.getApiUrl(`/api/img/json/${file.name}``))
         .then(response => response.json())
         .then(data => {
             if (data.success && data.data) {
-                // 如果有关联数据，显示自定义名称
+                // 如果有关联数据，显示自定义名�?
                 fileName.textContent = data.data.name || file.name;
                 
                 // 添加类型信息到详情中
@@ -868,8 +854,8 @@ function createImageFileItem(file) {
     jsonButton.className = 'btn btn-sm btn-info';
     jsonButton.textContent = '关联数据';
     jsonButton.addEventListener('click', function() {
-        // 检查是否已有关联数据
-        fetch(`/api/img/json/${file.name}`)
+        // 检查是否已有关联数�?
+        fetch(`window.getApiUrl(`/api/img/json/${file.name}``))
             .then(response => response.json())
             .then(data => {
                 const imageJsonModal = document.getElementById('imageJsonModal');
@@ -932,10 +918,10 @@ function uploadBgmFile(file) {
     
     loading.style.display = 'block';
     
-    fetch(window.getApiUrl('/api/sound/bgm/upload'), {
+    fetch('/api/sound/bgm/upload, {
         method: 'POST',
         body: formData
-    })
+    }')
     .then(response => response.json())
     .then(data => {
         if (data.success) {
@@ -968,10 +954,10 @@ function uploadSfxFile(file) {
     
     loading.style.display = 'block';
     
-    fetch(window.getApiUrl('/api/sound/sfx/upload'), {
+    fetch('/api/sound/sfx/upload, {
         method: 'POST',
         body: formData
-    })
+    }')
     .then(response => response.json())
     .then(data => {
         if (data.success) {
@@ -994,18 +980,18 @@ function uploadSfxFile(file) {
 /**
  * 保存音频文件关联信息
  * @param {string} filename - 服务器上的文件名
- * @param {string} originalName - 原始文件名
- * @param {string} type - 文件类型（音乐/音效）
+ * @param {string} originalName - 原始文件�?
+ * @param {string} type - 文件类型（音�?音效�?
  * @returns {Promise}
  */
 function saveAudioFileInfo(filename, originalName, type) {
-    return fetch(`/api/sound/json/${filename}`, {
+    return fetch(`window.getApiUrl(`/api/sound/json/${filename}``), {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({ 
-            name: originalName.replace(/\.[^/.]+$/, ""), // 移除文件扩展名
+            name: originalName.replace(/\.[^/.]+$/, ""), // 移除文件扩展�?
             type: type 
           })
         }).then(response => response.json());
@@ -1023,10 +1009,10 @@ function uploadAudioFile(file) {
     
     loading.style.display = 'block';
     
-    fetch(window.getApiUrl('/api/sound/upload'), {
+    fetch('/api/sound/upload, {
         method: 'POST',
         body: formData
-    })
+    }')
     .then(response => response.json())
     .then(data => {
         if (data.success) {
@@ -1060,14 +1046,14 @@ function compressPNG(file) {
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
                 
-                // 设置Canvas尺寸为原始图片尺寸
+                // 设置Canvas尺寸为原始图片尺�?
                 canvas.width = img.width;
                 canvas.height = img.height;
                 
                 // 清除Canvas并设置透明背景
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 
-                // 绘制图片到Canvas（保留透明通道）
+                // 绘制图片到Canvas（保留透明通道�?
                 ctx.drawImage(img, 0, 0);
                 
                 // 将Canvas内容转换为压缩的PNG Blob
@@ -1107,13 +1093,13 @@ async function uploadImageFile(file) {
     try {
         let fileToUpload = file;
         
-        // 检查是否为PNG图片，如果是则进行压缩
+        // 检查是否为PNG图片，如果是则进行压�?
         if (file.type === 'image/png') {
-            // 显示压缩中提示
-            alert('正在压缩PNG图片，请稍候...');
+            // 显示压缩中提�?
+            alert('正在压缩PNG图片，请稍�?..');
             // 压缩图片
             const compressedBlob = await compressPNG(file);
-            // 创建新的File对象，保留原始文件名和类型
+            // 创建新的File对象，保留原始文件名和类�?
             fileToUpload = new File([compressedBlob], file.name, { type: 'image/png' });
             
             // 显示压缩结果
@@ -1123,14 +1109,14 @@ async function uploadImageFile(file) {
             console.log(`PNG图片压缩完成: ${originalSize}KB -> ${compressedSize}KB (减少${reduction}%)`);
         }
         
-        // 创建表单数据并上传
+        // 创建表单数据并上�?
         const formData = new FormData();
         formData.append('imageFile', fileToUpload);
         
-        const response = await fetch(window.getApiUrl('/api/img/upload'), {
+        const response = await fetch('/api/img/upload, {
             method: 'POST',
             body: formData
-        });
+        }');
         
         const data = await response.json();
         
@@ -1141,7 +1127,7 @@ async function uploadImageFile(file) {
         }
     } catch (error) {
         alert(`处理失败: ${error.message}`);
-        console.error('图片处理或上传失败:', error);
+        console.error('图片处理或上传失�?', error);
     } finally {
         loading.style.display = 'none';
     }
@@ -1149,13 +1135,13 @@ async function uploadImageFile(file) {
 
 /**
  * 删除音频文件
- * @param {string} filename - 要删除的文件名
+ * @param {string} filename - 要删除的文件�?
  */
 function deleteAudioFile(filename) {
     const loading = document.getElementById('audioLoading');
     loading.style.display = 'block';
     
-    fetch(window.getApiUrl(`/api/sound/${filename}`), {
+    fetch(`window.getApiUrl(`/api/sound/${filename}``), {
         method: 'DELETE'
     })
     .then(response => response.json())
@@ -1176,13 +1162,13 @@ function deleteAudioFile(filename) {
 
 /**
  * 删除图片文件
- * @param {string} filename - 要删除的文件名
+ * @param {string} filename - 要删除的文件�?
  */
 function deleteImageFile(filename) {
     const loading = document.getElementById('imageLoading');
     loading.style.display = 'block';
     
-    fetch(window.getApiUrl(`/api/img/${filename}`), {
+    fetch(`window.getApiUrl(`/api/img/${filename}``), {
         method: 'DELETE'
     })
     .then(response => response.json())
@@ -1202,9 +1188,9 @@ function deleteImageFile(filename) {
 }
 
 /**
- * 格式化文件大小
+ * 格式化文件大�?
  * @param {number} bytes - 文件大小（字节）
- * @returns {string} - 格式化后的文件大小
+ * @returns {string} - 格式化后的文件大�?
  */
 function formatFileSize(bytes) {
     if (bytes === 0) return '0 Bytes';
@@ -1217,7 +1203,7 @@ function formatFileSize(bytes) {
 }
 
 /**
- * 加载对话列表（同时更新select和datalist）
+ * 加载对话列表（同时更新select和datalist�?
  */
 function loadDialogues() {
     const dialogueSelect = document.getElementById('dialogueSelect');
@@ -1226,7 +1212,7 @@ function loadDialogues() {
     const hiddenInput = document.getElementById('dialogueSelectHidden');
     const currentHiddenValue = hiddenInput.value;
     
-    // 清空除了第一个选项以外的所有选项（select元素）
+    // 清空除了第一个选项以外的所有选项（select元素�?
     while (dialogueSelect.options.length > 1) {
         dialogueSelect.remove(1);
     }
@@ -1241,7 +1227,7 @@ function loadDialogues() {
                 return;
             }
             
-            // 保存当前选中的对话名称
+            // 保存当前选中的对话名�?
             let selectedDialogueName = '';
             if (currentHiddenValue) {
                 const selectedDialogue = data.find(d => d.Id === currentHiddenValue);
@@ -1266,7 +1252,7 @@ function loadDialogues() {
                 dialogueOptions.appendChild(datalistOption);
             });
             
-            // 恢复之前的选择（如果有）
+            // 恢复之前的选择（如果有�?
             if (currentHiddenValue) {
                 dialogueSelect.value = currentHiddenValue;
                 hiddenInput.value = currentHiddenValue;
@@ -1279,32 +1265,32 @@ function loadDialogues() {
 }
 
 /**
- * 加载角色选择的图片列表
+ * 加载角色选择的图片列�?
  */
 function loadImagesForCharacterSelect() {
     const roleImageSelect = document.getElementById('roleImage');
     
     // 从images.json获取图片数据
-    fetch(window.getApiUrl('/data/img.json'))
+    fetch('/data/img.json')
         .then(response => response.json())
         .then(data => {
             roleImageSelect.innerHTML = '';
             
             if (!data.files || data.files.length === 0) {
                 const option = document.createElement('option');
-                option.textContent = '没有可用的图片';
+                option.textContent = '没有可用的图�?;
                 roleImageSelect.appendChild(option);
                 return;
             }
             
-            // 过滤出类型为"人物"的图片
+            // 过滤出类型为"人物"的图�?
             const characterImages = data.files.filter(file => 
                 file.type && file.type.includes('人物')
             );
             
             if (characterImages.length === 0) {
                 const option = document.createElement('option');
-                option.textContent = '没有可用的人物图片';
+                option.textContent = '没有可用的人物图�?;
                 roleImageSelect.appendChild(option);
                 return;
             }
@@ -1312,7 +1298,7 @@ function loadImagesForCharacterSelect() {
             // 添加人物图片选项
             characterImages.forEach(image => {
                 const option = document.createElement('option');
-                // 构建完整的图片路径
+                // 构建完整的图片路�?
                 option.value = `/img/${image.filename}`;
                 option.textContent = image.name || image.filename;
                 roleImageSelect.appendChild(option);
@@ -1329,30 +1315,30 @@ function loadImagesForCharacterSelect() {
 }
 
 /**
- * 加载声音选择的音频文件列表
+ * 加载声音选择的音频文件列�?
  */
 function loadAudioFilesForSoundSelect() {
     const soundFileSelect = document.getElementById('soundFile');
     
-    // 获取所有音频文件
-    fetch(window.getApiUrl('/data/sound.json'))
+    // 获取所有音频文�?
+    fetch('/data/sound.json')
         .then(response => response.json())
         .then(data => {
             soundFileSelect.innerHTML = '';
             
             if (!data.files || data.files.length === 0) {
                 const option = document.createElement('option');
-                option.textContent = '没有可用的音频文件';
+                option.textContent = '没有可用的音频文�?;
                 soundFileSelect.appendChild(option);
                 return;
             }
-                        // 过滤出类型为"音效"的音频文件
+                        // 过滤出类型为"音效"的音频文�?
             const soundFiles = data.files.filter(file => 
                 file.type && file.type.includes('音效')
             );
             if (soundFiles.length === 0) {
                 const option = document.createElement('option');
-                option.textContent = '没有可用的音效文件';
+                option.textContent = '没有可用的音效文�?;
                 soundFileSelect.appendChild(option);
                 return;
             }
@@ -1373,39 +1359,39 @@ function loadAudioFilesForSoundSelect() {
 }
 
 /**
- * 加载背景选择的图片列表
+ * 加载背景选择的图片列�?
  */
 function loadImagesForBackgroundSelect() {
     const backgroundImageSelect = document.getElementById('backgroundImage');
     
     // 从images.json获取图片数据
-    fetch(window.getApiUrl('/data/img.json'))
+    fetch('/data/img.json')
         .then(response => response.json())
         .then(data => {
             backgroundImageSelect.innerHTML = '';
-                        // 过滤出类型为"人物"的图片
+                        // 过滤出类型为"人物"的图�?
 
             
             if (!data.files || data.files.length === 0) {
                 const option = document.createElement('option');
-                option.textContent = '没有可用的图片';
+                option.textContent = '没有可用的图�?;
                 backgroundImageSelect.appendChild(option);
                 return;
             }
-            // 过滤出类型为"背景"的图片
+            // 过滤出类型为"背景"的图�?
             const backgroundImages = data.files.filter(file => 
                 file.type && file.type.includes('背景')
             );
                         if (backgroundImages.length === 0) {
                 const option = document.createElement('option');
-                option.textContent = '没有可用的背景图片';
+                option.textContent = '没有可用的背景图�?;
                 backgroundImageSelect.appendChild(option);
                 return;
             }
             // 添加所有图片作为背景选项
             backgroundImages.forEach(image => {
                 const option = document.createElement('option');
-                // 构建完整的图片路径
+                // 构建完整的图片路�?
                 option.value = `/img/${image.filename}`;
                 option.textContent = image.name || image.filename;
                 backgroundImageSelect.appendChild(option);
@@ -1426,17 +1412,17 @@ function loadImagesForBackgroundSelect() {
 function loadAudioFilesForMusicSelect() {
     const musicListDiv = document.getElementById('musicList');
     
-    // 获取所有音频文件
-    fetch(window.getApiUrl('/data/sound.json'))
+    // 获取所有音频文�?
+    fetch('/data/sound.json')
         .then(response => response.json())
         .then(data => {
             musicListDiv.innerHTML = '';
             
             if (!data.files || data.files.length === 0) {
-                musicListDiv.innerHTML = '<p class="text-muted">没有可用的音频文件</p>';
+                musicListDiv.innerHTML = '<p class="text-muted">没有可用的音频文�?/p>';
                 return;
             }
-                                    // 过滤出类型为"音乐"的音频文件
+                                    // 过滤出类型为"音乐"的音频文�?
             const musicFiles = data.files.filter(file => 
                 file.type && file.type.includes('音乐')
             );
@@ -1492,7 +1478,7 @@ function saveDialogue() {
     const selectedId = dialogueSelectHidden.value;
     
     if (!dialogueText.trim()) {
-        alert('请输入对话内容');
+        alert('请输入对话内�?);
         return;
     }
     
@@ -1508,35 +1494,35 @@ function saveDialogue() {
                 const dialogueIndex = data.findIndex(d => d.Id === selectedId);
                 if (dialogueIndex !== -1) {
                     // 弹出一个输入框让用户录入对话的名称
-                    const dialogueName = prompt('请输入对话名称', data[dialogueIndex].Name || '');
+                    const dialogueName = prompt('请输入对话名�?, data[dialogueIndex].Name || '');
                     if (dialogueName === null) {
                         return Promise.reject(new Error('取消保存'));
                     }
                     if (!dialogueName) {
-                        alert('请输入对话名称');
-                        return Promise.reject(new Error('请输入对话名称'));
+                        alert('请输入对话名�?);
+                        return Promise.reject(new Error('请输入对话名�?));
                     }
                     
                     data[dialogueIndex].Text = dialogueText;
                     data[dialogueIndex].Name = dialogueName;
                 }
             } else {
-                // 添加新对话
+                // 添加新对�?
                 // 弹出一个输入框让用户录入对话的名称
-                const dialogueName = prompt('请输入对话名称');
+                const dialogueName = prompt('请输入对话名�?);
                 if (dialogueName === null) {
                     return Promise.reject(new Error('取消保存'));
                 }
                 if (!dialogueName) {
-                    alert('请输入对话名称');
-                    return Promise.reject(new Error('请输入对话名称'));
+                    alert('请输入对话名�?);
+                    return Promise.reject(new Error('请输入对话名�?));
                 }
                 
                 // 生成新的ID
                 const newId = data.length > 0 ? 
                     (Math.max(...data.map(d => parseInt(d.Id))) + 1).toString() : '1';
                 
-                // 添加新对话
+                // 添加新对�?
                 data.push({
                     Id: newId,
                     Name: dialogueName,
@@ -1544,13 +1530,13 @@ function saveDialogue() {
                 });
             }
             
-            // 保存回文件
-            return fetch(window.getApiUrl('/api/dialogue/save'), {
+            // 保存回文�?
+            return fetch('/api/dialogue/save, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(data)
+                body: JSON.stringify(data')
             });
         })
         .then(response => response.json())
@@ -1558,7 +1544,7 @@ function saveDialogue() {
             if (result.success) {
                 alert('对话保存成功');
                 loadDialogues();
-                // 如果是新增，重置选择框
+                // 如果是新增，重置选择�?
                 if (!selectedId) {
                     document.getElementById('dialogueSelect').value = '';
                     document.getElementById('dialogueSelectHidden').value = '';
@@ -1570,7 +1556,7 @@ function saveDialogue() {
             }
         })
         .catch(error => {
-            if (error.message !== '取消保存' && error.message !== '请输入对话名称') {
+            if (error.message !== '取消保存' && error.message !== '请输入对话名�?) {
                 console.error('保存对话失败:', error);
                 alert('保存对话失败');
             }
@@ -1589,8 +1575,8 @@ function deleteDialogue() {
         return;
     }
     
-    // 弹出确认框
-    if (confirm('确定要删除这个对话吗？此操作不可撤销。')) {
+    // 弹出确认�?
+    if (confirm('确定要删除这个对话吗？此操作不可撤销�?)) {
         fetch('/data/DialogueList.json')
             .then(response => response.json())
             .then(data => {
@@ -1598,16 +1584,16 @@ function deleteDialogue() {
                     data = [];
                 }
                 
-                // 过滤掉要删除的对话
+                // 过滤掉要删除的对�?
                 data = data.filter(dialogue => dialogue.Id !== selectedId);
                 
-                // 保存回文件
-                return fetch(window.getApiUrl('/api/dialogue/save'), {
+                // 保存回文�?
+                return fetch('/api/dialogue/save, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify(data)
+                    body: JSON.stringify(data')
                 });
             })
             .then(response => response.json())
@@ -1615,7 +1601,7 @@ function deleteDialogue() {
                 if (result.success) {
                     alert('对话删除成功');
                     loadDialogues();
-                    // 重置选择框和文本框
+                    // 重置选择框和文本�?
                     document.getElementById('dialogueSelect').value = '';
                     document.getElementById('dialogueSelectHidden').value = '';
                     document.getElementById('dialogueSearchInput').value = '';
@@ -1646,12 +1632,12 @@ function previewDialogue() {
     const previewModal = new bootstrap.Modal(document.getElementById('dialoguePreviewModal'));
     previewModal.show();
     
-    // 解析对话内容并开始播放
+    // 解析对话内容并开始播�?
     parseAndPlayDialogue(dialogueText);
 }
 
 /**
- * 解析并播放对话
+ * 解析并播放对�?
  * @param {string} dialogueText - 对话文本内容
  */
 function parseAndPlayDialogue(dialogueText) {
@@ -1665,13 +1651,13 @@ function parseAndPlayDialogue(dialogueText) {
     document.getElementById('right-character').innerHTML = '';
     dialogueDisplay.innerHTML = '';
     
-    // 清除现有的背景
+    // 清除现有的背�?
     const existingBackground = scene.querySelector('.scene-background');
     if (existingBackground) {
         scene.removeChild(existingBackground);
     }
     
-    // 停止任何正在播放的音频
+    // 停止任何正在播放的音�?
     if (window.currentSound) {
         window.currentSound.pause();
         window.currentSound = null;
@@ -1684,7 +1670,7 @@ function parseAndPlayDialogue(dialogueText) {
     let currentLine = 0;
     let branchTargets = {}; // 存储分支选择的目标对话ID
     
-    // 开始播放
+    // 开始播�?
     function playNextLine() {
         if (currentLine >= lines.length) {
             return;
@@ -1707,7 +1693,7 @@ function parseAndPlayDialogue(dialogueText) {
                 const options = optionsStr.split(',');
                 
                 // 清空对话显示区域
-                dialogueDisplay.innerHTML = '<p class="text-lg mb-4">请选择：</p>';
+                dialogueDisplay.innerHTML = '<p class="text-lg mb-4">请选择�?/p>';
                 
                 // 创建选择按钮
                 options.forEach(option => {
@@ -1718,17 +1704,17 @@ function parseAndPlayDialogue(dialogueText) {
                             // 获取该选择对应的目标对话ID（使用trim确保与存储时的键一致）
                             const targetDialogueId = branchTargets[option.trim()];
                             if (targetDialogueId) {
-                                // 查找并加载目标对话
+                                // 查找并加载目标对�?
                                 fetch('/data/DialogueList.json')
                                     .then(response => response.json())
                                     .then(data => {
                                         if (data) {
                                             const targetDialogue = data.find(d => d.Id === targetDialogueId);
                                             if (targetDialogue) {
-                                                // 解析并播放目标对话
+                                                // 解析并播放目标对�?
                                                 parseAndPlayDialogue(targetDialogue.Text);
                                             } else {
-                                                console.error('未找到目标对话:', targetDialogueId);
+                                                console.error('未找到目标对�?', targetDialogueId);
                                             }
                                         } else {
                                             console.error('对话数据格式错误');
@@ -1738,7 +1724,7 @@ function parseAndPlayDialogue(dialogueText) {
                                         console.error('加载目标对话失败:', error);
                                     });
                             } else {
-                                console.error('未找到该选项对应的目标对话');
+                                console.error('未找到该选项对应的目标对�?);
                             }
                         };
                     dialogueDisplay.appendChild(btn);
@@ -1765,7 +1751,7 @@ function parseAndPlayDialogue(dialogueText) {
             }
             // 其他原有指令保持不变
             else if (line.startsWith('[开始]') || line.startsWith('[结束]')) {
-                // 开始继续下一行
+                // 开始继续下一�?
                 if (line.startsWith('[开始]')) {
                     setTimeout(playNextLine, 100);
                 }else if (line.startsWith('[结束]')) {
@@ -1785,9 +1771,9 @@ function parseAndPlayDialogue(dialogueText) {
                         // 创建新的角色图片
                         const characterImage = document.createElement('img');
                         
-                        // 检查图片路径是否是res://格式或实际路径
+                        // 检查图片路径是否是res://格式或实际路�?
                         if (imagePath.startsWith('res://')) {
-                            // 模拟res://路径，实际项目中可能需要转换
+                            // 模拟res://路径，实际项目中可能需要转�?
                             characterImage.src = '/img/default-character.png';
                             characterImage.alt = '角色图片';
                         } else {
@@ -1818,7 +1804,7 @@ function parseAndPlayDialogue(dialogueText) {
                 // 黑屏指令
                 const blackScreenText = line.substring('[黑屏]'.length).trim();
                 
-                // 清除所有角色
+                // 清除所有角�?
                 document.getElementById('left-character').innerHTML = '';
                 document.getElementById('center-character').innerHTML = '';
                 document.getElementById('right-character').innerHTML = '';
@@ -1829,7 +1815,7 @@ function parseAndPlayDialogue(dialogueText) {
                     scene.removeChild(existingBackground);
                 }
                 
-                // 设置场景为黑色背景
+                // 设置场景为黑色背�?
                 scene.style.backgroundColor = 'black';
                 
                 // 显示黑屏文字
@@ -1837,7 +1823,7 @@ function parseAndPlayDialogue(dialogueText) {
                 dialogueDisplay.classList.remove('bg-white');
                 dialogueDisplay.classList.add('bg-black');
                 setTimeout(() => {
-                    // 恢复场景背景色
+                    // 恢复场景背景�?
                     scene.style.backgroundColor = '#f8f9fa';
                     dialogueDisplay.classList.remove('bg-black');
                     dialogueDisplay.classList.add('bg-white');
@@ -1854,7 +1840,7 @@ function parseAndPlayDialogue(dialogueText) {
                         window.currentSound = null;
                     }
                     
-                    // 创建新的音频元素并播放
+                    // 创建新的音频元素并播�?
                     window.currentSound = new Audio(soundPath);
                     
                     // 添加加载完成事件监听
@@ -1867,7 +1853,7 @@ function parseAndPlayDialogue(dialogueText) {
                         }
                     };
                     
-                    // 如果音频已经加载完成，直接播放
+                    // 如果音频已经加载完成，直接播�?
                     if (window.currentSound.readyState >= 4) {
                         window.currentSound.oncanplaythrough();
                     }
@@ -1892,7 +1878,7 @@ function parseAndPlayDialogue(dialogueText) {
                 const backgroundPath = line.substring('[显示背景]'.length).trim();
                 
                 if (backgroundPath) {
-                    // 清除现有的背景
+                    // 清除现有的背�?
                     const existingBackground = scene.querySelector('.scene-background');
                     if (existingBackground) {
                         scene.removeChild(existingBackground);
@@ -1903,11 +1889,11 @@ function parseAndPlayDialogue(dialogueText) {
                     backgroundImage.src = backgroundPath;
                     backgroundImage.alt = '背景图片';
                     backgroundImage.className = 'scene-background position-absolute top-0 left-0 w-full h-full object-cover z-0';
-                    backgroundImage.style.opacity = '0.8'; // 设置透明度
+                    backgroundImage.style.opacity = '0.8'; // 设置透明�?
                     //设置背景图片最大宽度和高度
                     backgroundImage.style.maxWidth = '800px';
                     backgroundImage.style.maxHeight = '600px';
-                    //确保背景图片在其他元素之下
+                    //确保背景图片在其他元素之�?
                     scene.style.position = 'relative';
                     if (scene.firstChild) {
                         scene.insertBefore(backgroundImage, scene.firstChild);
@@ -1930,23 +1916,23 @@ function parseAndPlayDialogue(dialogueText) {
                 const params = line.substring('[播放音乐]'.length).trim();
                 const parts = params.split(',');
                 const playMode = parts.pop(); // 最后一个参数是播放模式
-                const musicPaths = parts; // 前面的都是音乐路径
+                const musicPaths = parts; // 前面的都是音乐路�?
                 
                 if (musicPaths.length > 0) {
-                    // 停止当前正在播放的音乐
+                    // 停止当前正在播放的音�?
                     if (window.currentMusic) {
                         window.currentMusic.pause();
                         window.currentMusic = null;
                     }
                     
-                    // 创建音频播放管理器
+                    // 创建音频播放管理�?
                     createMusicPlayer(musicPaths, playMode);
                 }
                 
                 setTimeout(playNextLine, 1);
             }
         } else {
-            // 普通对话文本
+            // 普通对话文�?
             dialogueDisplay.innerHTML = `<p class="text-lg">${line}</p>`;
             
             // 等待用户点击继续
@@ -1959,12 +1945,12 @@ function parseAndPlayDialogue(dialogueText) {
         }
     }
     
-    // 开始播放第一行
+    // 开始播放第一�?
     playNextLine();
 }
 
 /**
- * 创建音乐播放器
+ * 创建音乐播放�?
  * @param {Array} musicPaths - 音乐文件路径数组
  * @param {string} playMode - 播放模式：single（单曲循环）、random（随机播放）、sequential（顺序播放一次）
  */
@@ -1976,12 +1962,12 @@ function createMusicPlayer(musicPaths, playMode) {
             return;
         }
         
-        // 根据播放模式确定下一首要播放的音乐索引
+        // 根据播放模式确定下一首要播放的音乐索�?
         if (playMode === 'random') {
             // 随机播放
             currentIndex = Math.floor(Math.random() * musicPaths.length);
         } else if (playMode === 'sequential') {
-            // 顺序播放一次
+            // 顺序播放一�?
             if (currentIndex >= musicPaths.length - 1) {
                 // 已经播放到最后一首，停止播放
                 return;
@@ -2020,13 +2006,13 @@ function createMusicPlayer(musicPaths, playMode) {
             }
         };
         
-        // 如果音频已经加载完成，直接播放
+        // 如果音频已经加载完成，直接播�?
         if (window.currentMusic.readyState >= 4) {
             window.currentMusic.oncanplaythrough();
         }
     }
     
-    // 开始播放第一首音乐
+    // 开始播放第一首音�?
     playNextMusic();
 }
 
@@ -2040,11 +2026,11 @@ document.getElementById('saveAudioJsonBtn').addEventListener('click', function()
     const type = document.getElementById('audioType').value;
     
     if (!name || !type) {
-        alert('请填写完整信息');
+        alert('请填写完整信�?);
         return;
     }
     
-    fetch(`/api/sound/json/${filename}`, {
+    fetch(`window.getApiUrl(`/api/sound/json/${filename}``), {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -2077,11 +2063,11 @@ document.getElementById('saveImageJsonBtn').addEventListener('click', function()
     const type = document.getElementById('imageType').value;
     
     if (!name || !type) {
-        alert('请填写完整信息');
+        alert('请填写完整信�?);
         return;
     }
     
-    fetch(`/api/img/json/${filename}`, {
+    fetch(`window.getApiUrl(`/api/img/json/${filename}``), {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'

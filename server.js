@@ -33,6 +33,10 @@ app.use(propServer);
 const playerServer = require('./player-server');
 app.use(playerServer);
 
+// 导入卡片管理模块
+const cardServer = require('./card-server');
+app.use(cardServer);
+
 // 配置文件上传
 const soundStorage = multer.diskStorage({
   destination: function (req, file, cb) {

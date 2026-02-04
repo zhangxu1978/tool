@@ -1,4 +1,4 @@
-const jsonDataDir = './data'; // Set the directory path for JSON files
+const jsonDataDir = '/data'; // Set the directory path for JSON files
 
 function writeJsonFile(fileName, data) {
     const filePath = `${jsonDataDir}/${fileName}.json`;

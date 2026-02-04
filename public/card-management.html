@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>卡片管理</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <ul>
+                <li onclick="showAllCards()">全部卡片</li>
+                <li onclick="filterByType('法器')">法器</li>
+                <li onclick="filterByType('法术')">法术</li>
+                <li onclick="filterByType('丹药')">丹药</li>
+                <li onclick="filterByType('符箓')">符箓</li>
+                <li onclick="filterByType('召唤物')">召唤物</li>
+                <li onclick="filterByType('阵法')">阵法</li>
+            </ul>
+        </div>
+        
+        <div class="main-content">
+            <div class="buttons">
+                <button onclick="openAddModal()">新增卡片</button>
+                <button onclick="sortById()">按ID排序</button>
+                <button onclick="exportCards()">导出数据</button>
+                <button onclick="importCards()">导入数据</button>
+                <input type="text" id="searchInput" placeholder="搜索卡片名称..." oninput="searchCards()">
+            </div>
+            
+            <div id="cards-display" class="cards-grid">
+                <!-- 卡片列表将在这里显示 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 新增/编辑卡片模态框 -->
+    <div id="cardModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">新增卡片</h3>
+                <span class="close" onclick="closeModal()">&times;</span>
+            </div>
+            
+            <div class="modal-body">
+                <form id="cardForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="cardId">ID:</label>
+                            <input type="text" id="cardId" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="cardName">名称:</label>
+                            <input type="text" id="cardName" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="cardType">类型:</label>
+                            <select id="cardType" required>
+                                <!-- 选项将通过JavaScript动态生成 -->
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="cardAttack">攻击:</label>
+                            <input type="number" id="cardAttack" min="0">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="cardDurability">耐久:</label>
+                            <input type="number" id="cardDurability" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="cardCostValue">消耗费用值:</label>
+                            <input type="number" id="cardCostValue" min="0">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="cardCostType">消耗费用类型:</label>
+                            <select id="cardCostType">
+                                <!-- 选项将通过JavaScript动态生成 -->
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="cardTarget">作用目标:</label>
+                            <select id="cardTarget">
+                                <!-- 选项将通过JavaScript动态生成 -->
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="cardTargetType">作用目标类型:</label>
+                            <select id="cardTargetType">
+                                <!-- 选项将通过JavaScript动态生成 -->
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="cardSpecialEffectType">特殊效果类型:</label>
+                            <select id="cardSpecialEffectType">
+                                <!-- 选项将通过JavaScript动态生成 -->
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="cardSpecialEffect">特殊效果:</label>
+                        <input type="text" id="cardSpecialEffect">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="cardSpecialEffectDesc">特殊效果说明:</label>
+                        <textarea id="cardSpecialEffectDesc" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>五行属性:</label>
+                        <div class="checkbox-group" id="elementCheckboxes">
+                            <!-- 五行属性复选框将通过JavaScript动态生成 -->
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>效果触发方式:</label>
+                        <div class="checkbox-group" id="triggerMethodCheckboxes">
+                            <!-- 触发方式复选框将通过JavaScript动态生成 -->
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="cardDuration">作用持续时间(回合数):</label>
+                            <input type="number" id="cardDuration" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="cardActionCount">行动次数:</label>
+                            <input type="number" id="cardActionCount" min="0">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="cardEffectValue">效果数值:</label>
+                            <input type="number" id="cardEffectValue">
+                        </div>
+                        <div class="form-group">
+                            <label for="cardStatus">卡片状态:</label>
+                            <select id="cardStatus">
+                                <!-- 选项将通过JavaScript动态生成 -->
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="modal-footer">
+                <button type="button" onclick="saveCard()">保存</button>
+                <button type="button" onclick="closeModal()">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 文件输入 -->
+    <input type="file" id="fileInput" accept=".json" style="display: none;" onchange="handleFileImport(event)">
+
+    <script src="js/card-management.js"></script>
+</body>
+</html>

@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>卡片API测试</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        button { margin: 5px; padding: 8px 15px; cursor: pointer; }
+        .result { background: #f5f5f5; padding: 10px; margin: 10px 0; border-radius: 3px; }
+        pre { white-space: pre-wrap; word-wrap: break-word; }
+    </style>
+</head>
+<body>
+    <h1>卡片管理API测试页面</h1>
+    
+    <div class="test-section">
+        <h3>获取所有卡片</h3>
+        <button onclick="getAllCards()">获取所有卡片</button>
+        <div id="getAllResult" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>创建新卡片</h3>
+        <button onclick="createTestCard()">创建测试卡片</button>
+        <div id="createResult" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>按类型筛选</h3>
+        <button onclick="getCardsByType('法术')">获取法术卡片</button>
+        <button onclick="getCardsByType('丹药')">获取丹药卡片</button>
+        <div id="filterResult" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>按作用目标类型筛选</h3>
+        <button onclick="getCardsByTargetType('场上卡牌')">场上卡牌</button>
+        <button onclick="getCardsByTargetType('手中卡牌')">手中卡牌</button>
+        <button onclick="getCardsByTargetType('牌库卡牌')">牌库卡牌</button>
+        <button onclick="getCardsByTargetType('主将')">主将</button>
+        <div id="targetTypeResult" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>按特殊效果类型筛选</h3>
+        <button onclick="getCardsByEffectType('赋值')">赋值</button>
+        <button onclick="getCardsByEffectType('状态赋予')">状态赋予</button>
+        <button onclick="getCardsByEffectType('抽卡')">抽卡</button>
+        <div id="effectTypeResult" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>按五行属性筛选</h3>
+        <button onclick="getCardsByElement('火')">火</button>
+        <button onclick="getCardsByElement('水')">水</button>
+        <button onclick="getCardsByElement('木')">木</button>
+        <button onclick="getCardsByElement('阴')">阴</button>
+        <div id="elementResult" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>搜索卡片</h3>
+        <button onclick="searchCards('火')">搜索包含"火"的卡片</button>
+        <div id="searchResult" class="result"></div>
+    </div>
+
+    <script>
+        async function getAllCards() {
+            try {
+                const response = await fetch('/api/cards');
+                const data = await response.json();
+                document.getElementById('getAllResult').innerHTML = 
+                    `<strong>状态:</strong> ${response.status}<br>
+                     <strong>数据:</strong><pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                document.getElementById('getAllResult').innerHTML = 
+                    `<strong>错误:</strong> ${error.message}`;
+            }
+        }
+
+        async function createTestCard() {
+            const testCard = {
+                id: 'test_' + Date.now(),
+                name: '测试卡片',
+                type: '法术',
+                attack: 25,
+                durability: 1,
+                specialEffect: '测试效果',
+                specialEffectDesc: '这是一个测试卡片的效果描述',
+                specialEffectType: '赋值',
+                elements: ['火', '金'],
+                costValue: 15,
+                costType: '法力',
+                target: '指定一个',
+                targetType: '场上卡牌',
+                triggerMethods: ['使用'],
+                duration: 1,
+                actionCount: 1,
+                effectValue: 25,
+                status: '普通'
+            };
+
+            try {
+                const response = await fetch('/api/cards/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(testCard)
+                });
+                const data = await response.json();
+                document.getElementById('createResult').innerHTML = 
+                    `<strong>状态:</strong> ${response.status}<br>
+                     <strong>响应:</strong><pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                document.getElementById('createResult').innerHTML = 
+                    `<strong>错误:</strong> ${error.message}`;
+            }
+        }
+
+        async function getCardsByType(type) {
+            try {
+                const response = await fetch(`/api/cards/type/${type}`);
+                const data = await response.json();
+                document.getElementById('filterResult').innerHTML = 
+                    `<strong>状态:</strong> ${response.status}<br>
+                     <strong>类型:</strong> ${type}<br>
+                     <strong>数据:</strong><pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                document.getElementById('filterResult').innerHTML = 
+                    `<strong>错误:</strong> ${error.message}`;
+            }
+        }
+
+        async function getCardsByTargetType(targetType) {
+            try {
+                const response = await fetch(`/api/cards/targetType/${targetType}`);
+                const data = await response.json();
+                document.getElementById('targetTypeResult').innerHTML = 
+                    `<strong>状态:</strong> ${response.status}<br>
+                     <strong>目标类型:</strong> ${targetType}<br>
+                     <strong>数据:</strong><pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                document.getElementById('targetTypeResult').innerHTML = 
+                    `<strong>错误:</strong> ${error.message}`;
+            }
+        }
+
+        async function getCardsByEffectType(effectType) {
+            try {
+                const response = await fetch(`/api/cards/effectType/${effectType}`);
+                const data = await response.json();
+                document.getElementById('effectTypeResult').innerHTML = 
+                    `<strong>状态:</strong> ${response.status}<br>
+                     <strong>效果类型:</strong> ${effectType}<br>
+                     <strong>数据:</strong><pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                document.getElementById('effectTypeResult').innerHTML = 
+                    `<strong>错误:</strong> ${error.message}`;
+            }
+        }
+
+        async function getCardsByElement(element) {
+            try {
+                const response = await fetch(`/api/cards/element/${element}`);
+                const data = await response.json();
+                document.getElementById('elementResult').innerHTML = 
+                    `<strong>状态:</strong> ${response.status}<br>
+                     <strong>五行属性:</strong> ${element}<br>
+                     <strong>数据:</strong><pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                document.getElementById('elementResult').innerHTML = 
+                    `<strong>错误:</strong> ${error.message}`;
+            }
+        }
+
+        async function searchCards(keyword) {
+            try {
+                const response = await fetch(`/api/cards/search/${keyword}`);
+                const data = await response.json();
+                document.getElementById('searchResult').innerHTML = 
+                    `<strong>状态:</strong> ${response.status}<br>
+                     <strong>关键词:</strong> ${keyword}<br>
+                     <strong>数据:</strong><pre>${JSON.stringify(data, null, 2)}</pre>`;
+            } catch (error) {
+                document.getElementById('searchResult').innerHTML = 
+                    `<strong>错误:</strong> ${error.message}`;
+            }
+        }
+
+        // 页面加载时自动获取所有卡片
+        window.onload = function() {
+            getAllCards();
+        };
+    </script>
+</body>
+</html>
